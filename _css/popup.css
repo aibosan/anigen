@@ -1,0 +1,86 @@
+.popup {
+	position: absolute;
+	border: 1px solid #777;
+	background-color: #fbfbfb;
+	box-shadow: 0px 2px 4px #999;
+	border-radius: 5px;
+	z-index: 209;
+	padding: .5ex;
+	transition: opacity 0.2s;
+}
+
+.popup > div {
+	border-radius: 5px;
+	/*overflow: hidden;*/
+}
+
+.popup *:not(table):not(tr) {
+	vertical-align: middle;
+	display: table-cell;
+}
+
+.popup button {
+    padding: .5ex;
+}
+
+.popup button {
+	border-radius: 5px 0px 0px 5px;
+}
+
+.popup button:last-child {
+	border-radius: 0px 5px 5px 0px;
+}
+
+.popup button.black {
+	margin-left: 1ex;
+}
+
+.popup input {
+	padding: .5ex;
+	width: 8em;
+	margin: 0 .25ex;
+}
+
+.popup select {
+	padding: .5ex;
+	min-width: 8em;
+	margin: 0 .25ex;
+}
+
+.popup input[type=time] {
+	width: inherit;
+}
+
+.popup input[type=number] {
+	width: 3em;
+}
+
+
+.popup-menu {
+	border-spacing: 0px;
+}
+
+.popup-menu tr {
+	vertical-align: middle;
+	background-color: transparent;
+}
+
+.popup-menu tr:hover {
+	background-color: lightgray;
+}
+
+.popup-menu tr.hr {
+	background-color: gray;
+}
+
+.popup-menu tr.disabled {
+	opacity: 0.5;
+}
+
+.popup-menu tr.disabled:hover {
+	background-color: transparent;
+}
+
+.popup-menu td {
+	padding: .5ex;
+}

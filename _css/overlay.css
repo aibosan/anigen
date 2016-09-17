@@ -1,0 +1,72 @@
+
+div.overlay {
+	position: absolute;
+    top: 0px;
+    left: 0px;
+    width: 100%;
+    height: 100%;
+    background-color: white;
+    z-index: 208;
+    text-align: center;
+
+	overflow-x: hidden;
+	overflow-y: auto;
+	/*
+	transition: opacity .5s, height 0s linear 0.5s; 
+	*/
+}
+
+div.overlay > div:last-child {
+    margin-top: 1.5em;
+	margin-bottom: 2em;
+}
+
+div.overlay > div:first-child {
+    margin-top: 2em;
+	margin-bottom: 1.5em;
+}
+
+div.overlay > div:nth-child(1) {
+    max-width: 600px;
+    max-height: 100%;
+	
+    position: relative;
+	top: 50%;
+	
+	left: 50%;
+    transform: translate(-50%, -50%);
+
+    transition: top 1s;
+}
+
+div.overlay div:nth-child(1) h1 {
+    display: none;
+}
+
+div.overlay input {
+	cursor: text;
+    border: 1px solid darkgray;
+	width: 100%;
+	display: block;
+}
+
+div.overlay input:disabled {
+	background-color: lightgray;
+}
+
+div.overlay input[type=checkbox] {
+	cursor: pointer;
+}
+
+div.overlay table {
+    width: 100%;
+}
+
+div.overlay td, div.overlay td * {
+	vertical-align: middle;
+}
+
+div.overlay button {
+    width: inherit;
+	display: inline-block;
+}

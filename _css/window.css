@@ -1,0 +1,196 @@
+.window {
+	border-bottom: 1px solid gray;
+	margin-bottom: 1ex;
+}
+
+.window h1 {
+	border-top: 1px solid gray;
+    border-bottom: 1px solid gray;
+	
+    font-size: 1.05em;
+    margin: 0px;
+	margin-bottom: 0.5ex;
+    padding: .5ex;
+    font-weight: normal;
+	
+	overflow: hidden;
+	white-space: nowrap;
+	background-color: #ddd;
+	
+	text-align: left;
+}
+
+.window h1 span {
+	display: inline-block;
+}
+
+.window h1 span:first-child {
+	float: left;
+}
+
+.window h1 span:last-child {
+	float: right;
+	cursor: pointer;
+}
+
+ul.navbar {
+	list-style-type: none;
+	margin: 0;
+	padding: 0;
+	padding-left: 0.5ex;
+	overflow: hidden;
+}
+
+ul.navbar li {
+	float: left;
+	margin: 0px;
+	padding-left: 0;
+	padding-right: 0.5ex;
+}
+
+ul.navbar li a {
+	display: inline-block;
+	text-align: center;
+	padding: 0.5ex 1ex 0.75ex;
+	border: 1px solid lightgray;
+	border-bottom: none;
+	color: inherit;
+	position: relative;
+	top: 1px;
+	text-decoration: none;
+	font-size: 85%;
+}
+
+ul.navbar li a:hover {
+	background-color: #e5e5e5;
+}
+
+ul.navbar li.active a {
+	background-color: #fff;
+}
+
+.window {
+	text-align: center;
+}
+
+.window div.tab {
+	margin: 0.5ex;
+	margin-top: 0px;
+	padding: 0.5ex;
+	border: 1px solid lightgray;
+	background-color: #fff;
+	
+	overflow-x: auto;
+}
+
+.window div.tab > label {
+	margin: 1ex;
+	display: inline-block;
+}
+
+.window table th {
+	white-space: nowrap;
+}
+
+.window div.footer {
+	padding: .5ex;
+	margin: 0ex .5ex;
+}
+
+.window table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+table.layers tr td:last-child {
+	text-align: left;
+	cursor: pointer;
+	width: 100%;
+}
+
+table.layers tr.selected {
+    background-color: lightgray;
+}
+
+table.inputs tr td:nth-child(2) {
+	width: 100%;
+}
+
+table.begins input, table.begins select {
+	width: 100%;
+}
+
+table.begins tr td:first-child, table.begins tr td:nth-child(2) {
+	width: 50%;
+}
+
+table.keyframes tr {
+	border: 0px solid gray;
+}
+
+table.keyframes tr:not(:first-child):hover {
+	background-color: lightgray;
+}
+
+table.keyframes tr.selected {
+	background-color: gray;
+}
+
+
+table.keyframes tr.selected:not(:first-child):hover {
+	background-color: dimgray;
+}
+
+
+table.keyframes {
+	white-space:nowrap;
+}
+
+table.keyframes td:first-child {
+	color: transparent;
+	width: 0.5em !important; 
+	cursor: pointer;
+	border: 1px solid transparent;
+}
+
+table.keyframes td:first-child:hover {
+	background-color: gray;
+	background: repeating-linear-gradient(
+		0deg,
+		black,
+		black 1px,
+		transparent 1px,
+		transparent 3px
+	);
+	border-color: black;
+}
+
+
+
+/*
+// distracting, plus doesn't account for non-spline calcMode (different selector?)
+table.keyframes td:last-child {
+	position: relative;
+	transform: translateY(-50%);
+}
+*/
+
+.splineInput {
+	height: 100%;
+	white-space:nowrap;
+}
+
+.splineInput input {
+	border: 1px solid lightgray;
+	font-size: 80%;
+	width: 4em;
+	padding: 0.5ex 0;
+}
+
+table.keyframes select {
+	width: inherit;
+}
+
+table.keyframes select.small {
+	width: 1.5em;
+}

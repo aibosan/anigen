@@ -1,0 +1,619 @@
+/* aniGen (http://anigen.org) is a web-based SVG animation editor under GPLv3 and should be treated as such */
+
+/* body */
+
+*:not(input) {
+    -webkit-user-select: none;
+    -moz-user-select: -moz-none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+
+@keyframes changed {
+	15%		{ background-color: gold; }
+}
+
+input.changed {
+	animation-name: changed;
+	animation-duration: 1s;
+}
+
+
+[title] {
+    cursor: pointer;
+}
+
+html {
+    height: 100%;
+}
+
+body {
+    font-family: 'Open Sans', sans-serif;
+    overflow: hidden;
+	cursor: default;
+	height: 100%;
+	width: 100%;
+    padding: 0;
+    margin: 0px;
+}
+
+
+a {
+	text-decoration: none;
+	color: #008000;
+}
+
+a:hover {
+	text-decoration: underline;
+	color: #00c000;
+}
+
+
+
+
+#layout_layout_panel_top {
+    font-size: 24px;
+    background-color: white;
+}
+
+#layout_layout_panel_top span {
+    margin: 0 1px;
+
+}
+
+#anigenPauseButton {
+	float: left;
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 3em;
+    z-index: 204;
+}
+
+#anigenMenu {
+    position: absolute;
+    top: 3px;
+    right: 1ex;
+	z-index: 201;
+	font-size: 16px;
+}
+
+#anigeninfoSelection {
+    position: absolute;
+    top: 36px;
+    left: 1ex;
+    font-size: .9em;
+}
+
+#anigeninfoContext {
+    position: absolute;
+    top: 76px;
+    margin-left: 2px;
+    background-color: #eee;
+    height: 35px;
+	width: 100%;
+    font-size: .9em;
+    border-top: 1px solid gray;
+}
+
+#anigeninfoSelection span {
+	vertical-align: middle;
+	margin-right: .4ex;
+}
+
+#anigeninfoSelection span:first-child, .nodeName {
+    color: gray;
+    font-size: 0.85em;
+}
+
+#anigeninfoSelection span:nth-child(3) {
+    color: lightgray;
+	font-style: italic;
+	font-size: 0.85em;
+}
+
+#anigeninfoEditor {
+	line-height: 100%;
+	/*height: 100%;*/
+	
+    float: left;
+    position: absolute;
+    top: 4px;
+	left: 5px;
+	z-index: 207;
+}
+
+#anigeninfoEditor * {
+	line-height: 100%;
+	
+	display: inline-block;
+    z-index: 205;
+    float: left;
+}
+
+#anigeninfoEditor span {
+    opacity: 0.9;
+	padding-top: 1px;
+}
+
+div.progress {
+	/*display: inline-block;*/
+	min-height: 1.5em;
+	vertical-align: middle;
+	min-width: 20em;
+	
+	position: relative;
+	
+	background-color: lightgray;
+	border-radius: 0.75ex;
+	
+	border: 1px solid gray;
+	
+	margin-top: 1ex;
+	margin-bottom: 1ex;
+	overflow: hidden;
+	
+}
+
+div.progress > div:first-child {
+	position: absolute;
+	background-color: #008000;
+	height: 100%;
+	/*
+	transition: width 0.25s ease-in-out 0s;
+	*/
+}
+
+div.progress > div:nth-child(2) {
+	position: absolute;
+	height: 100%;
+	width: 100%;
+	text-align: center;
+	color: white;
+	text-shadow: 0px 0px 3px black;
+}
+
+div.progress.indefinite > div:first-child {
+	background: #006000;
+	
+	background: repeating-linear-gradient(
+		-45deg,
+		#008000,
+		#008000 10px,
+		#005000 10px,
+		#005000 20px
+	);
+	background-size: 150% 100%;
+	
+	animation: stripesMove 1s linear infinite;
+}
+
+@keyframes stripesMove {
+	from { background-position: -28.28px 0; }
+	to { background-position: 0 0; }
+}
+
+
+
+
+
+
+
+#layout_layout_panel_top {
+    border-bottom: 1px solid gray;
+	overflow: hidden;
+}
+
+#layout_layout_panel_top div {
+	overflow: hidden;
+}
+
+#layout_layout_panel_left {
+    border-right: 1px solid gray;
+    background-color: #eee;
+}
+
+#layout_layout_panel_right {
+	border-left: 1px solid gray;
+	background-color: #eee;
+}
+
+#layout_layout_panel_bottom {
+    border-top: 1px solid gray;
+    background-color: #eee;
+}
+
+img, .floatLeft {
+    float: left;
+}
+
+.floatRight {
+    float: right;
+}
+
+.anigenText span {
+    font-weight: bold;
+    color: #008000;
+    position: relative;
+    font-size: 1.25em;
+    top: 0.25ex;
+}
+
+img.logo {
+    max-height: 128px;
+    max-width: 80%;
+    text-align: center;
+    float: none;
+    margin: 0 auto;
+    display: block;
+    margin: auto;
+}
+
+
+#renderArea {
+	position: absolute;
+	z-index: -3;
+}
+
+#svgArea {
+	position: absolute;
+	z-index: -2;
+}
+
+#rasterArea {
+	position: absolute;
+	z-index: -4;
+	top: 0;
+	left: 0;
+	margin: 0;
+	padding: 0;
+}
+
+#anigenBackground {
+	background-color: red;
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+}
+
+p.inline {
+	display: inline;
+	margin: .5ex;
+	vertical-align: middle;
+}
+
+h1 span {
+    margin-left: 0.25ex;
+}
+
+h1 img {
+    float: none;
+    vertical-align: baseline;
+    margin: 0px;
+    padding: 0;
+}
+
+input[type=file] {
+    width: .1px;
+    height: .1px;
+    opacity: 0;
+    overflow: hidden;
+    position: absolute;
+    z-index: -1;
+}
+
+label[for="files"] {
+    border-radius: 5px;
+    border: 1px solid black;
+    border-top: 1px solid gray;
+    border-left: 1px solid gray;
+    padding: 1ex 1em;
+    cursor: pointer;
+}
+
+label[for="files"]:hover, label[for="files"].dragover {
+    background-color: gray;
+	color: white;
+}
+
+
+.hide {
+    display: none;
+}
+
+
+.w2ui-panel {
+    overflow: hidden;
+
+}
+
+.hidden {
+    display: none;
+}
+
+
+.guiWindow {
+	border-bottom: 1px solid gray;
+	margin-bottom: 1ex;
+	padding-bottom: .5ex;
+}
+
+.guiWindow h1 {
+	border-top: 1px solid gray;
+    border-bottom: 1px solid gray;
+	
+    font-size: 1em;
+    margin-top: 0px;
+    margin-bottom: .5ex;
+    padding: .5ex;
+    font-weight: normal;
+	
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+.guiWindow h1 span {
+	display: block;
+}
+
+
+.windowList {
+    padding: 0 .5ex;
+	display: block;
+	overflow-x: auto;
+}
+
+.windowList table {
+	width: 100%;
+    border-collapse: collapse;
+	
+	border: 1px solid gray;
+	text-align: center;
+	background-color: white;
+}
+
+.windowList table tr {
+	width: 100%;
+	vertical-align: center;
+	border: 0px lightgray solid;
+}
+
+.windowList table tr:hover {
+    background-color: lightgray;
+    color: black;
+}
+
+.windowList table tr.selected {
+    background-color: gray;
+}
+
+.windowList table tr.selected:hover {
+	background-color: gray;
+}
+
+.windowList table tr th {
+	border-bottom: 1px solid gray;
+	padding: 3px;
+	white-space: nowrap;
+}
+
+table.inputs {
+	width: 100%;
+    border-collapse: collapse;
+	text-align: center;
+	white-space: nowrap;
+}
+
+table.inputs input {
+	border: 1px solid darkgray;
+	width: 100%;
+	background: white;
+}
+
+table.inputs input[type=checkbox] {
+	width: inherit;
+}
+
+
+/*
+.windowList table tr td:first-child, .windowList table tr td:nth-child(2) {
+    max-width: 15%;
+}
+*/
+
+tr.hr {
+	background-color: gray;
+	height: 1px;
+}
+
+tr.hr:hover {
+	background-color: gray;
+}
+
+tr.hr td {
+	padding: 0px;
+	
+}
+
+
+.w2ui-overlay input {
+    display: block;
+    float: left;
+    padding: .5ex 1ex;
+    margin: 2px;
+    height: auto;
+    width: auto;
+}
+
+.w2ui-overlay input[type=text] {
+    max-width: 5em;
+    text-align: center;
+}
+
+td input {
+	text-align: center;
+	width: 5em;
+	border: 1px solid transparent;
+	background-color: transparent;
+	font-size: inherit;
+}
+
+/*
+td input {
+	cursor: pointer;
+}
+*/
+
+td input[disabled=true] {
+	color: #111;
+}
+
+td input:hover {
+	background-color: white;
+}
+
+
+td select {
+	width: 6em;
+}
+
+label.checkbox {
+	cursor: pointer;
+}
+
+label.selected, li.selected {
+	font-weight: bold;
+}
+
+#anigenCanvas {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	
+	background-color: white;
+}
+
+.w2ui-panel {
+	z-index: 203;
+}
+
+
+
+.timeline {
+	width: 100%;
+	height: 100%;
+}
+
+.timeline > div {
+	display: block;
+	position: relative;
+	width: 100%;
+	border-bottom: 1px solid #666;
+	vertical-align: middle;
+	
+}
+
+.timeline div.redline {
+	position: absolute;
+	height: 100%;
+	width: 1px;
+	background-color: red;
+	border: none;
+	top: 0px;
+}
+
+.timeline div.blueline {
+	position: absolute;
+	height: 100%;
+	width: 1px;
+	background-color: blue;
+	border: none;
+	top: 0px;
+}
+
+
+.timelineObject span {
+	cursor: pointer;
+}
+
+.timelineObject {
+	display: block;
+	position: absolute;
+	height: 80%;
+	
+	overflow: hidden;
+	border: 1px solid gray;
+	
+	text-align: center;
+	color: #111;
+	
+	box-shadow: 0px 0px 1px #999;
+}
+
+.timelineObject .sliderLeft, .timelineObject .sliderRight {
+	position: absolute;
+	top: 0;
+	background-color: white;
+	opacity: 0.2;
+}
+
+.timelineObject .sliderLeft:hover, .timelineObject .sliderRight:hover {
+	opacity: 0.5;
+	cursor: ew-resize;
+}
+
+.timelineObject .sliderLeft {
+	left: 0;
+}
+
+.timelineObject .sliderRight {
+	right: 0;
+}
+
+.timelineObject div {
+	height: 100%;
+}
+
+.timelineAnimate {
+	background-color: cornflowerblue;
+}
+
+.timelineMotion {
+	background-color: goldenrod;
+}
+
+.timelineTranslate {
+	background-color: indianred;
+}
+
+.timelineRotate {
+	background-color: mediumpurple;
+}
+
+.timelineScale {
+	background-color: slategray;
+}
+
+.timelineSkewX {
+	background-color: seagreen;
+}
+
+.timelineSkewY {
+	background-color: firebrick;
+}
+
+.timelineAnimationGroup {
+	background-color: olive;
+}
+
+
+.menu {
+	overflow: hidden !important;
+}
+

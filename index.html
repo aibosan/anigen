@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+
+<!-- 	aniGen (http://anigen.org) is a web-based SVG animation editor under GPLv3 license and should be treated as such
+		aniGen was created by Ondrej "Aibo" Benda, of http://misteraibo.deviantart.com -->
+
+<html
+        xmlns="http://www.w3.org/1999/xhtml"
+        xmlns:svg="http://www.w3.org/2000/svg"
+        xmlns:xlink="http://www.w3.org/1999/xlink"
+        xmlns:anigen="http://www.anigen.org/namespace"
+>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="height=device-height, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <title id="page_title">aniGen</title>
+	
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+
+    <link rel="alternate icon" type="image/png" href="_png/favicon.png">
+
+    <link rel="stylesheet" type="text/css" href="_libs/w2ui/w2ui-1.4.3.css" />
+	
+    <link rel="stylesheet" type="text/css" href="_css/icons.css">
+    <link rel="stylesheet" type="text/css" href="_css/style.css">
+	<link rel="stylesheet" type="text/css" href="_css/tree.css">
+	<link rel="stylesheet" type="text/css" href="_css/button.css">
+	<link rel="stylesheet" type="text/css" href="_css/overlay.css">
+	<link rel="stylesheet" type="text/css" href="_css/popup.css">
+	<link rel="stylesheet" type="text/css" href="_css/window.css">
+	
+	<!-- jquery up to date -->
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+	
+	<!-- jquery local
+	<script type="text/javascript" src="_libs/jquery/jquery-1.8.3.min.js"></script> 
+	-->
+	
+    <script type="text/javascript" src="_libs/w2ui/w2ui-1.4.3.js"></script>
+	
+	<script type="text/javascript" src="_libs/jszip/jszip.js"></script> 
+	<script type="text/javascript" src="_libs/filesaver/FileSaver.js"></script>
+
+</head>
+<body>
+	<!-- exporting elements -->
+	<canvas id="renderArea"></canvas>
+	<div id="svgArea"></div>
+
+	<!-- jpeg import helper -->
+	<img id="rasterArea" alt="This is a raster helping element - it is never shown and doesn't hold data for longer periods."></img>
+	
+<div id="anigenGUI" style="height: 100%"></div>
+
+<div id="anigenCanvas" style="height: 100%"></div>
+</body>
+
+<script type="text/javascript" src="formula.js"></script>
+<script type="text/javascript" src="build.js"></script>
+
+<script type="text/javascript" src="prototype/HTMLSelectElement.js"></script>
+<script type="text/javascript" src="prototype/HTMLInputElement.js"></script>
+
+<script type="text/javascript" src="tool/tool.js"></script>
+<script type="text/javascript" src="tool/toolAnchor.js"></script>
+<script type="text/javascript" src="tool/toolGroup.js"></script>
+<script type="text/javascript" src="tool/toolElement.js"></script>
+<script type="text/javascript" src="tool/toolPicker.js"></script>
+<script type="text/javascript" src="tool/toolZoom.js"></script>
+
+<script type="text/javascript" src="value/angle.js"></script>
+<script type="text/javascript" src="value/color.js"></script>
+<script type="text/javascript" src="value/coordinates.js"></script>
+<script type="text/javascript" src="value/spline.js"></script>
+<script type="text/javascript" src="value/time.js"></script>
+
+<script type="text/javascript" src="pathSeg/pathSeg.js"></script>
+<script type="text/javascript" src="pathSeg/pathSegArc.js"></script>
+<script type="text/javascript" src="pathSeg/pathSegClosepath.js"></script>
+<script type="text/javascript" src="pathSeg/pathSegCurvetoCubic.js"></script>
+<script type="text/javascript" src="pathSeg/pathSegCurvetoCubicSmooth.js"></script>
+<script type="text/javascript" src="pathSeg/pathSegCurvetoQuadratic.js"></script>
+<script type="text/javascript" src="pathSeg/pathSegCurvetoQuadraticSmooth.js"></script>
+<script type="text/javascript" src="pathSeg/pathSegLineto.js"></script>
+<script type="text/javascript" src="pathSeg/pathSegLinetoHorizontal.js"></script>
+<script type="text/javascript" src="pathSeg/pathSegLinetoVertical.js"></script>
+<script type="text/javascript" src="pathSeg/pathSegMoveto.js"></script>
+<script type="text/javascript" src="pathSeg/pathSegList.js"></script>
+
+<script type="text/javascript" src="prototype/general.js"></script>
+<script type="text/javascript" src="prototype/Element.js"></script>
+<script type="text/javascript" src="prototype/SVGMatrix.js"></script>
+<script type="text/javascript" src="prototype/SVGElement.js"></script>
+<script type="text/javascript" src="prototype/SVGSVGElement.js"></script>
+<script type="text/javascript" src="prototype/SVGPathElement.js"></script>
+<script type="text/javascript" src="prototype/SVGAnimationElement.js"></script>
+<script type="text/javascript" src="prototype/SVGAnimateElement.js"></script>
+<script type="text/javascript" src="prototype/SVGAnimateTransformElement.js"></script>
+<script type="text/javascript" src="prototype/SVGAnimateMotionElement.js"></script>
+<script type="text/javascript" src="prototype/SVGCircleElement.js"></script>
+<script type="text/javascript" src="prototype/SVGEllipseElement.js"></script>
+<script type="text/javascript" src="prototype/SVGLineElement.js"></script>
+<script type="text/javascript" src="prototype/SVGRectElement.js"></script>
+<script type="text/javascript" src="prototype/SVGPolygonElement.js"></script>
+<script type="text/javascript" src="prototype/SVGPolylineElement.js"></script>
+<script type="text/javascript" src="prototype/SVGGElement.js"></script>
+
+<script type="text/javascript" src="selection.js"></script>
+
+<script type="text/javascript" src="constraints/constraintDistance.js"></script>
+<script type="text/javascript" src="constraints/constraintLinear.js"></script>
+<script type="text/javascript" src="constraints/constraintPosition.js"></script>
+
+
+<script type="text/javascript" src="shepherd/animationState.js"></script>
+<script type="text/javascript" src="shepherd/animationGroup.js"></script>
+
+<script type="text/javascript" src="history/historyAttribute.js"></script>
+<script type="text/javascript" src="history/historyCreation.js"></script>
+<script type="text/javascript" src="history/historyGeneric.js"></script>
+<script type="text/javascript" src="history/historyParentage.js"></script>
+
+<script type="text/javascript" src="history.js"></script>
+
+<script type="text/javascript" src="svg/anchor.js"></script>
+<script type="text/javascript" src="svg/anchorAngle.js"></script>
+<script type="text/javascript" src="svg/arrow.js"></script>
+<script type="text/javascript" src="svg/canvasFrame.js"></script>
+<script type="text/javascript" src="svg/circleDouble.js"></script>
+<script type="text/javascript" src="svg/connector.js"></script>
+<script type="text/javascript" src="svg/imageSVG.js"></script>
+<script type="text/javascript" src="svg/lineLong.js"></script>
+<script type="text/javascript" src="svg/pathDouble.js"></script>
+<script type="text/javascript" src="svg/highlight.js"></script>
+<script type="text/javascript" src="svg/selectionBox.js"></script>
+<script type="text/javascript" src="svg/uiSVG.js"></script>
+
+<script type="text/javascript" src="cookies.js"></script>
+<script type="text/javascript" src="settings.js"></script>
+
+<script type="text/javascript" src="_libs/svgrender/svg-render.js"></script>
+
+<script type="text/javascript" src="root.js"></script>
+<script type="text/javascript" src="anigenActual.js"></script>
+
+
+<script type="text/javascript" src="gui/icon.js"></script>
+<script type="text/javascript" src="gui/popup.js"></script>
+<script type="text/javascript" src="gui/progressBar.js"></script>
+<script type="text/javascript" src="gui/overlay.js"></script>
+<script type="text/javascript" src="gui/clock.js"></script>
+<script type="text/javascript" src="gui/infoEditor.js"></script>
+<script type="text/javascript" src="gui/infoSelection.js"></script>
+<script type="text/javascript" src="gui/infoContext.js"></script>
+<script type="text/javascript" src="gui/button.js"></script>
+<script type="text/javascript" src="gui/buttonToggle.js"></script>
+<script type="text/javascript" src="gui/timelineObject.js"></script>
+<script type="text/javascript" src="gui/timeline.js"></script>
+<script type="text/javascript" src="gui/treeNode.js"></script>
+<script type="text/javascript" src="gui/tree.js"></script>
+
+<script type="text/javascript" src="gui/windowGeneric.js"></script>
+<script type="text/javascript" src="gui/windowAnimation.js"></script>
+<script type="text/javascript" src="gui/windowLayers.js"></script>
+
+<script type="text/javascript" src="gui/menu.js"></script>
+
+<script type="text/javascript" src="_ignite.js"></script>
+<script type="text/javascript" src="gui.js"></script>
+
+</html>

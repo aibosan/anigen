@@ -1,0 +1,100 @@
+.button {
+    border: 1px solid transparent;
+}
+
+.button:hover {
+    border: 1px solid #9da4af;
+}
+
+img {
+    border: 1px solid transparent;
+    padding: 2px;
+    margin: 1px;
+}
+
+img.button:hover {
+    border: 1px solid black;
+}
+
+div.button {
+	display: inline-block;
+}
+
+
+button {
+    cursor: pointer;
+    border-radius: 5px;
+    font-weight: bold;
+    padding: 0.4ex 1ex;
+    background-color: #ccc;
+    border: 1px outset gray;
+    min-width: 5em;
+    margin: 0 .25ex;
+}
+
+button:disabled {
+    opacity: 0.5;
+}
+
+button:hover {
+    border: 1px outset gray;
+    background-color: #eee;
+}
+
+button:active {
+    border: 1px inset gray;
+    background-color: #aaa;
+}
+
+button.black {
+    cursor: pointer;
+    background-color: #000;
+    color: white;
+}
+
+button.black:hover {
+    border: 1px outset gray;
+    background-color: #555;
+}
+
+button.black:active {
+    border: 1px inset gray;
+    background-color: #aaa;
+}
+
+button.black:disabled:hover {
+    background-color: #000;
+    color: white;
+}
+
+button.black:disabled:active {
+    background-color: #000;
+    color: white;
+}
+
+
+
+
+button.menu {
+	min-width: inherit;
+	font-size: inherit;
+	vertical-align: text-top;
+	font-weight: normal;
+	
+	border-radius: 1px;
+	border: 1px solid transparent;
+	background-color: transparent;
+	outline: none;
+}
+
+button.menu:hover {
+	background-color: #eee;
+	border-color: gray;
+}
+
+button.selected, button.selected:hover {
+	background-color: transparent;
+	border-color: lightgray;
+}
+
+
