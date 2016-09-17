@@ -2,13 +2,13 @@
  *  @author		Ondrej Benda
  *  @date		2011-2016
  *  @copyright	GNU GPLv3
- *	@version	0.7.3
+ *	@version	0.7.4
  *	@brief		Main event handling class, also links to the instance of svg class
  */
 function anigenActual() {
     this.iconType = 32;
     this.iconHeight = 24;
-    this.version = "0.7.3 Almost Editor";
+    this.version = "0.7.4 Almost Polished";
     this.tool = 1;
 	
 	this.tools = [

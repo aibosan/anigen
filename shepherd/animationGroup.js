@@ -69,10 +69,10 @@ function animationGroup(target, numeric, flags, attributes) {
 		this.element.setAttribute('anigen:begin', this.beginList.join(';'));
 		this.element.setAttribute('anigen:dur', this.dur);
 		this.element.setAttribute('anigen:repeatcount', numeric.repeatCount);
-		this.element.setAttribute('anigen:additive', this.additive);
-		this.element.setAttribute('anigen:accumulate', this.accumulate);
-		this.element.setAttribute('anigen:freeze', this.freeze);
-		
+		this.element.setAttribute('anigen:calcmode', this.calcMode);
+		this.element.setAttribute('anigen:additive', this.additive ? "sum" : "replace");
+		this.element.setAttribute('anigen:accumulate', this.accumulate ? "sum" : "none");
+		this.element.setAttribute('anigen:fill', this.freeze ? "freeze" : "remove");
 		this.element.generateId(true);
 		
 		if(attributes) {

@@ -989,6 +989,7 @@ root.prototype.transferOut = function(stripIds, scale) {
 		children[i].parentNode.removeChild(children[i]);
 	}
 	
+	clone.pauseAnimations();
 	clone.setCurrentTime(0);
 	clone.endAnimations(true);
 
@@ -1019,11 +1020,17 @@ root.prototype.setPageSize = function(newWidth, newHeight) {
 root.prototype.save = function(dontOpen) {
 	var type = "application\/octet-stream'";
 	var container = document.createElement("div");
-
+	
+	var oldTime = this.svgElement.getCurrentTime();
+	this.svgElement.pauseAnimations();
+	this.svgElement.setCurrentTime(0);
+	
 	var response = this.transferOut();
-
+	
+	this.svgElement.setCurrentTime(oldTime);
+	
 	container.appendChild(response);
-
+	
 	var anigenHeader = "<!-- Animated using aniGen version " + anigenActual.version + " - http://anigen.org -->";
 	var string = "<?xml version='1.0' encoding='UTF-8' standalone='no'?>\n<!DOCTYPE svg PUBLIC '-//W3C//DTD SVG 1.1//EN' 'http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd'>\n"+anigenHeader+"\n"+container.innerHTML;
 	

@@ -60,7 +60,7 @@ windowAnimation.prototype.seed = function() {
 		{ 'value': 'spline', 'title': 'Allows linear or non-linear change between key frames' },
 		{ 'value': 'paced', 'title': 'Evenly paces between given values. Movement through path only' },
 		{ 'value': 'discrete', 'title': 'Animation will jump from one value to the next without interpolation' }
-	], { 'onchange': 'if(!windowAnimation.animation){return;};windowAnimation.animation.setCalcMode(this.value, true);' });
+	], { 'onchange': 'if(!windowAnimation.animation){return;};windowAnimation.animation.setCalcMode(this.value, true);windowAnimation.refreshKeyframes();' });
 	
 	array = [
 		[ 'Interpolation mode', iCalcMode ],
