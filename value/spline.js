@@ -11,32 +11,6 @@ function spline() {
     this.x2 = 1;
     this.y2 = 1;
 	
-	// sets this spline to one of the given types (default values like linear, ease-in ease-out etc.)
-	this.setType = function(type) {
-		switch(type) {
-			case 0:	this.x1 = 0; this.y1 = 0; this.x2 = 1; this.y2 = 1; this.type = 0; break;
-			case 1:	this.x1 = .25; this.y1 = 0; this.x2 = .75; this.y2 = 1; this.type = 1; break;
-			case 2:	this.x1 = .25; this.y1 = 0; this.x2 = .75; this.y2 = .75; this.type = 2; break;
-			case 3:	this.x1 = .25; this.y1 = .25; this.x2 = .75; this.y2 = 1; this.type = 3; break;
-			case 4:	this.x1 = .5; this.y1 = 0; this.x2 = .5; this.y2 = 1; this.type = 4; break;
-			case 5:	this.x1 = .5; this.y1 = 0; this.x2 = .5; this.y2 = .5; this.type = 5; break;
-			case 6:	this.x1 = .5; this.y1 = .5; this.x2 = .5; this.y2 = 1; this.type = 6; break;
-			default: this.type = null; return false;
-		}
-		return true;
-	};
-	
-	// sets type of spline if all numerical values correspond to the existing type 
-	this.evaluateType = function() {
-		if(this.x1 == 0 && this.y1 == 0 && this.x2 == 1 && this.y2 == 1) { this.type = 0; }
-		if(this.x1 == .25 && this.y1 == 0 && this.x2 == .75 && this.y2 == 1) { this.type = 1; }
-		if(this.x1 == .25 && this.y1 == 0 && this.x2 == .75 && this.y2 == .75) { this.type = 2; }
-		if(this.x1 == .25 && this.y1 == .25 && this.x2 == .75 && this.y2 == 1) { this.type = 3; }
-		if(this.x1 == .5 && this.y1 == 0 && this.x2 == .5 && this.y2 == 1) { this.type = 4; }
-		if(this.x1 == .5 && this.y1 == 0 && this.x2 == .5 && this.y2 == .5) { this.type = 5; }
-		if(this.x1 == .5 && this.y1 == .5 && this.x2 == .5 && this.y2 == 1) { this.type = 6; }
-	};
-	
 	var input = [];
 	
 	if(arguments.length == 1) {
@@ -63,6 +37,32 @@ function spline() {
 		if(!isNaN(input[3]) && parseFloat(input[3]) <= 1 && parseFloat(input[3]) >= 0) { this.y2 = Math.round(parseFloat(input[3]) * 100) / 100; }
 	}
 	this.evaluateType();
+}
+
+// sets this spline to one of the given types (default values like linear, ease-in ease-out etc.)
+spline.prototype.setType = function(type) {
+	switch(type) {
+		case 0:	this.x1 = 0; this.y1 = 0; this.x2 = 1; this.y2 = 1; this.type = 0; break;
+		case 1:	this.x1 = .25; this.y1 = 0; this.x2 = .75; this.y2 = 1; this.type = 1; break;
+		case 2:	this.x1 = .25; this.y1 = 0; this.x2 = .75; this.y2 = .75; this.type = 2; break;
+		case 3:	this.x1 = .25; this.y1 = .25; this.x2 = .75; this.y2 = 1; this.type = 3; break;
+		case 4:	this.x1 = .5; this.y1 = 0; this.x2 = .5; this.y2 = 1; this.type = 4; break;
+		case 5:	this.x1 = .5; this.y1 = 0; this.x2 = .5; this.y2 = .5; this.type = 5; break;
+		case 6:	this.x1 = .5; this.y1 = .5; this.x2 = .5; this.y2 = 1; this.type = 6; break;
+		default: this.type = null; return false;
+	}
+	return true;
+}
+
+// sets type of spline if all numerical values correspond to the existing type 
+spline.prototype.evaluateType = function() {
+	if(this.x1 == 0 && this.y1 == 0 && this.x2 == 1 && this.y2 == 1) { this.type = 0; }
+	if(this.x1 == .25 && this.y1 == 0 && this.x2 == .75 && this.y2 == 1) { this.type = 1; }
+	if(this.x1 == .25 && this.y1 == 0 && this.x2 == .75 && this.y2 == .75) { this.type = 2; }
+	if(this.x1 == .25 && this.y1 == .25 && this.x2 == .75 && this.y2 == 1) { this.type = 3; }
+	if(this.x1 == .5 && this.y1 == 0 && this.x2 == .5 && this.y2 == 1) { this.type = 4; }
+	if(this.x1 == .5 && this.y1 == 0 && this.x2 == .5 && this.y2 == .5) { this.type = 5; }
+	if(this.x1 == .5 && this.y1 == .5 && this.x2 == .5 && this.y2 == 1) { this.type = 6; }
 }
 
 // returns string with readable value (without leading zeros)
@@ -108,6 +108,9 @@ spline.prototype.getValue = function(x) {
 	var lY = [ 0, 1 ];
 	
 	var intersection = computeIntersections(pX,pY,lX,lY);
+	if(intersection[0].y >= 0 && intersection[0].y <= 1) { return intersection[0].y; }
+	if(intersection[1].y >= 0 && intersection[1].y <= 1) { return intersection[1].y; }
+	if(intersection[2].y >= 0 && intersection[2].y <= 1) { return intersection[2].y; }
 	return intersection[intersection.length-1].y;
 }
 
@@ -115,3 +118,14 @@ spline.prototype.getValue = function(x) {
 spline.prototype.clone = function() { 
 	return new spline(this.x1 + " " + this.y1 + " " + this.x2 + " " + this.y2);
 }
+
+spline.prototype.inbetween = function(other, ratio) {
+	if(!(other instanceof spline)) { return; }
+	if(ratio = null || ratio < 0 || ratio > 1) { ratio = 0.5; }
+	var x1 = this.x1+(other.x1-this.x1)*ratio;
+	var y1 = this.y1+(other.y1-this.y1)*ratio;
+	var x2 = this.x2+(other.x2-this.x2)*ratio;
+	var y2 = this.y2+(other.y2-this.y2)*ratio;
+	return new spline(x1, y1, x2, y2);
+}
+

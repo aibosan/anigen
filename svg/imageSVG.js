@@ -21,33 +21,25 @@ function imageSVG(source, dimensions) {
 	this.container.setAttribute("preserveAspectRatio", "xMidYMid");
 	
 	this.copy = source.cloneNode(true);
-	this.copy.stripId(true);
 	this.container.appendChild(this.copy);
+	this.copy.setAttribute('transform', source.getCTM());
+	this.copy.stripId(true);
+	this.copy.consumeTransform();
 	
-	var area = source.getBBox();
-	var CTM = source.getCTM();
+	document.body.appendChild(this.container);
+	var area = this.copy.getBBox();
+	document.body.removeChild(this.container);
 	
-	this.userspaceToInitial = function(inX, inY, CTM) {
-        var inMatrix = svg.svgElement.createSVGMatrix();
-        inMatrix.a = 0; inMatrix.d = 0; inMatrix.e = inX; inMatrix.f = inY;
-        var outMatrix = CTM.multiply(inMatrix);
-        return { 
-			x: (outMatrix.e)/svg.zoom+svg.viewBox.x,
-			y: (outMatrix.f)/svg.zoom+svg.viewBox.y
-		};
-    };
-	
-	var tl = this.userspaceToInitial(area.x, area.y, CTM);
-	var tr = this.userspaceToInitial(area.x+area.width, area.y, CTM);
-	var br = this.userspaceToInitial(area.x+area.width, area.y+area.height, CTM);
-	var bl = this.userspaceToInitial(area.x, area.y+area.height, CTM);
-	
-	var blX = Math.min(tl.x, tr.x, br.x, bl.x);
-	var trX = Math.max(tl.x, tr.x, br.x, bl.x);
-	var blY = Math.min(tl.y, tr.y, br.y, bl.y);
-	var trY = Math.max(tl.y, tr.y, br.y, bl.y);
-	
-	this.container.setAttribute("viewBox", blX + " " + blY + " " + (trX-blX) + " " + (trY-blY));
-	
-	
+	this.container.setAttribute("viewBox", area.x + " " + area.y + " " + area.width + " " + area.height);	
 }
+imageSVG.prototype.userspaceToInitial = function(inX, inY, CTM) {
+	var inMatrix = svg.svgElement.createSVGMatrix();
+	inMatrix.a = 0; inMatrix.d = 0; inMatrix.e = inX; inMatrix.f = inY;
+	var outMatrix = CTM.multiply(inMatrix);
+	return { 
+		x: (outMatrix.e)/svg.zoom+svg.viewBox.x,
+		y: (outMatrix.f)/svg.zoom+svg.viewBox.y
+	};
+}
+	
+	

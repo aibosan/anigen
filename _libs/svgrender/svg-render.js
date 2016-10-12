@@ -255,7 +255,6 @@ SVGRender.prototype.renderNextFrame = function () {
 	var clone = this.svgElement.cloneNode(true);
 	this.svgElement.parentNode.appendChild(clone);
 	clone.setCurrentTime(this.SVGtime / 1000);
-	
 	clone.consumeAnimations(true);
 
 	var svgString = (new XMLSerializer()).serializeToString(clone);

@@ -20,15 +20,18 @@ function popup() {
 	}, false);
 	
 	this.hidden = true;
+	this.event = null;
 }
 
 popup.prototype.hide = function() {
 	this.container.style.display = 'none';
 	this.container.style.opacity = '0';
 	this.hidden = true;
+	this.event = null;
 }
 
 popup.prototype.show = function(target) {
+	this.event = window.event;
 	var toX, toY;
 	var toX2;
 	
@@ -108,7 +111,6 @@ popup.prototype.addButtonCancel = function(action) {
 }
 
 popup.prototype.confirmation = function(target, text, actionYes, actionNo) {
-	if(!target) { return; }
 	this.reset();
 	
 	if(text) { this.add(build.p(text)); }
@@ -120,7 +122,6 @@ popup.prototype.confirmation = function(target, text, actionYes, actionNo) {
 }
 
 popup.prototype.input = function(target, type, value, actionYes, actionNo) {
-	if(!target) { return; }
 	this.reset();
 	
 	this.add(build.input(type, value));
@@ -135,6 +136,16 @@ popup.prototype.input = function(target, type, value, actionYes, actionNo) {
 	} else {
 		this.addButtonCancel();
 	}
+	
+	this.show(target);
+}
+
+popup.prototype.alert = function(target, text) {
+	this.reset();
+	
+	this.add(build.p(text));
+	
+	this.addButtonOk();
 	
 	this.show(target);
 }
@@ -159,7 +170,7 @@ popup.prototype.macroClock = function(target) {
 	this.show(target);
 }
 
-popup.prototype.macroAnimationContextMenu = function(event, index, isInvertible) {
+popup.prototype.macroAnimationContextMenu = function(event, index) {
 	this.reset();
 	
 	var tArray = [];
@@ -171,19 +182,27 @@ popup.prototype.macroAnimationContextMenu = function(event, index, isInvertible)
 	tArray.push([ build.icon("plus-white"), "Duplicate" ]);
 	tArray.push([ build.icon("arrow-down-white"), "Move down" ]);
 	tArray.push([ "", "" ]);
+	tArray.push([ build.icon("plus-black"), "Create inbetween" ]);
 	tArray.push([ build.icon("clock-black"), "Balance " + selText ]);
-	if(isInvertible) {
-		tArray.push([ build.icon("arrow-double-horizontal-black"), "Invert " + selText ]);
-	}
+	tArray.push([ build.icon("arrow-double-horizontal-black"), "Invert " + selText ]);
 	tArray.push([ build.icon("trash-black"), "Remove " + selText ]);
 	
 	rAttributes.push({ 'onclick': 'popup.hide();windowAnimation.contextMenuEvaluate("up", '+index+');' });
 	rAttributes.push({ 'onclick': 'popup.hide();windowAnimation.contextMenuEvaluate("duplicate", '+index+');' });
 	rAttributes.push({ 'onclick': 'popup.hide();windowAnimation.contextMenuEvaluate("down", '+index+');' });
 	rAttributes.push({ 'class': 'hr' });
+	
+	if(windowAnimation.selected.length == 2 && windowAnimation.selected[0]+1 == windowAnimation.selected[1] ) {
+		rAttributes.push({ 'onclick': 'popup.hide();windowAnimation.contextMenuEvaluate("inbetween", '+index+');' });
+	} else {
+		rAttributes.push({ 'class': 'disabled' });
+	}
+	
 	rAttributes.push({ 'onclick': 'popup.hide();windowAnimation.contextMenuEvaluate("balance", '+index+');' });
-	if(isInvertible) {
+	if(windowAnimation.animation.isInvertible()) {
 		rAttributes.push({ 'onclick': 'popup.hide();windowAnimation.contextMenuEvaluate("invert", '+index+');' });
+	} else {
+		rAttributes.push({ 'class': 'disabled' });
 	}
 	rAttributes.push({ 'onclick': 'popup.hide();windowAnimation.contextMenuEvaluate("delete", '+index+');' });
 	
@@ -314,14 +333,20 @@ popup.prototype.macroMenuFile = function(target) {
 	var rAttributes = [];
 	
 	tArray.push([ build.icon("folder-black"), "Open..." ]);
+	tArray.push([ build.icon("floppy-white"), "Save" ]);
 	tArray.push([ build.icon("floppy-black"), "Save and download" ]);
 	tArray.push([ build.icon("arrow-end-black"), "Export..." ]);
+	tArray.push([ "", "" ]);
 	tArray.push([ build.icon("edit-black"), "Document properties..." ]);
+	tArray.push([ build.icon("gears-black"), "Settings..." ]);
 	
 	rAttributes.push({ 'onclick': 'popup.hide();overlay.macroOpen();' });
+	rAttributes.push({ 'onclick': 'popup.hide();svg.save(true);' });
 	rAttributes.push({ 'onclick': 'popup.hide();svg.save();' });
 	rAttributes.push({ 'onclick': 'popup.hide();overlay.macroExport();' });
+	rAttributes.push({ 'class': 'hr' });
 	rAttributes.push({ 'onclick': 'popup.hide();overlay.macroDocument();' });
+	rAttributes.push({ 'onclick': 'popup.hide();overlay.macroSettings();' });
 	
 	this.add(build.table(tArray, null, rAttributes)).setAttribute('class', 'popup-menu');
 	
@@ -425,13 +450,17 @@ popup.prototype.macroMenuAnimation = function(target) {
 	var tArray = [];
 	var rAttributes = [];
 	
-	tArray.push([ build.icon("animate-translate-black"), "Translate" ]);
-	tArray.push([ build.icon("animate-motion-black"), "Move through path" ]);
-	tArray.push([ build.icon("animate-rotate-black"), "Rotate" ]);
-	tArray.push([ build.icon("animate-scale-black"), "Scale" ]);
-	tArray.push([ build.icon("animate-skewx-black"), "Skew horizontally" ]);
-	tArray.push([ build.icon("animate-skewy-black"), "Skew vertically" ]);
-	tArray.push([ build.icon("animate-attribute-black"), "Animate attribute..." ]);
+	if(svg.selected == svg.svgElement) {
+		tArray.push([ build.icon("camera-black"), "Camera" ]);
+	} else {
+		tArray.push([ build.icon("animate-translate-black"), "Translate" ]);
+		tArray.push([ build.icon("animate-motion-black"), "Move through path" ]);
+		tArray.push([ build.icon("animate-rotate-black"), "Rotate" ]);
+		tArray.push([ build.icon("animate-scale-black"), "Scale" ]);
+		tArray.push([ build.icon("animate-skewx-black"), "Skew horizontally" ]);
+		tArray.push([ build.icon("animate-skewy-black"), "Skew vertically" ]);
+		tArray.push([ build.icon("animate-attribute-black"), "Animate attribute..." ]);
+	}
 	
 	tArray.push([ "", "" ]);
 	
@@ -439,28 +468,25 @@ popup.prototype.macroMenuAnimation = function(target) {
 	tArray.push([ build.icon("restart-black"), "Restart all" ]);
 	tArray.push([ build.icon("stopwatch-white"), "Pause / unpause" ]);
 	
-	
-	rAttributes.push({ 'onclick': 'popup.hide();svg.createAnimation(svg.selected, 2, null, { select: true }, null);' });
-	rAttributes.push({ 'onclick': 'popup.hide();svg.createAnimation(svg.selected, 1, null, { select: true }, null);' });
-	rAttributes.push({ 'onclick': 'popup.hide();svg.createAnimation(svg.selected, 3, null, { select: true }, null);' });
-	rAttributes.push({ 'onclick': 'popup.hide();svg.createAnimation(svg.selected, 4, null, { select: true }, null);' });
-	rAttributes.push({ 'onclick': 'popup.hide();svg.createAnimation(svg.selected, 5, null, { select: true }, null);' });
-	rAttributes.push({ 'onclick': 'popup.hide();svg.createAnimation(svg.selected, 6, null, { select: true }, null);' });
-	rAttributes.push({ 'onclick': 'popup.hide();menu.refresh();popup.macroAnimateTypes(document.getElementById("anigenMenu"), svg.selected);' });
+	if(svg.selected == svg.svgElement) {
+		if(svg.camera) {
+			rAttributes.push({ 'class': 'disabled' });
+		} else {
+			rAttributes.push({ 'onclick': 'popup.hide();svg.createAnimationViewbox();' });
+		}
+	} else {
+		rAttributes.push({ 'onclick': 'popup.hide();svg.createAnimation(svg.selected, 2, null, { select: true }, null);' });
+		rAttributes.push({ 'onclick': 'popup.hide();svg.createAnimation(svg.selected, 1, null, { select: true }, null);' });
+		rAttributes.push({ 'onclick': 'popup.hide();svg.createAnimation(svg.selected, 3, null, { select: true }, null);' });
+		rAttributes.push({ 'onclick': 'popup.hide();svg.createAnimation(svg.selected, 4, null, { select: true }, null);' });
+		rAttributes.push({ 'onclick': 'popup.hide();svg.createAnimation(svg.selected, 5, null, { select: true }, null);' });
+		rAttributes.push({ 'onclick': 'popup.hide();svg.createAnimation(svg.selected, 6, null, { select: true }, null);' });
+		rAttributes.push({ 'onclick': 'popup.hide();menu.refresh();popup.macroAnimateTypes(document.getElementById("anigenMenu"), svg.selected);' });
+	}
 	rAttributes.push({ 'class': 'hr' });
 	rAttributes.push({ 'onclick': 'popup.hide();menu.refresh();popup.input(document.getElementById("anigenMenu"), "number", infoEditor.clock.maxTime || 0, "value = parseFloat(value);if(value==null || isNaN(value) || value < 0){return;}infoEditor.clock.setMaxTime(value);", null);' });
 	rAttributes.push({ 'onclick': 'popup.hide();svg.gotoTime(0);' });
 	rAttributes.push({ 'onclick': 'popup.hide();svg.pauseToggle();' });
-	
-	if(svg.selected == svg.svgElement) {
-		rAttributes[0] = { 'class': 'disabled' };
-		rAttributes[1] = { 'class': 'disabled' };
-		rAttributes[2] = { 'class': 'disabled' };
-		rAttributes[3] = { 'class': 'disabled' };
-		rAttributes[4] = { 'class': 'disabled' };
-		rAttributes[5] = { 'class': 'disabled' };
-		rAttributes[6] = { 'class': 'disabled' };
-	}
 	
 	this.add(build.table(tArray, null, rAttributes)).setAttribute('class', 'popup-menu');
 	
@@ -601,7 +627,7 @@ popup.prototype.macroSlider = function(target, value, attributes, actionYes, act
 	
 	if(hasNumericInput) {
 		if(attributes.onchange) { attributes.onchange = 'this.nextElementSibling.value = this.value;' + attributes.onchange; }
-		if(attributes.onmousemove) { attributes.onmousemove = 'this.nextElementSibling.value = this.value;' + attributes.onmousemove; }
+		if(attributes.onmousemove) { attributes.onmousemove = 'if(!event.buttons){return;};this.nextElementSibling.value = this.value;' + attributes.onmousemove; }
 	}
 			
 	this.add(build.input('range', value, attributes));

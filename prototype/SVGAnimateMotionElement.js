@@ -32,6 +32,24 @@ SVGAnimateMotionElement.prototype.setPathData = function(data) {
 SVGAnimateMotionElement.prototype.setPath = function(target, absolute) {
 	if(!(target instanceof SVGPathElement)) { return; }
 	
+	var path = target.cloneNode(false);
+		path.consumeTransform();
+		path.setStartAtZero();
+	if(absolute) {
+		try {
+			var origin = target.getPathData().baseVal.getItem(0);
+		} catch(err) {
+			// no path data
+			return;
+		}
+		var center = this.getCenter();
+		// doesn't take CTM of target path into account?
+		path.moveAllBy(origin.x-center.x, origin.y-center.y );
+	}
+	this.setAttribute('path', path.getAttribute('d'));
+		
+	svg.select();
+	svg.gotoTime();
 }
 
 SVGAnimateMotionElement.prototype.getValues = function() {
@@ -102,3 +120,26 @@ SVGAnimateMotionElement.prototype.generateAnchors = function() {
 	return generated;
 }
 
+SVGAnimateMotionElement.prototype.createInbetween = function(one, two, ratio, makeHistory) {
+	if(two < one) {
+		var temp = one;
+		one = two;
+		two = temp;
+	}
+	if(ratio == null || ratio < 0 || ratio > 1) { ratio = 0.5; }
+	
+	this.duplicateValue(one, makeHistory);
+	this.getValues();
+	this.getSplines();
+	
+	this.times[one+1] += (this.times[two+1]-this.times[one])*ratio;
+	if(this.splines) {
+		this.splines[one] = this.splines[one].inbetween(this.splines[two], ratio);
+	}
+	
+	this.values[one+1] += (this.values[two+1]-this.values[one])*ratio;
+	if(makeHistory) { this.makeHistory(true, true, (this.splines ? true : false)); }
+	if(this.splines) { this.commitSplines(); }
+	this.commitTimes();
+	this.commitValues();
+}

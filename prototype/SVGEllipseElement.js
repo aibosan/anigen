@@ -10,6 +10,15 @@ SVGEllipseElement.prototype.consumeTransform = function(matrixIn) {
 	if(matrixIn) {
 		matrix = matrixIn.multiply(matrix);
 	}
+	
+	if(this.style.strokeWidth) {
+		var oldStroke = parseFloat(this.style.strokeWidth);
+		var zero = matrix.toViewport(0,0);
+		var one = matrix.toViewport(1,1);
+		var ratio = Math.sqrt((one.x-zero.x)*(one.x-zero.x)+(one.y-zero.y)*(one.y-zero.y));
+		this.style.strokeWidth = ratio*oldStroke;
+	}
+	
 	if(matrix.isIdentity()) {
 		this.removeAttribute('transform');
 	} else {
@@ -33,28 +42,7 @@ SVGEllipseElement.prototype.setRY = function(value) {
 	this.setAttribute('ry', value);
 }
 
-SVGEllipseElement.prototype.translateBy = function(byX, byY, makeHistory) {
-	var oldCX = this.cx.baseVal.value;
-	var oldCY = this.cy.baseVal.value;
-	
-	var transform = this.getTransformBase();
-	var adjusted = transform.toUserspace(byX, byY);
-	var adjustedZero = transform.toUserspace(0, 0);
-	
-	byX = adjusted.x - adjustedZero.x;
-	byY = adjusted.y - adjustedZero.y;
-	
-	this.setAttribute('cx', oldCX+byX);
-	this.setAttribute('cy', oldCY+byY);
-	
-	if(makeHistory) {
-		var oldTransform = this.getTransformBase();
-		svg.history.add(new historyAttribute(this.id, 
-			{ 'cx': oldCX, 'cy': oldCY },
-			{ 'cx': oldCX+byX, 'cy': oldCY+byY },
-		true));
-	}
-}
+SVGEllipseElement.prototype.translateBy = SVGCircleElement.prototype.translateBy;
 
 SVGEllipseElement.prototype.setRadius = function(x, y, makeHistory) {
 	var newRX = Math.abs(x-this.cx.baseVal.value);

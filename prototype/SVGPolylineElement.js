@@ -4,7 +4,33 @@
  *  @copyright	GNU GPLv3
  *	@brief		Prototypes for SVG "polyline" (rectangle) element
  */
- 
+
+SVGPolylineElement.prototype.consumeTransform = function(matrixIn) {
+	var matrix = this.getTransformBase();
+	if(matrixIn) {
+		matrix = matrixIn.multiply(matrix);
+	}
+	
+	if(this.style.strokeWidth) {
+		var oldStroke = parseFloat(this.style.strokeWidth);
+		var zero = matrix.toViewport(0,0);
+		var one = matrix.toViewport(1,1);
+		var ratio = Math.sqrt((one.x-zero.x)*(one.x-zero.x)+(one.y-zero.y)*(one.y-zero.y));
+		this.style.strokeWidth = ratio*oldStroke;
+	}
+	
+	this.getValues();
+	
+	for(var i = 0; i < this.values.length; i++) {
+		var adjusted = matrix.toViewport(this.values[i].x, this.values[i].y);
+		this.values[i].x = adjusted.x;
+		this.values[i].y = adjusted.y;
+	}
+	
+	this.commitValues();
+	this.removeAttribute('transform');
+}
+
 SVGPolylineElement.prototype.getValues = function() {
 	this.values = [];
 	var temp = this.getAttribute('points').replace(/,/g, ' ').replace(/^\s+|\s+$/g, '').replace(/\s+/g, ' ');

@@ -13,7 +13,14 @@ toolAnchor.prototype = Object.create(tool.prototype);
 toolAnchor.prototype.mouseClick = function(event) {
 	var keys = { 'ctrlKey': event.ctrlKey == true, 'altKey': event.altKey == true, 'shiftKey': event.shiftKey == true };
 	if(this.target) {
-		this.target.click(keys);
+		if(!event.shiftKey && !event.altKey && !event.ctrlKey) {
+			svg.ui.clearSelect();
+			svg.ui.addSelect(this.target);
+		} else if(event.shiftKey) {
+			svg.ui.toggleSelect(this.target);
+		} else {
+			this.target.click(keys);
+		}
 	}
 }
 
@@ -27,12 +34,30 @@ toolAnchor.prototype.mouseMove = function(event) {
 	
 	var evaluated = svg.evaluateEventPosition(event);
 	var keys = { 'ctrlKey': event.ctrlKey == true, 'altKey': event.altKey == true, 'shiftKey': event.shiftKey == true };
-	this.target.moveTo(evaluated.x, evaluated.y, keys);
+	
+	var previousAbsolute = this.target.getAbsolute();
+	
+	var dAbsolute = { 'x': evaluated.x - previousAbsolute.x, 'y': evaluated.y - previousAbsolute.y };
+	
+	if(!this.target.selected) {
+		if(this.target.selectable) {
+			svg.ui.clearSelect();
+			svg.ui.addSelect(this.target);
+		} else {
+			this.target.moveBy(dAbsolute.x, dAbsolute.y, keys);
+		}
+	}
+	
+	if(this.target.selectable) {
+		for(var i = 0; i < svg.ui.selected.length; i++) {
+			svg.ui.selected[i].moveBy(dAbsolute.x, dAbsolute.y, keys);
+		}
+	}
 	
 	svg.ui.highlight.refresh();
 	svg.ui.selectionBox.refresh();
 	
-	windowAnimation.refreshKeyframes();
+	windowAnimation.refreshKeyframes(true);
 	
 	this.lastEvent = event;
 }
@@ -40,14 +65,14 @@ toolAnchor.prototype.mouseMove = function(event) {
 toolAnchor.prototype.mouseUp = function(event) {
 	var threshold = 1;
 	var thresholdTime = 200;
-		
+	
+	var keys = { 'ctrlKey': event.ctrlKey == true, 'altKey': event.altKey == true, 'shiftKey': event.shiftKey == true };
+	
+	this.target.mouseUp(keys);
+	
 	if(this.downEvent && this.downEvent.target == event.target && Math.abs(this.downEvent.timeStamp-event.timeStamp) < thresholdTime &&
 		Math.abs(this.downEvent.clientX-event.clientX) < threshold && Math.abs(this.downEvent.clientY-event.clientY) < threshold) {
 		this.mouseClick(event);
-	}
-	
-	if(this.target.actions && this.target.actions.mouseup) {
-		eval(this.target.actions.mouseup);
 	}
 	
 	this.target = null;

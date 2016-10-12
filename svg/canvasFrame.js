@@ -12,7 +12,14 @@ function canvasFrame() {
 
 canvasFrame.prototype.refresh = function() {
 	this.container.removeChildren();
-
+	
+	if(!anigenActual.settings.get('canvasFrame') || (svg && svg.camera)) {
+		this.container.setAttribute("display", "none");
+		return;
+	} else {
+		this.container.removeAttribute("display");
+	}
+	
 	if (svg.namedView.getAttribute("bordercolor")) {
 		var viewFrameColor = svg.namedView.getAttribute("bordercolor");
 	} else {

@@ -29,6 +29,7 @@ overlay.prototype.hide = function() {
 	this.container.parentNode.style.opacity = 0;
 	this.container.parentNode.style.height = "0%";
 	this.hidden = true;
+	document.body.focus();
 }
 overlay.prototype.show = function() {
 	this.container.parentNode.style.transition = "opacity .25s ease-in 0s, height 0s linear 0s"; 
@@ -145,6 +146,23 @@ overlay.prototype.macroDocument = function() {
 	this.show();
 }
 
+overlay.prototype.macroSettings = function() {
+	this.reset();
+	this.setHeader("Settings");
+	
+	this.add(build.table([
+		[ "Show element highlights", build.input('checkbox', anigenActual.settings.get('highlight'), { 'title': 'Red curve highlighting currently selected element.' }) ],
+		[ "Show progress curves", build.input('checkbox', anigenActual.settings.get('progressCurve'), { 'title': 'Green lines connecting positions of corresponding animation nodes.' }) ],
+		[ "Show nodes", build.input('checkbox', anigenActual.settings.get('nodes'), { 'title': 'Green lines connecting positions of corresponding animation nodes.' }) ],
+		[ "Show page border", build.input('checkbox', anigenActual.settings.get('canvasFrame')) ]
+	]));
+	
+	this.addButtonOk('anigenActual.settings.evaluateOverlay();', true);
+	this.addButtonCancel(null, true);
+	
+	this.show();
+}
+
 overlay.prototype.macroOpen = function() {
 	this.reset();
 	this.setHeader("Open file");
@@ -154,6 +172,13 @@ overlay.prototype.macroOpen = function() {
 	}));
 	
 	var label = this.add(build.label("Choose an SVG file", "files"));
+	
+	this.add(build.br());
+	
+	if(typeof(Storage) !== "undefined" && localStorage.getItem("quicksaveFilename")) {
+		this.add(build.button(localStorage.getItem("quicksaveFilename"), { 'onclick': 'svg.loadLocal();overlay.hide();' }));
+		this.add(build.button("Remove", { 'onclick': 'svg.removeLocal();overlay.macroOpen();' }));
+	}
 	
 	if(svg.svgElement != null) {
 		this.addButtonCancel(null, true);
@@ -196,6 +221,7 @@ overlay.prototype.macroAnimationStatesManager = function() {
 			tRow.push(build.button("←", { "onclick": "this.parentNode.previousSibling.children[0].value = '"+svg.animationStates[i][j].name+"';" }));
 			tRow.push(preview.container);
 			tRow.push(build.input('checkbox'));
+			tRow.push(build.button('Inbetween...', { "onclick": "overlay.macroStateInbetween("+j+", "+j+", null, '"+i+"');" }));
 			
 			tArray.push(tRow);
 		}
@@ -208,6 +234,110 @@ overlay.prototype.macroAnimationStatesManager = function() {
 	this.addButtonCancel();
 	
 	this.show();
+}
+
+overlay.prototype.macroStateInbetween = function(index1, index2, firstValueIndex, groupName) {
+	this.reset();
+	this.setHeader("Animation states inbetween creation");
+	
+	var states;
+	if(groupName) {
+		if(!svg.animationStates[groupName]) { return; }
+		states = svg.animationStates[groupName];
+	} else {
+		if(!(windowAnimation.animation instanceof animationGroup) || !windowAnimation.animation.getAttribute('anigen:group') || !svg.animationStates[windowAnimation.animation.getAttribute('anigen:group')]) {
+			return;
+		}
+		states = svg.animationStates[windowAnimation.animation.getAttribute('anigen:group')];
+		groupName = windowAnimation.animation.getAttribute('anigen:group');
+	}
+	
+	if(index1 == null) { index1 = 0; }
+	if(index2 == null) { index2 = 0; }
+	if(!states[index1] || !states[index2]) { return; }
+	
+	var tArray = [];
+	
+	var opt = [];
+	for(var i = 0; i < states.length; i++) {
+		opt.push({'value': String(i), 'text': String(states[i].name)});
+	}
+	var stateSelection1 = build.select(opt);
+	stateSelection1.setAttribute('onchange', 'overlay.macroStateInbetweenRefresh("'+groupName+'", true);');
+	
+	var stateSelection2 = stateSelection1.cloneNode(true);
+	
+	stateSelection1.setSelected(parseInt(index1));
+	stateSelection2.setSelected(parseInt(index2));
+	
+	tArray.push([
+		stateSelection1,
+		build.input('text', states[index1].name+'-'+states[index2].name),
+		stateSelection2
+	]);
+	
+	tArray.push([
+		'',
+		'',
+		''
+	]);
+	tArray.push([
+		'',
+		[
+		build.input('range', '0.5', {
+			'min': 0,
+			'max': 1,
+			'step': 0.001,
+			'onchange': 'overlay.macroStateInbetweenRefresh("'+groupName+'");this.nextElementSibling.value=this.value;',
+			'onmousemove': 'if(!event.buttons){return;};overlay.macroStateInbetweenRefresh("'+groupName+'");this.nextElementSibling.value=this.value;'
+		}),
+		build.input('number', '0.5', {
+			'step': 0.01,
+			'onchange': 'overlay.macroStateInbetweenRefresh("'+groupName+'");this.previousElementSibling.value=this.value;'
+		})
+		],
+		''
+	]);
+	
+	this.add(build.table(tArray));
+	
+	this.addButtonOk("svg.evaluateGroupInbetween("+firstValueIndex+", '"+groupName+"');", true);
+	this.addButtonCancel(null, true);
+	
+	this.macroStateInbetweenRefresh(groupName, true);
+	this.show();
+}
+
+overlay.prototype.macroStateInbetweenRefresh = function(groupName, hard) {
+	
+					// table	//tr		//td		//el
+//	this.content.children[0].children[0].children[0].children[0]
+	
+	var states = svg.animationStates[groupName];
+	
+	var state1Index = parseInt(this.content.children[0].children[0].children[0].children[0].value);
+	var state2Index = parseInt(this.content.children[0].children[0].children[2].children[0].value);
+	var ratio = parseFloat(this.content.children[0].children[2].children[1].children[1].value);
+	
+	if(state1Index == null || state2Index == null || ratio == null) {
+		console.log('!');
+		return;
+	}
+	
+	if(hard) {
+		var state1Preview = new imageSVG(states[state1Index].element, { width: 100, height: 50 });
+		var state2Preview = new imageSVG(states[state2Index].element, { width: 100, height: 50 });
+		this.content.children[0].children[1].children[0].removeChildren();
+		this.content.children[0].children[1].children[0].appendChild(state1Preview.container);
+		this.content.children[0].children[1].children[2].removeChildren();
+		this.content.children[0].children[1].children[2].appendChild(state2Preview.container);
+	}
+	
+	var inbetween = states[state1Index].inbetween(states[state2Index], ratio);
+	var inbetweenPreview = new imageSVG(inbetween.element, { width: 100, height: 50 });
+	this.content.children[0].children[1].children[1].removeChildren();
+	this.content.children[0].children[1].children[1].appendChild(inbetweenPreview.container);
+	
 }
 
 overlay.prototype.macroExport = function() {
@@ -301,5 +431,6 @@ overlay.prototype.macroEdit = function(target) {
 	
 	this.show();
 }
+
 
 

@@ -23,6 +23,12 @@ ul.tree li.leaf span.animation { background: url("../_png/ui/20/gear-black.png")
 
 ul.tree li.leaf span.other { background: url("../_png/ui/20/edit-black.png") -2px 0 no-repeat; }
 
+ul.tree li.leaf span.layers { background: url("../_png/ui/20/layers-black.png") -2px 0 no-repeat; }
+
+ul.tree li.leaf span.camera { background: url("../_png/ui/20/camera-black.png") -2px 0 no-repeat; }
+
+ul.tree li.leaf span.folder { background: url("../_png/ui/20/folder-black.png") -2px 0 no-repeat; }
+
 ul.tree li input
 {
     position: absolute;
@@ -59,9 +65,11 @@ ul.tree li label.layers { background: url("../_png/ui/20/layers-white.png") 15px
 
 ul.tree li label.layers-black { background: url("../_png/ui/20/layers-black.png") 15px 1px no-repeat; }
 
-ul.tree li label.layers { background: url("../_png/ui/20/layers-white.png") 15px 1px no-repeat; }
+ul.tree li label.camera { background: url("../_png/ui/20/camera-white.png") 15px 1px no-repeat; }
 
-ul.tree li label.animation { background: url("../_png/ui/20/gears-white.png") 13px 1px no-repeat; }
+ul.tree li label.camera-black { background: url("../_png/ui/20/camera-black.png") 15px 1px no-repeat; }
+
+ul.tree li label.animation { background: url("../_png/ui/20/gear-white.png") 15px 1px no-repeat; }
 
 ul.tree li label.other { background: url("../_png/ui/20/edit-white.png") 13px 1px no-repeat; }
 

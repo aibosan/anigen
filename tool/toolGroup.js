@@ -26,7 +26,9 @@ toolGroup.prototype.mouseClick = function(event) {
 	if(!svg || !(svg instanceof root)) { return; }
 	if(event.button != 0) { return; }
 	if(event.target == svg.svgElement) {
-		svg.select(svg.getCurrentLayer() || svg.svgElement);
+		if(svg.selected instanceof SVGGElement) {
+			svg.select(svg.getCurrentLayer() || svg.svgElement);
+		}
 		return;
 	}
 	

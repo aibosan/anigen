@@ -8,7 +8,6 @@
 SVGAnimationElement.prototype.translateBy = function(byX, byY, makeHistory) {
 	return;
 }
- 
 
 SVGAnimationElement.prototype.consumeTransform = function(matrixIn) {
 	this.removeAttribute('transform');
@@ -50,7 +49,20 @@ SVGAnimationElement.prototype.getCalcMode = function() {
 	return this.calcMode;
 }
 
+SVGAnimationElement.prototype.getFill = function() {
+	this.fill = this.getAttribute('fill') || 'replace';
+	return this.fill;
+}
 
+SVGAnimationElement.prototype.getAdditive = function() {
+	this.additive = this.getAttribute('additive') || 'replace';
+	return this.additive;
+}
+
+SVGAnimationElement.prototype.getAccumulate = function() {
+	this.accumulate = this.getAttribute('accumulate') || 'none';
+	return this.accumulate;
+}
 
 // sets begin of given index to given time object, and remakes (clones and deletes) the element to stop lingering begins
 // throws DOMException if index is out of bounds
@@ -117,7 +129,7 @@ SVGAnimationElement.prototype.addBegin = function(timeValue, makeHistory) {
 	var newTime = new time(timeValue);
 	
 	this.beginList.push(newTime);
-	this.beginList.sort(function(a,b) { return a.value-b.value; });
+	this.beginList.sort(function(a,b) { return a.seconds-b.seconds; });
 	
 	if(makeHistory && svg && svg.history) {
 		svg.history.add(new historyAttribute(this.id, 
@@ -146,7 +158,7 @@ SVGAnimationElement.prototype.setDur = function(value, makeHistory, keepTimes) {
 		this.getTimes();
 		this.getDur();
 		
-		var ratio = this.dur.value/newDur.value;
+		var ratio = this.dur.seconds/newdur.seconds;
 		
 		for(var i = 0; i < this.times.length; i++) {
 			this.times[i] *= ratio;
@@ -343,9 +355,21 @@ SVGAnimationElement.prototype.getSpline = function(index) {
 
 // sets value at given index
 // throws DOMException if index is out of bounds
-SVGAnimationElement.prototype.setValue = function(index, value, makeHistory) {
+SVGAnimationElement.prototype.setValue = function(index, value, makeHistory, isAbsolute) {
 	this.getValues();
 	if(index < 0 || index >= this.values.length) { throw new DOMException(1); }
+	
+	if(!isAbsolute && this.getAttribute('attributeName') == 'd' && this.getAttribute('additive') == 'sum') {
+		// assumes absolute values -> need to subtract original path data
+		
+		var originalPath = document.createElementNS(svgNS, 'path');
+			originalPath.setAttribute('d', this.parentNode.getPathData().baseVal);
+			originalPath.negate();
+		var newPath = document.createElementNS(svgNS, 'path');
+			newPath.setAttribute('d', value);
+			newPath.sum(originalPath);
+			value = newPath.getAttribute('d');
+	}
 	
 	this.values[index] = value;
 	if(makeHistory) { this.makeHistory(false, true, false); }
@@ -397,14 +421,14 @@ SVGAnimationElement.prototype.getCurrentLoopBeginTime = function() {
 	
 	for(var i = 0; i < this.beginList.length; i++) {
 		if(this.beginList[i].special) { continue; }
-		if(time < this.beginList[i].value) { continue; }
-		if(targetTime == null || targetTime < this.beginList[i].value) { targetTime = this.beginList[i].value; }
+		if(time < this.beginList[i].seconds) { continue; }
+		if(targetTime == null || targetTime < this.beginList[i].seconds) { targetTime = this.beginList[i].seconds; }
 	}
 	// targetTime is now last begin
 	
-	var loopNumber = Math.floor((time-targetTime)/this.dur.value);
+	var loopNumber = Math.floor((time-targetTime)/this.dur.seconds);
 	if(repeatCount != 'indefinite' && repeatCount < loopNumber) { loopNumber = repeatCount; }
-	targetTime = targetTime + (loopNumber*this.dur.value);
+	targetTime = targetTime + (loopNumber*this.dur.seconds);
 	return targetTime;
 }
 
@@ -420,14 +444,14 @@ SVGAnimationElement.prototype.getCurrentLoop = function() {
 	
 	for(var i = 0; i < this.beginList.length; i++) {
 		if(this.beginList[i].special) { continue; }
-		if(time < this.beginList[i].value) { continue; }
-		if(targetTime == null || targetTime < this.beginList[i].value) { targetTime = this.beginList[i].value; }
+		if(time < this.beginList[i].seconds) { continue; }
+		if(targetTime == null || targetTime < this.beginList[i].seconds) { targetTime = this.beginList[i].seconds; }
 	}
 	// targetTime is now last begin
 	
 	if(targetTime == null) { return null; }
 	
-	var loopNumber = Math.floor((time-targetTime)/this.dur.value);
+	var loopNumber = Math.floor((time-targetTime)/this.dur.seconds);
 	return loopNumber;
 }
 
@@ -445,7 +469,7 @@ SVGAnimationElement.prototype.getCurrentProgress = function(time) {
 	var currentBeginTime = this.getCurrentLoopBeginTime();
 	if(currentBeginTime == null) { return null; }
 	
-	var progress = (time-currentBeginTime)/this.dur.value;
+	var progress = (time-currentBeginTime)/this.dur.seconds;
 	if(progress > 1) { return 1; }
 	return progress;
 }
@@ -471,12 +495,12 @@ SVGAnimationElement.prototype.getPreviousTime = function() {
 	
 	if(previousFrame == null) {
 		if(currentLoop == 0 || this.times.length <= 1) { return null; } else {
-			currentBegin -= this.dur.value;
+			currentBegin -= this.dur.seconds;
 			previousFrame = this.times.length-2;
 		}
 	}
 	
-	return currentBegin + this.times[previousFrame]*this.dur.value;
+	return currentBegin + this.times[previousFrame]*this.dur.seconds;
 }
 
 // returns index of next keyTime, or null if no future time exists
@@ -497,7 +521,7 @@ SVGAnimationElement.prototype.getNextTime = function() {
 	if(nextFrame == null) { return null; }
 	
 	var currentBegin = this.getCurrentLoopBeginTime();
-	return currentBegin + this.times[nextFrame]*this.dur.value;
+	return currentBegin + this.times[nextFrame]*this.dur.seconds;
 }
 
 // returns index of closest keyTime
@@ -540,11 +564,10 @@ SVGAnimationElement.prototype.moveValue = function(movedIndex, targetIndex, make
 // duplicates value (and if applicable, its spline) at given index
 // throws DOMException if index is out of bounds
 SVGAnimationElement.prototype.duplicateValue = function(index, makeHistory) {
+	if(isNaN(index) || index < 0 || index >= this.values.length) { throw new DOMException(1); }
 	this.getSplines();
 	this.getValues();
 	this.getTimes();
-	
-	if(isNaN(index) || index < 0 || index >= this.values.length) { throw new DOMException(1); }
 	
 	this.values.splice(index, 0, this.values[index]);
 	
@@ -555,6 +578,30 @@ SVGAnimationElement.prototype.duplicateValue = function(index, makeHistory) {
 		this.splines.splice(index-1, 0, this.splines[index-1].clone());
 	}
 	
+	if(makeHistory) { this.makeHistory(true, true, (this.splines ? true : false)); }
+	if(this.splines) { this.commitSplines(); }
+	this.commitTimes();
+	this.commitValues();
+}
+
+SVGAnimationElement.prototype.createInbetween = function(one, two, ratio, makeHistory) {
+	if(two < one) {
+		var temp = one;
+		one = two;
+		two = temp;
+	}
+	if(ratio == null || ratio < 0 || ratio > 1) { ratio = 0.5; }
+	
+	this.duplicateValue(one, makeHistory);
+	this.getValues();
+	this.getSplines();
+	
+	this.times[one+1] += (this.times[two+1]-this.times[one])*ratio;
+	if(this.splines) {
+		this.splines[one] = this.splines[one].inbetween(this.splines[two], ratio);
+	}
+	
+	this.values[one+1] = this.values[one].inbetween(this.values[two+1], ratio);
 	if(makeHistory) { this.makeHistory(true, true, (this.splines ? true : false)); }
 	if(this.splines) { this.commitSplines(); }
 	this.commitTimes();
@@ -802,6 +849,7 @@ SVGAnimationElement.prototype.getCurrentValue = function(time) {
 		
 		var ratio = (progress-timeBefore)/(timeAfter-timeBefore);
 		
+		
 		var pathBefore = document.createElementNS("http://www.w3.org/2000/svg", "path");
 		var pathAfter = document.createElementNS("http://www.w3.org/2000/svg", "path");
 		
@@ -813,12 +861,11 @@ SVGAnimationElement.prototype.getCurrentValue = function(time) {
 		if(splines && splines[before]) {
 			ratio = splines[before].getValue(ratio);
 		}
-		
 		return pathBefore.inbetween(pathAfter, ratio);
 		
 	} else {
 		try {
-			return this.parentNode[this.getAttribute('attributeName')].animVal.value;
+			return this.parentNode[this.getAttribute('attributeName')].animVal.value || this.parentNode[this.getAttribute('attributeName')].animVal.toString();
 		} catch(e) {
 			return null;
 		}
@@ -834,7 +881,7 @@ SVGAnimationElement.prototype.valuesToUserspace = function(CTM) { }
 
 
 SVGAnimationElement.prototype.getCenter = function(viewport) {
-	if(!this.parentNode) { return null; }
+	if(!this.parentNode || typeof this.parentNode.getCenter !== 'function') { return null; }
 	return this.parentNode.getCenter(viewport);
 }
 
@@ -869,10 +916,35 @@ SVGAnimationElement.prototype.setFill = function(value, makeHistory) {
 	}
 }
 SVGAnimationElement.prototype.setAdditive = function(value, makeHistory) {
+	var oldValues = this.getAttribute('values');
+	
+	if(this.getAttribute('attributeName') == 'd') {
+		this.getValues();
+		
+		var originalPath = document.createElementNS(svgNS, 'path');
+			originalPath.setAttribute('d', this.parentNode.getPathData().baseVal);
+		if(this.getAttribute('additive') == 'replace') {
+			// will be sum -> original data has to be subtraced instead of added
+			originalPath.negate();
+		}
+		
+		for(var i = 0; i < this.values.length; i++) {
+			var path = document.createElementNS(svgNS, 'path');
+			path.setAttribute('d', this.values[i]);
+			path.sum(originalPath);
+			this.values[i] = path.getAttribute('d');
+		}
+		
+		this.commitValues();
+	}
+	
+	var newValues = this.getAttribute('values');
+	
+	
 	if(makeHistory && svg && svg.history) {
 		svg.history.add(new historyAttribute(this.id, 
-			{ 'additive': this.getAttribute('additive') },
-			{ 'additive': value },
+			{ 'additive': this.getAttribute('additive'), 'values': oldValues },
+			{ 'additive': value, 'values': newValues },
 			true));
 	}
 	if(value == null) {
@@ -880,6 +952,9 @@ SVGAnimationElement.prototype.setAdditive = function(value, makeHistory) {
 	} else {
 		this.setAttribute('additive', value);
 	}
+	
+	windowAnimation.refreshKeyframes();
+	
 }
 SVGAnimationElement.prototype.setAccumulate = function(value, makeHistory) {
 	if(makeHistory && svg && svg.history) {

@@ -80,6 +80,10 @@ windowAnimation.prototype.refreshInputs = function() {
 	this.animation.getRepeatCount();
 	this.animation.getDur();
 	
+	this.animation.getFill();
+	this.animation.getAdditive();
+	this.animation.getAccumulate();
+	
 	this.footer.children[0].children[0].children[1].children[0].value = this.animation.dur.value;
 	this.footer.children[0].children[0].children[3].children[0].setAttribute("onclick", "if(!windowAnimation.animation){return;};windowAnimation.animation.setDur('"+this.animation.dur+"', true, this.parentNode.previousElementSibling.children[0].children[0].checked);this.parentNode.previousElementSibling.previousElementSibling.children[0].value = "+this.animation.dur.value+";windowAnimation.refreshBegins();windowAnimation.refreshKeyframes();");
 	
@@ -94,9 +98,6 @@ windowAnimation.prototype.refreshInputs = function() {
 	}
 	this.footer.children[0].children[1].children[3].children[0].setAttribute("onclick", "if(!windowAnimation.animation){return;};windowAnimation.animation.setRepeatCount('"+this.animation.repeatCount+"', true);windowAnimation.refresh();");
 	
-	
-	
-	
 	var cMode = 0;
 	switch(this.animation.getCalcMode()) {
 		case 'spline': cMode = 1; break;
@@ -109,12 +110,12 @@ windowAnimation.prototype.refreshInputs = function() {
 	} else {
 		this.footer.children[1].children[0].children[1].children[0].disableOption(2);
 	}
-	this.footer.children[1].children[1].children[1].children[0].setSelected(this.animation.getAttribute('fill') == 'freeze' ? 1 : 0);
-	this.footer.children[1].children[2].children[1].children[0].setSelected(this.animation.getAttribute('additive') == 'sum' ? 1 : 0);
-	this.footer.children[1].children[3].children[1].children[0].setSelected(this.animation.getAttribute('accumulate') == 'sum' ? 1 : 0);
+	this.footer.children[1].children[1].children[1].children[0].setSelected(this.animation.fill == 'freeze' ? 1 : 0);
+	this.footer.children[1].children[2].children[1].children[0].setSelected(this.animation.additive == 'sum' ? 1 : 0);
+	this.footer.children[1].children[3].children[1].children[0].setSelected(this.animation.accumulate == 'sum' ? 1 : 0);
 }
 
-windowAnimation.prototype.refreshKeyframes = function() {
+windowAnimation.prototype.refreshKeyframes = function(dontEdit) {
 	if(!this.animation) { return; }
 	
 	var scrolledTopParent = this.container.parentNode.scrollTop;
@@ -129,6 +130,7 @@ windowAnimation.prototype.refreshKeyframes = function() {
 	this.animation.getTimes();
 	this.animation.getSplines();
 	this.animation.getDur();
+	this.animation.getCalcMode();
 	
 	var headings = [ "", "Percent", "Time [s]" ];
 	var type;
@@ -157,6 +159,12 @@ windowAnimation.prototype.refreshKeyframes = function() {
 	} else if(this.animation instanceof SVGAnimateMotionElement) {
 		type = 1;
 		headings.push("Distance [%]");
+	} else if(this.animation instanceof animatedViewbox) {
+		type = 7;
+		headings.push("Axis X");
+		headings.push("Axis Y");
+		headings.push("Width");
+		headings.push("Height");
 	} else if(this.animation instanceof animationGroup) {
 		type = 6;
 		headings.push("State");
@@ -179,7 +187,7 @@ windowAnimation.prototype.refreshKeyframes = function() {
 		for(var i = 0; i < attrValues.length; i++) {
 			opt.push({'value': attrValues[i]});
 			if(attrValues[i][0] == "<") {
-				eve.onclick = "if(this.value != '"+attrValues[i]+"') { this.nextElementSibling.removeClass('hidden'); } else { this.nextElementSibling.addClass('hidden'); }"
+				eve.onclick = "if(this.value.startsWith('<')) { this.nextElementSibling.removeClass('hidden'); } else { this.nextElementSibling.addClass('hidden'); }"
 			}
 		}
 		var attrSelect = build.select(opt, eve);
@@ -248,60 +256,70 @@ windowAnimation.prototype.refreshKeyframes = function() {
 				subArray.push(in2);
 				break;
 			case 0:		// animate (generic)
-				var in1;
-				var cloneSelect;
-				
 				var customValue = (attrValues.indexOf(this.animation.values[i]) == -1);
 				
-				if(attrValues.length > 1) {
-					cloneSelect = attrSelect.cloneNode(true);
-					for(var j = 0; j < attrValues.length; j++) {
-						if(!customValue && attrValues[j] == this.animation.values[i]) {
-							cloneSelect.children[j].setAttribute('selected', 'true');
-						}
-					}
-				} else {
-					if(this.animation.attribute == 'd') {
-						in1 = document.createElement('input');
-						in1.setAttribute('type', 'text');
-						in1.setAttribute('value', this.animation.values[i].trim().replace(/\s+/g,' '));
-						customValue = true;
-					} else {
-						in1 = document.createElement('input');
-						in1.setAttribute('value', this.animation.values[i]);
-						
-						switch(attrValues[0]) {
-							case "<string>":
-								in1.setAttribute("type", "text");
-								in1.setAttribute('title', 'String');
-								break;
-							case "<length>":
-							case "<number>":
-							case "<angle>":
-								in1.setAttribute('title', 'Numeric value');
-								in1.setAttribute("type", "number");
-								break;
-							case "<color>":
-								in1.setAttribute("type", "color");
-								in1.setAttribute('title', 'Color');
-								break;
-							case "<fraction>":
-								in1.setAttribute("type", "number");
-								in1.setAttribute("min", "0");
-								in1.setAttribute("max", "100");
-								in1.setAttribute("value", this.animation.values[i] * 100);
-								in1.setAttribute('title', 'Percentage');
-								break;
-						}
-					}
-					if(!customValue) {
-						in1.setAttribute('class', 'hidden');
+				var inputValues = 0;
+				var customIndex = 0;
+				
+				for(var j = 0; j < attrValues.length; j++) {
+					if(attrValues[j].startsWith('<')) {
+						customIndex = j;
+						inputValues++;
 					}
 				}
 				
 				var cont = document.createElement('div');
-				if(cloneSelect) { cont.appendChild(cloneSelect); }
-				if(in1) { cont.appendChild(in1); }
+				var in1 = document.createElement('input');
+				
+				if(attrValues.length > 1) {
+					var cloneSelect = attrSelect.cloneNode(true);
+					for(var j = 0; j < attrValues.length; j++) {
+						if(!customValue && attrValues[j] == this.animation.values[i]) {
+							cloneSelect.children[j].setAttribute('selected', 'true');
+						}
+						if(customValue && attrValues[j].startsWith('<')) {
+							cloneSelect.children[j].setAttribute('selected', 'true');
+						}
+					}
+					cont.appendChild(cloneSelect);
+				}
+				
+				switch(attrValues[customIndex]) {
+					case "<length>":
+					case "<number>":
+					case "<angle>":
+						in1.setAttribute('title', 'Numeric value');
+						in1.setAttribute("type", "number");
+						break;
+					case "<color>":
+						in1.setAttribute("type", "color");
+						in1.setAttribute('title', 'Color');
+						break;
+					case "<fraction>":
+						in1.setAttribute("type", "number");
+						in1.setAttribute("min", "0");
+						in1.setAttribute("max", "100");
+						in1.setAttribute("value", this.animation.values[i] * 100);
+						in1.setAttribute('title', 'Percentage');
+						break;
+					default:
+					case "<string>":
+						in1 = document.createElement('textarea');
+						in1.setAttribute('title', 'String');
+						break;
+				}
+				
+				if(this.animation.attribute == 'd') {
+					in1.value = this.animation.values[i].trim().replace(/\s+/g,' ');
+				} else {
+					in1.value = this.animation.values[i];
+				}
+				
+				if(!customValue) {
+					in1.setAttribute('class', 'hidden');
+				}
+				
+				cont.appendChild(in1);
 				
 				subArray.push(cont);
 				break;
@@ -313,6 +331,12 @@ windowAnimation.prototype.refreshKeyframes = function() {
 				
 				var preview = new imageSVG(state.element, { width: 100, height: 50 });
 				subArray.push(preview.container);
+				break;
+			case 7:		// animated viewbox
+				subArray.push(build.input('number', this.animation.values[i].x));
+				subArray.push(build.input('number', this.animation.values[i].y));
+				subArray.push(build.input('number', this.animation.values[i].width, {'min': '0' }));
+				subArray.push(build.input('number', this.animation.values[i].height, {'min': '0' }));
 				break;
 		}
 		
@@ -359,7 +383,7 @@ windowAnimation.prototype.refreshKeyframes = function() {
 	}
 	
 	this.tab1.appendChild(table);
-	this.refreshSelection();
+	this.refreshSelection(dontEdit);
 	
 	this.container.parentNode.scrollTop = scrolledTopParent;
 	this.container.parentNode.scrollLeft = scrolledLeftParent;
@@ -438,7 +462,7 @@ windowAnimation.prototype.refreshBegins = function() {
 	this.tab2.scrollLeft = scrolledLeft;
 }
 
-windowAnimation.prototype.refreshSelection = function() {
+windowAnimation.prototype.refreshSelection = function(dontEdit) {
 	if(!this.tab1 || !this.tab1.children[0]) { return; }
 	for(var i = 1; i < this.tab1.children[0].children.length; i++) {
 		if(this.selected.indexOf(i-1) != -1) {
@@ -447,10 +471,13 @@ windowAnimation.prototype.refreshSelection = function() {
 			this.tab1.children[0].children[i].removeClass('selected');
 		}
 	}
+	if(!dontEdit) {
+		svg.ui.edit(svg.selected);
+	}
 }
 
 windowAnimation.prototype.refreshAttributes = function() {
-	if(this.animation instanceof animationGroup) {
+	if(this.animation instanceof animationGroup && !(this.animation instanceof animatedViewbox)) {
 		this.unhideTab(2);
 		
 		var scrolledTopParent = this.container.parentNode.scrollTop;
@@ -494,6 +521,8 @@ windowAnimation.prototype.refresh = function(clearSelection) {
 		} else {
 			animation = svg.selected.shepherd;
 		}
+	} else if(svg.selected.getAttribute('anigen:type') == 'animatedViewbox') {
+		animation = svg.selected.shepherd;
 	} else if(svg.selected.isAnimation()) {
 		animation = svg.selected;
 	} else {
@@ -566,18 +595,6 @@ windowAnimation.prototype.select = function(index, event) {
 
 
 
-windowAnimation.prototype.eventContextMenu = function(event) {
-	event.preventDefault ? event.preventDefault() : event.returnValue = false;
-	
-	var targ = event.target;
-	while(!(targ instanceof HTMLTableRowElement)) {
-		targ = targ.parentNode;
-	}
-	if(!targ.rowIndex) { return; }
-	
-	popup.macroAnimationContextMenu(event, targ.rowIndex-1, windowAnimation.animation.isInvertible());
-}
-
 windowAnimation.prototype.contextMenuEvaluate = function(option, index) {
 	var anim = this.animation;
 	var times = anim.getTimes();
@@ -640,6 +657,16 @@ windowAnimation.prototype.contextMenuEvaluate = function(option, index) {
 			}
 			
 			break;
+		case "inbetween":		// create inbetween
+			if(this.selected.length != 2 || this.selected[0]+1 != this.selected[1]) { break; }
+			if(this.animation instanceof animationGroup) {
+				this.animation.getValues();
+				overlay.macroStateInbetween(this.animation.values[this.selected[0]], this.animation.values[this.selected[1]], this.selected[0]);
+				return;
+			}
+			anim.createInbetween(this.selected[0], this.selected[1], 0.5, true);
+			this.selected = [ this.selected[1] ];
+			break;
 		case "balance":		// balance keyFrames
 			if(this.selected.length == 0) {
 				anim.balanceFrames(null, null, true);
@@ -684,10 +711,23 @@ windowAnimation.prototype.contextMenuEvaluate = function(option, index) {
 			break;
 	}
 	windowAnimation.refreshKeyframes();
+	svg.ui.edit(svg.selected);
 }
 
+
+
+windowAnimation.prototype.eventContextMenu = function(event) {
+	event.preventDefault ? event.preventDefault() : event.returnValue = false;
+	
+	var targ = event.target;
+	while(!(targ instanceof HTMLTableRowElement)) {
+		targ = targ.parentNode;
+	}
+	if(!targ.rowIndex) { return; }
+	
+	popup.macroAnimationContextMenu(event, targ.rowIndex-1);
+}
 windowAnimation.prototype.eventChange = function(event) {
-	console.log('change');
 	var val = event.target.value;
 	var anim = windowAnimation.animation;
 	
@@ -790,6 +830,12 @@ windowAnimation.prototype.eventChange = function(event) {
 				}
 			}
 		}
+	} else if(anim instanceof animatedViewbox) {
+		splineRow = 6;
+		if(col >= 2 && col < 6) {
+			var value = parseFloat(val);
+			anim.setValue(row, col-2, value, true);
+		}
 	} else if(anim instanceof animationGroup) {
 		splineRow = 4;
 		if(col == 2) {
@@ -816,10 +862,10 @@ windowAnimation.prototype.eventChange = function(event) {
 				}
 				
 			if(windowAnimation.selected.length == 0 || windowAnimation.selected.indexOf(row) == -1) {
-				anim.setValue(row, val, true);
+				anim.setValue(row, val, true, true);
 			} else {
 				for(var i = 0; i < windowAnimation.selected.length; i++) {
-					anim.setValue(windowAnimation.selected[i], val, true);
+					anim.setValue(windowAnimation.selected[i], val, true, true);
 				}
 			}
 		}
@@ -900,6 +946,8 @@ windowAnimation.prototype.eventClick = function(event) {
 		windowAnimation.select(index, event);
 		return;
 	}
+	
+	if(col > 1 || isNaN(col)) { return; }	// false click
 	
 	event.stopPropagation();
 	
@@ -1014,7 +1062,7 @@ windowAnimation.prototype.eventKeyDown = function(event) {
 			if(this.selected.length == 0) { return false; }
 			this.contextMenuEvaluate('delete', 0);
 			return true;
-		case 65:
+		case 65:		// a
 			if(event.ctrlKey) {
 				if(this.selected.length == this.animation.getTimes().length) {
 					this.selected = [];

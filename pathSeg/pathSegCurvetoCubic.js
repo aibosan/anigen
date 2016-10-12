@@ -86,8 +86,7 @@ pathSegCurvetoCubic.prototype.adjust = function(matrix) {
 	
 pathSegCurvetoCubic.prototype.inbetween = function(other, ratio) {
 	if(!(other instanceof pathSegCurvetoCubic)) { throw new Error('Path segment type mismatch.'); }
-	if(ratio < 0) { ratio = 0; }
-	if(ratio > 1) { ratio = 1; }
+	if(ratio == null) { ratio = 0; }
 	
 	var x1 = this.x1 + ratio*(other.x1 - this.x1);
 	var y1 = this.y1 + ratio*(other.y1 - this.y1);

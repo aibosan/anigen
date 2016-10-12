@@ -45,13 +45,6 @@ infoContext.prototype.seed = function() {
 
 			{ type: 'spacer' },
 			
-			
-			/*
-			// TODO: buttons for showing/hiding nodes, connectors, highlights, boxes etc.
-			// linesAnimationStates
-			{ type: 'break' },
-			*/
-			
 			{ type: 'check',  id: 'buttonTree', img: 'icon-tree-white', checked: false, hint: 'Show XML tree (Ctrl+Shift+X)' },
 			/*
 			{ type: 'check',  id: 'buttonTimeline', img: 'icon-stopwatch-white', checked: false, hint: 'Show animation timeline', disabled: true },
@@ -100,7 +93,7 @@ infoContext.prototype.refresh = function() {
 		if(svg.selected instanceof SVGAnimationElement) {
 			prevTime = svg.selected.getPreviousTime();
 			nextTime = svg.selected.getNextTime();
-		} else if(svg.selected.shepherd && svg.selected.shepherd instanceof animationGroup) {
+		} else if(svg.selected.shepherd && (svg.selected.shepherd instanceof animationGroup || svg.selected.shepherd instanceof animatedViewbox)) {
 			prevTime = svg.selected.shepherd.getPreviousTime();
 			nextTime = svg.selected.shepherd.getNextTime();
 		}

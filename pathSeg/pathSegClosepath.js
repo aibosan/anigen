@@ -25,8 +25,6 @@ pathSegClosepath.prototype.getAdjusted = function() { return new pathSegClosepat
 	
 pathSegClosepath.prototype.inbetween = function(other, ratio) {
 	if(!(other instanceof pathSegClosepath)) { throw new Error('Path segment type mismatch.'); }
-	if(ratio < 0) { ratio = 0; }
-	if(ratio > 1) { ratio = 1; }
 	
 	return new pathSegClosepath();
 }

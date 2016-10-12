@@ -67,7 +67,7 @@ selectionBox.prototype.getCenter = function() {
 }
 
 selectionBox.prototype.setElement = function(element) {
-	if(!element || !(typeof element.getBBox === 'function')) {
+	if(!element || !(typeof element.getBBox === 'function') || element instanceof animatedViewbox) {
 		this.element = null;
 		return;
 	}
@@ -88,6 +88,7 @@ selectionBox.prototype.refresh = function() {
 
 selectionBox.prototype.setArea = function(area, CTM) {
 	if(CTM == null) { CTM = svg.svgElement.createSVGMatrix(); }
+	if(area == null) { return; }
 
 	var tl = this.userspaceToInitial(area.x, area.y, CTM);
 	var tr = this.userspaceToInitial(area.x+area.width, area.y, CTM);

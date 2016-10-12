@@ -87,8 +87,7 @@ pathSegArc.prototype.adjust = function(matrix) {
 	
 pathSegArc.prototype.inbetween = function(other, ratio) {
 	if(!(other instanceof pathSegArc)) { throw new Error('Path segment type mismatch.'); }
-	if(ratio < 0) { ratio = 0; }
-	if(ratio > 1) { ratio = 1; }
+	if(ratio == null) { ratio = 0; }
 	
 	var rx = this.rx + ratio*(other.rx - this.rx);
 	var ry = this.ry + ratio*(other.ry - this.ry);

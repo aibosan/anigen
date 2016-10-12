@@ -11,14 +11,12 @@
 //		- "animVal" is the element's normalized, absolute path data as set by its animation (if any)
 //			if element has no animation of "d" attribute, "animVal" is a clone of "baseVal"
 SVGPathElement.prototype.getPathData = function() {
-	if(!this.pathData) {
-		this.pathData = { 'baseVal': null, 'animVal': null }
-	}
+	this.pathData = { 'baseVal': null, 'animVal': null }
 	
 	// baseVal
 	this.pathData.baseVal = new pathSegList();
 	
-	var path = this.getAttribute('d') || '';
+	var path = this.getAttribute('anigen:original-d') || this.getAttribute('d') || '';
 	path = path.replace(/,/g, ' ').replace(/^\s+|\s+$/g, '').replace(/\s+/g, ' ');
 	path = path.split(' ');
 	
@@ -244,7 +242,14 @@ SVGPathElement.prototype.getPathData = function() {
 	// animVal
 	for(var i = 0; i < this.children.length; i++) {
 		if(this.children[i] instanceof SVGAnimateElement && this.children[i].getAttribute('attributeName') == 'd') {
-			this.pathData.animVal = this.children[i].getCurrentValue();
+			if(this.pathData.animVal == null || this.children[i].getAttribute('additive') != 'sum') {
+				this.pathData.animVal = this.children[i].getCurrentValue();
+				if(this.children[i].getAttribute('additive') == 'sum') {
+					this.pathData.animVal.sum(this.pathData.baseVal);
+				}
+			} else {
+				this.pathData.animVal.sum(this.children[i].getCurrentValue())
+			}
 		}
 	}
 	
@@ -264,11 +269,26 @@ SVGPathElement.prototype.setPathData = function(pathData, makeHistory) {
 	var oldD = this.getAttribute('d');
 	var newD = this.pathData.baseVal.toString();
 	
+	var hasAnimD = false;
+	for(var i = 0; i < this.children.length; i++) {
+		if(this.children[i] instanceof SVGAnimateElement && this.children[i].getAttribute('attributeName') == 'd') {
+			hasAnimD = true;
+			break;
+		}
+	}
+	
 	if(makeHistory && svg && svg.history) {
-		svg.history.add(new historyAttribute(this.id, 
-			{ 'd': oldD },
-			{ 'd': newD },	
-			true));;
+		if(hasAnimD) {
+			svg.history.add(new historyAttribute(this.id, 
+				{ 'd': oldD, 'anigen:original-d': this.getAttribute('anigen:orginal-d') },
+				{ 'd': newD, 'anigen:original-d': newD },	
+				true));
+		} else {
+			svg.history.add(new historyAttribute(this.id, 
+				{ 'd': oldD },
+				{ 'd': newD },	
+				true));
+		}
 	}
 	
 	this.setAttribute('d', newD);
@@ -308,8 +328,6 @@ SVGPathElement.prototype.moveBy = function(index, byX, byY, point, handle1, hand
 // (they have different number or type of segments), either this (ratio <= 0.5) or other (ratio > 0.5) path is given
 SVGPathElement.prototype.inbetween = function(other, ratio) {
 	if(!(other instanceof SVGPathElement)) { return; }
-	if(ratio < 0) { ratio = 0; }
-	if(ratio > 1) { ratio = 1; }
 	
 	var otherData = other.getPathData();
 	var pathData = this.getPathData();
@@ -407,9 +425,11 @@ SVGPathElement.prototype.generateAnchors = function(offset) {
 					}
 					break;
 				case 'handle2':
+					segmentAnchors[j].selectable = false;
 					lastH2 = segmentAnchors[j];
 					break;
 				case 'handle1':
+					segmentAnchors[j].selectable = false;
 					var thisPoint = segmentAnchors[j];
 					if(lastPoint) {		// if last point exists, handle 1 is added to its children and to the actions
 						var slave = new connector(lastPoint, thisPoint);
@@ -443,7 +463,7 @@ SVGPathElement.prototype.generateAnchors = function(offset) {
 					break;
 				}
 				
-			segmentAnchors[j].actions.mouseup = 'svg.gotoTime();svg.select();'
+			//segmentAnchors[j].actions.mouseup = 'svg.gotoTime();svg.select();'
 			anchors.push(segmentAnchors[j]);
 		}
 		
@@ -482,26 +502,22 @@ SVGPathElement.prototype.generateAnchors = function(offset) {
 
 // moves path so that its first pathSegMoveto is at [0,0]; all other points are moved to stay at the same relative positions
 SVGPathElement.prototype.setStartAtZero = function() {
-	var pathData = this.getPathData();
-	if(!pathData.baseVal[0]) { return; }
-	var offset = { 'x': -1*pathData.baseVal[0].x, 'y': -1*pathData.baseVal[0].y };
-	for(var i = 0; i < pathData.baseVal.length; i++) {
-		pathData.baseVal.getItem(i).moveBy(offset.x, offset.y, true, true, true);
-	}
-	this.setAttribute('d', pathData.baseVal);
+	this.getPathData();
+	if(!this.pathData.baseVal.getItem(0)) { return; }
+	this.moveAllBy(-1*this.pathData.baseVal.getItem(0).x, -1*this.pathData.baseVal.getItem(0).y);
 }
 
 // moves all path's segments by given (dX, dY) delta
 SVGPathElement.prototype.moveAllBy = function(dX, dY) {
 	if(dX == null || dY == null) { return; }
 	
-	var pathData = this.getPathData();
+	this.getPathData();
 	
-	for(var i = 0; i < pathData.baseVal.length; i++) {
-		pathData.baseVal.getItem(i).moveBy(dX, dY, true, true, true);
+	for(var i = 0; i < this.pathData.baseVal.length; i++) {
+		this.pathData.baseVal.getItem(i).moveBy(dX, dY, true, true, true);
 	}
 	
-	this.setPathData(pathData.baseVal);
+	this.setAttribute('d', this.pathData.baseVal);
 }
 
 // changes node type at given index to given letter
@@ -625,6 +641,30 @@ SVGPathElement.prototype.cycleNodeType = function(index, makeHistory) {
 }
 
 
+SVGPathElement.prototype.negate = function() {
+	this.getPathData();
+	for(var i = 0; i < this.pathData.baseVal.length; i++) {
+		this.pathData.baseVal.arr[i].negate();
+	}
+	this.setD(this.pathData.baseVal);
+}
+
+SVGPathElement.prototype.sum = function(other) {
+	if(!(other instanceof SVGPathElement)) { return; }
+	
+	this.getPathData();
+	other.getPathData();
+	
+	if(this.pathData.baseVal.arr.length != other.pathData.baseVal.arr.length) { return; }
+	
+	this.pathData.baseVal.sum(other.pathData.baseVal);
+	
+	this.setD(this.pathData.baseVal);
+	return this.pathData.baseVal.toString();
+}
+
+
+
 // returns element's center - the middle of the positions of all of its control points
 // if viewport is true, the value given will be adjusted so that the original viewport value is given
 // (according to the element's complete transformation matrix)
@@ -669,13 +709,22 @@ SVGPathElement.prototype.consumeTransform = function(matrixIn) {
 	if(matrixIn) {
 		matrix = matrixIn.multiply(matrix);
 	}
-	var pathData = this.getPathData();
+	
+	if(this.style.strokeWidth) {
+		var oldStroke = parseFloat(this.style.strokeWidth);
+		var zero = matrix.toViewport(0,0);
+		var one = matrix.toViewport(1,1);
+		var ratio = Math.sqrt((one.x-zero.x)*(one.x-zero.x)+(one.y-zero.y)*(one.y-zero.y));
+		this.style.strokeWidth = ratio*oldStroke;
+	}
+	
+	this.getPathData();
 	
 	for(var i = 0; i < this.pathData.baseVal.length; i++) {
 		this.pathData.baseVal.getItem(i).adjust(matrix);
 	}
 	
-	this.setPathData(pathData);
+	this.setPathData(this.pathData);
 	this.removeAttribute('transform');
 }
 

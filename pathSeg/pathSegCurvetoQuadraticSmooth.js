@@ -49,8 +49,7 @@ pathSegCurvetoQuadraticSmooth.prototype.adjust = function(matrix) {
 	
 pathSegCurvetoQuadraticSmooth.prototype.inbetween = function(other, ratio) {
 	if(!(other instanceof pathSegCurvetoQuadraticSmooth)) { throw new Error('Path segment type mismatch.'); }
-	if(ratio < 0) { ratio = 0; }
-	if(ratio > 1) { ratio = 1; }
+	if(ratio == null) { ratio = 0; }
 	
 	var x = this.x + ratio*(other.x - this.x);
 	var y = this.y + ratio*(other.y - this.y);

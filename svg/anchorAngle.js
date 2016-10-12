@@ -12,6 +12,9 @@ function anchorAngle(center, referenceZero, angle, element, shape, actions) {
 	this.referenceZero = referenceZero;
 	this.angle = angle;
 	
+	this.selected = false;
+	this.selectable = false;
+	
 	this.radius = Math.sqrt((this.center.x-this.referenceZero.x)*(this.center.x-this.referenceZero.x)+(this.center.y-this.referenceZero.y)*(this.center.y-this.referenceZero.y));
 	var initialAngleRad = Math.atan2((this.referenceZero.y-this.center.y), (this.referenceZero.x-this.center.x));
 	if(initialAngleRad < 0) { initialAngleRad += 2*Math.PI; }	// <0; 2pi)
@@ -31,6 +34,8 @@ function anchorAngle(center, referenceZero, angle, element, shape, actions) {
 	this.adjustZoom();
 }
 
+anchorAngle.prototype = Object.create(anchor.prototype);
+
 anchorAngle.prototype.refreshPosition = function() {
 	if(!this.container) { return; }
 	
@@ -44,25 +49,10 @@ anchorAngle.prototype.refreshPosition = function() {
 	this.y = this.radius*Math.sin(rad);
 	this.container.setAttribute('transform', 'translate('+(this.x+this.center.x)+', '+(this.y+this.center.y)+')');
 	
-	/*
-	this.container.setAttribute('transform', 'translate('+(this.x+this.center.x)+', '+(this.y+this.center.y)+')');
-	*/
 	for(var i = 0; i < this.connectors.length; i++) {
 		this.connectors[i].refresh();
 	}
 }
-
-anchorAngle.prototype.adjustZoom = anchor.prototype.adjustZoom;
-
-anchorAngle.prototype.seed = anchor.prototype.seed;
-
-anchorAngle.prototype.addChild = anchor.prototype.addChild;
-
-anchorAngle.prototype.addConnector = anchor.prototype.addConnector;
-
-anchorAngle.prototype.getAbsolute = anchor.prototype.getAbsolute;
-
-anchorAngle.prototype.click = anchor.prototype.click;
 
 anchorAngle.prototype.moveTo = function(inX, inY, keys) {
 	var CTMcontainer = this.container.getCTMBase(); 
@@ -113,6 +103,3 @@ anchorAngle.prototype.moveTo = function(inX, inY, keys) {
 		if(svg.ui.path) { svg.ui.path.commit(); }
 	}
 }
-
-
-

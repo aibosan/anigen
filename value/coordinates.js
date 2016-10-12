@@ -25,9 +25,10 @@ coordinates.prototype.toString = function() {
 }
 
 coordinates.prototype.clone = function() {
-	return new coordinates(this.x + " " + this.y);
+	return new coordinates(this.toString());
 }
 
 coordinates.prototype.inbetween = function(other, ratio) {
+	if(ratio == null) { ratio = 0; }
 	return new coordinates((this.x+(other.x-this.x)*ratio) + " " + (this.y+(other.y-this.y)*ratio));
 }

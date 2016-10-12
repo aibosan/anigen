@@ -11,14 +11,4 @@ SVGSVGElement.prototype.consumeTransform = function() {
 	}
 }
 
-SVGSVGElement.prototype.consumeAnimations = function(recursive) {
-	if(recursive) {
-		for(var i = 0; i < this.children.length; i++) {
-			if(!(this.children[i] instanceof SVGAnimationElement)) {
-				this.children[i].consumeAnimations(recursive);
-			}
-		}
-	}
-}
-
 SVGSVGElement.prototype.translateBy = function() {}

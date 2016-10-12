@@ -34,10 +34,13 @@ angle.prototype.clone = function() {
 }
 
 angle.prototype.inbetween = function(other, ratio) {
+	if(ratio == null) { ratio = 0; }
 	if(this.x == null || this.y == null) {
 		return new angle((this.angle+(other.angle-this.angle)*ratio));
 	} else {
 		return new angle((this.angle+(other.angle-this.angle)*ratio) + " " + (this.x+(other.x-this.x)*ratio) + " " + (this.y+(other.y-this.y)*ratio));
 	}
 }
+
+
 

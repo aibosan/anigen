@@ -12,6 +12,12 @@ function uiSVG() {
 	this.anchorContainer = null;
 	this.highlightContainer = null;
 	
+	this.target = null;
+	
+	this.selected = [];
+	this.selectedIndexes = [];
+	this.allSelected = false;
+	
     this.anchors = [];
 	
 	this.container = null;
@@ -19,8 +25,80 @@ function uiSVG() {
 	this.threshold = 0.01;
 }
 
+uiSVG.prototype.toggleSelect = function(target) {
+	if(target.selected) {
+		this.removeSelect(target);
+	} else {
+		this.addSelect(target);
+	}
+}
+
+uiSVG.prototype.addSelect = function(target) {
+	if(!target.selectable) { return; }
+	for(var i = 0; i < this.anchorContainer.children.length; i++) {
+		if(this.anchorContainer.children[i] == target.container) {
+			this.selectedIndexes.push(i);
+			this.selectedIndexes.sort();
+			this.selected.push(target);
+			target.select(true);
+			break;
+		}
+	}
+}
+
+uiSVG.prototype.removeSelect = function(target) {
+	for(var i = 0; i < this.anchorContainer.children.length; i++) {
+		if(this.anchorContainer.children[i] == target.container) {
+			this.selectedIndexes.splice(this.selectedIndexes.indexOf(i), 1);
+			var index = this.selected.indexOf(target);
+			if(index >= 0) {
+				this.selected.splice(this.selected.indexOf(target), 1);
+			}
+			target.select(false);
+			break;
+		}
+	}
+	this.allSelected = false;
+}
+
+uiSVG.prototype.clearSelect = function() {
+	for(var i = 0; i < this.selected.length; i++) {
+		this.selected[i].select(false);
+	}
+	this.selected = [];
+	this.selectedIndexes = [];
+	this.allSelected = false;
+}
+
+uiSVG.prototype.selectAll = function() {
+	this.clearSelect();
+	for(var i = 0; i < this.anchorContainer.children.length; i++) {
+		if(this.anchorContainer.children[i].shepherd && this.anchorContainer.children[i].shepherd.selectable) {
+			this.selectedIndexes.push(i);
+		}
+	}
+	this.allSelected = true;
+	this.edit(svg.selected);
+}
+
+uiSVG.prototype.rebuildSelect = function(soft) {
+	if(!soft) {
+		for(var i = 0; i < this.anchorContainer.children.length; i++) {
+			this.anchorContainer.children[i].select(false);
+		}
+	}
+	this.selected = [];
+	for(var i = 0; i < this.selectedIndexes.length; i++) {
+		if(this.anchorContainer.children[this.selectedIndexes[i]] && this.anchorContainer.children[this.selectedIndexes[i]].shepherd) {
+			this.anchorContainer.children[this.selectedIndexes[i]].shepherd.select(true);
+			this.selected.push(this.anchorContainer.children[this.selectedIndexes[i]].shepherd);
+		}
+	}
+}
+
 uiSVG.prototype.putOnTop = function() {
 	if(!this.container || !this.container.parentNode) { return; }
+	if(svg.camera) { svg.svgElement.appendChild(svg.camera.element); }
 	this.container.parentNode.appendChild(this.container);
 }
 
@@ -42,22 +120,8 @@ uiSVG.prototype.removeAnchor = function(anchor, anchorGroup) {
 	}
 }
 
-/*
-uiSVG.prototype.clearHighlight = function() {
-	if(this.highlight && this.highlight.container && this.highlight.container.parentNode) {
-		this.highlight.container.parentNode.removeChild(this.highlight.container);
-	}
-}
-*/
-
 uiSVG.prototype.clearAnchors = function() {
 	this.anchors = [];
-	/*
-	this.path1.removeAttribute('d');
-	this.path1.pathData = null;
-	this.path2.removeAttribute('d');
-	this.path2.pathData = null;
-	*/
 	
 	this.anchorContainer.removeChildren();
 	this.anchorContainer.removeAttribute('transform');
@@ -217,8 +281,10 @@ uiSVG.prototype.condenseAnchors = function(anchorGroup) {
 uiSVG.prototype.refresh = function() {
 	this.putOnTop();
 	this.frame.refresh();
+	if(svg.camera) { svg.camera.adjustZoom(); }
 	this.selectionBox.adjustZoom();
 	this.highlight.adjustZoom();
+	if(svg.camera) { svg.camera.adjustZoom(); }
 	for(var i in this.anchors) {
 		for(var j = 0; j < this.anchors[i].length; j++) {
 			if(typeof this.anchors[i][j].adjustZoom === 'function') {
@@ -226,22 +292,13 @@ uiSVG.prototype.refresh = function() {
 			}
 		}
 	}
-	/*
-	this.path1.setAttribute('stroke-width', 3/svg.zoom);
-	this.path2.setAttribute('stroke-width', 1/svg.zoom);
-	*/
 }
 
 uiSVG.prototype.setContainer = function(container) {
 	this.container = container;
 	this.container.removeChildren();
 	this.container.appendChild(this.selectionBox.container);
-	//this.container.appendChild(this.pathHighligh.container);
 	this.container.appendChild(this.frame.container);
-	/*
-	this.container.appendChild(this.path1);
-	this.container.appendChild(this.path2);
-	*/
 	this.highlight = new highlight();
 	this.container.appendChild(this.highlight.container);
 	
@@ -254,19 +311,36 @@ uiSVG.prototype.edit = function(target) {
 	this.highlight.hide();
 	this.clearAnchors();
 	
-	this.highlight.setElement(target);
-	this.selectionBox.setElement(target);
+	if(target && target.shepherd) {
+		target = target.shepherd;
+	}
 	
-	if(target instanceof SVGSVGElement || target instanceof SVGGElement && target.getAttribute('inkscape:groupmode') == 'layer') {
+	if(this.target != target || target == null) {
+		this.clearSelect();
+	}
+	
+	this.target = target;
+	
+	this.highlight.setElement(target.element || target);
+	this.selectionBox.setElement(target.element || target);
+	
+	if(!(target instanceof animationGroup) && (target instanceof SVGSVGElement || target instanceof SVGGElement && target.getAttribute('inkscape:groupmode') == 'layer'
+		|| target instanceof SVGAnimationElement)) {
 		this.selectionBox.hide();
 	}
 	
 	if(!target || !(typeof target.generateAnchors === 'function')) { return; }
-	var anchorData = target.generateAnchors();
+	var anchorData;
 	
-//	console.log(anchorData);
+	anchorData = target.generateAnchors();
 	
 	if(!anchorData) { return; }
+	
+	if(anigenActual.settings.get('nodes')) {
+		this.anchorContainer.removeAttribute("display");
+	} else {
+		this.anchorContainer.setAttribute("display", "none");
+	}
 	
 	if(anchorData.connectors) {
 		for(var i = 0; i < anchorData.connectors.length; i++) {
@@ -287,4 +361,6 @@ uiSVG.prototype.edit = function(target) {
 			}
 		}
 	}
+	
+	this.rebuildSelect(true);
 }

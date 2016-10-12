@@ -11,7 +11,7 @@ function highlight() {
 }
 
 highlight.prototype.setElement = function(element) {
-	if(!element || element instanceof SVGGElement || element instanceof SVGUseElement) {
+	if(!element || element instanceof SVGGElement || element instanceof SVGUseElement || element.shepherd) {
 		this.element = null;
 		return;
 	}
@@ -50,5 +50,9 @@ highlight.prototype.hide = function() {
 }
 
 highlight.prototype.show = function() {
-	this.container.removeAttribute("display");
+	if(anigenActual.settings.get('highlight')) {
+		this.container.removeAttribute("display");
+	} else {
+		this.container.setAttribute("display", "none");
+	}
 }

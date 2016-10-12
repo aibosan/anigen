@@ -9,6 +9,8 @@ function anchor(posAbsolute, element, shape, actions, constraint) {
 	this.x = posAbsolute.x;
 	this.y = posAbsolute.y;
 	this.element = element;
+	this.selected = false;
+	this.selectable = true;
 	
 	this.actions = actions || {};
 	this.shape = shape || 'rectangle';
@@ -80,6 +82,21 @@ anchor.prototype.setOffset = function(x, y) {
 	this.container.setAttribute('transform', 'translate('+x+' '+y+')');
 }
 
+anchor.prototype.select = function(value) {
+	if(value != null) {
+		if(value == true) {
+			this.selected = true;
+		} else {
+			this.selected = false;
+		}
+	}
+	if(this.selected) {
+		this.rectangle2.style.fill = this.colors["active"].getHex() || "#00ff00";
+	} else {
+		this.rectangle2.style.fill = this.colors["fill"].getHex() || "#ffffff";
+	}
+}
+
 anchor.prototype.refreshPosition = function() {
 	if(!this.containerInner || this.x == null || this.y == null) { return; }
 	this.containerInner.setAttribute('transform', 'translate('+this.x+', '+this.y+')');
@@ -111,7 +128,7 @@ anchor.prototype.seed = function() {
 	
 	if(!this.size) { this.size = 8; }
 	if(!this.shape) { this.shape = 'rectangle'; }
-	if(!this.colors) { this.colors = {"fill": new color("#ffffff"), "stroke": new color("#000000"), "hover": new color("#ffd700"), "active": new color("#1e90ff")}; }
+	if(!this.colors) { this.colors = {"fill": new color("#ffffff"), "stroke": new color("#000000"), "hover": new color("#ffd700"), "active": new color("#00ff00")}; }
 	
 	this.rectangle1 = document.createElementNS(svgNS, "rect");
 	this.rectangle2 = document.createElementNS(svgNS, "rect");
@@ -132,7 +149,7 @@ anchor.prototype.seed = function() {
 	this.rectangle2.setAttribute("stroke-width", "1.5px");
 	this.rectangle2.style.fill = this.colors["fill"].getHex();
 	this.rectangle2.setAttribute("onmouseover", "this.style.fill = '"+this.colors["hover"].getHex()+"';");
-    this.rectangle2.setAttribute("onmouseout", "this.style.fill = '"+this.colors["fill"].getHex()+"';");
+    this.rectangle2.setAttribute("onmouseout", "this.style.fill = this.parentNode.shepherd.selected ? '"+this.colors["active"].getHex()+"' : '"+this.colors["fill"].getHex()+"';");
 	
 	if(this.shape == 'circle') {
 		this.rectangle1.setAttribute("rx", "50%");
@@ -198,17 +215,16 @@ anchor.prototype.moveTo = function(inX, inY, keys) {
 	this.evaluateLocal(absolute, dAbsolute, relative, dRelative);
 }
 
+anchor.prototype.moveBy = function(dAX, dAY, keys) {
+	var abs = this.getAbsolute();
+	
+	this.moveTo(abs.x+dAX, abs.y+dAY, keys);
+}
+
 anchor.prototype.evaluate = function(absolute, dAbsolute, relative, dRelative) {
 	if(this.actions != null && this.actions.move) {
 		var bound = this.bound;
 		eval(this.actions.move);
-		/*
-		var arr = this.actions.move.split(';');
-		for(var i = 0; i < arr.length; i++) {
-			eval(arr[i]);
-		}
-		*/
-		
 		svg.gotoTime();
 		if(svg.ui.path) { svg.ui.path.commit(); }
 	}
@@ -218,13 +234,6 @@ anchor.prototype.evaluateLocal = function(absolute, dAbsolute, relative, dRelati
 	if(this.actions != null && this.actions.moveLocal) {
 		var bound = this.bound;
 		eval(this.actions.moveLocal);
-		/*
-		var arr = this.actions.moveLocal.split(';');
-		for(var i = 0; i < arr.length; i++) {
-			eval(arr[i]);
-		}
-		*/
-		
 		svg.gotoTime();
 		if(svg.ui.path) { svg.ui.path.commit(); }
 	}
@@ -233,11 +242,26 @@ anchor.prototype.evaluateLocal = function(absolute, dAbsolute, relative, dRelati
 anchor.prototype.click = function(keys) {
 	if(this.actions && this.actions.click) {
 		eval(this.actions.click);
+	}
+}
+
+anchor.prototype.mouseUp = function(keys) {
+	var CTMelement = this.element.getCTMBase();
+	
+	if(this.element instanceof SVGAnimateTransformElement && this.element.getAttribute('type') == 'translate') {
+		CTMelement.e = 0;
+		CTMelement.f = 0;
+	}
+	
+	var absolute = { 'x': this.x-this.offset.x, 'y': this.y-this.offset.y };
+	var relative = CTMelement.toUserspace(this.x, this.y);
+	
+	if(this.actions != null && this.actions.mouseup) {
+		var bound = this.bound;
+		eval(this.actions.mouseup);
 		/*
-		var arr = this.actions.click.split(';');
-		for(var i = 0; i < arr.length; i++) {
-			eval(arr[i]);
-		}
+		svg.gotoTime();
+		if(svg.ui.path) { svg.ui.path.commit(); }
 		*/
 	}
 }

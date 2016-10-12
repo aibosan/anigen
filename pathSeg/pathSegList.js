@@ -65,6 +65,15 @@ pathSegList.prototype.appendItem = function(newItem) {
 	return newItem;
 }
 
+// sums with another path list, adding each value to its respective counterpart
+pathSegList.prototype.sum = function(other) {
+	if(!(other instanceof pathSegList) || other.arr.length != this.arr.length) { return; }
+	for(var i = 0; i < this.arr.length; i++) {
+		this.arr[i].sum(other.arr[i]);
+	}
+	return this;
+}
+
 // returns string path data ("d")
 pathSegList.prototype.toString = function() {
 	return this.arr.join(' ');

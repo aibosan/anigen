@@ -10,18 +10,17 @@ function animationGroup(target, numeric, flags, attributes) {
 	if(!numeric) {
 		numeric = { dur: '10s', begin: '0s', repeatCount: 'indefinite' }
 	}
-	if(!flags) {
-		flags = { additive: true, accumulate: false, freeze: false, select: false }
-	}
+	if(!flags) { flags = {}; }
 	if(!numeric.dur) { numeric.dur = '10s'; }
 	if(!numeric.begin) { numeric.begin = '0s'; }
 	if(!numeric.repeatCount) { numeric.repeatCount = 'indefinite'; }
-	if(!flags.additive) { flags.additive = type == 0 ? false : true; }
-	if(!flags.accumulate) { flags.accumulate = false; }
-	if(!flags.freeze) { flags.freeze = false; }
+	if(!flags.additive) { flags.additive = 'replace'; }
+	if(!flags.accumulate) { flags.accumulate = 'none'; }
+	if(!flags.fill) { flags.fill = 'remove'; }
+	if(!flags.calcMode) { flags.calcMode = 'spline'; }
 	
 	this.type = 7;
-	this.calcMode = 'spline';
+	this.calcMode = flags.calcMode;
 	this.timelineObject = null;
 	
 	if(target instanceof animationState) {
@@ -54,7 +53,7 @@ function animationGroup(target, numeric, flags, attributes) {
 		
 		this.additive = flags.additive;
 		this.accumulate = flags.accumulate;
-		this.freeze = flags.freeze;
+		this.fill = flags.fill;
 		
 		this.times = [ 0, 1 ];
 		this.splines = [ new spline("0 0 1 1") ];
@@ -70,9 +69,9 @@ function animationGroup(target, numeric, flags, attributes) {
 		this.element.setAttribute('anigen:dur', this.dur);
 		this.element.setAttribute('anigen:repeatcount', numeric.repeatCount);
 		this.element.setAttribute('anigen:calcmode', this.calcMode);
-		this.element.setAttribute('anigen:additive', this.additive ? "sum" : "replace");
-		this.element.setAttribute('anigen:accumulate', this.accumulate ? "sum" : "none");
-		this.element.setAttribute('anigen:fill', this.freeze ? "freeze" : "remove");
+		this.element.setAttribute('anigen:additive', this.additive);
+		this.element.setAttribute('anigen:accumulate', this.accumulate);
+		this.element.setAttribute('anigen:fill', this.fill);
 		this.element.generateId(true);
 		
 		if(attributes) {
@@ -151,18 +150,45 @@ animationGroup.prototype.getCalcMode = function() {
 	return this.calcMode;
 }
 
+animationGroup.prototype.getFill = function() {
+	if(this.getAttribute('anigen:freeze')) {
+		if(!this.getAttribute('anigen:fill')) {
+			this.setAttribute('anigen:fill', this.getAttribute('anigen:freeze') == 'true' ? 'freeze' : 'remove');
+		}
+		this.removeAttribute('anigen:freeze');
+	}
+	this.fill = this.getAttribute('anigen:fill') || 'replace';
+	return this.fill;
+}
+
+animationGroup.prototype.getAdditive = function() {
+	this.additive = this.getAttribute('anigen:additive') || 'replace';
+	if(this.additive == 'true') { this.additive = 'sum'; }
+	if(this.additive == 'false') { this.additive = 'replace'; }
+	this.setAttribute('anigen:additive', this.additive);
+	return this.additive;
+}
+
+animationGroup.prototype.getAccumulate = function() {
+	this.accumulate = this.getAttribute('anigen:accumulate') || 'none';
+	if(this.accumulate == 'true') { this.accumulate = 'sum'; }
+	if(this.accumulate == 'false') { this.accumulate = 'none'; }
+	this.setAttribute('anigen:accumulate', this.accumulate);
+	return this.accumulate;
+}
+
 animationGroup.prototype.getValues = function() {
 	this.values = [];
 	var temp = this.element.getAttribute('anigen:values');
 	if(!temp) {
-		var vFrom = this.getAttribute('from');
-		var vTo = this.getAttribute('to');
+		var vFrom = this.getAttribute('anigen:from');
+		var vTo = this.getAttribute('anigen:to');
 		if(vFrom && vTo) {
 			this.values.push(vFrom);
 			this.values.push(vTo);
 			this.element.setAttribute('anigen:values', this.values.join(';'));
-			this.removeAttribute('from');
-			this.removeAttribute('to');
+			this.removeAttribute('anigen:from');
+			this.removeAttribute('anigen:to');
 		}
 	} else {
 		temp = temp.split(';');
@@ -227,7 +253,6 @@ animationGroup.prototype.animate = function(attribute) {
 		var anim = document.createElementNS(svgNS, 'animate');
 		anim.setAttribute('attributeType', isCSS ? "CSS" : "XML");
 		anim.setAttribute('attributeName', attribute);
-		anim.setAttribute('anigen:insensitive', 'true');
 		anim.setAttribute('anigen:childindex', i);
 		anim.generateId();
 		this.childElements[i].appendChild(anim);
@@ -301,10 +326,6 @@ animationGroup.prototype.commitValues = function(fromAttribute) {
 		}
 	}
 	
-	/*
-	windowAnimation.refresh();
-	svg.gotoTime();
-	*/
 	return true;
 }
 
@@ -356,7 +377,7 @@ animationGroup.prototype.commitCalcMode = function(fromAttribute) {
 }
 
 animationGroup.prototype.commitFill = function() {
-	var newFill = this.fill || this.element.getAttribute('anigen:fill');
+	var newFill = this.element.getAttribute('anigen:fill') || 'replace';
 	for(var i in this.animations) {
 		for(var j = 0; j < this.animations[i].length; j++) {
 			this.animations[i][j].setAttribute('fill', newFill);
@@ -365,7 +386,7 @@ animationGroup.prototype.commitFill = function() {
 }
 
 animationGroup.prototype.commitAdditive = function(fromAttribute) {
-	var newAdditive = this.additive || this.element.getAttribute('anigen:additive');
+	var newAdditive = this.element.getAttribute('anigen:additive') || 'replace';
 	for(var i in this.animations) {
 		for(var j = 0; j < this.animations[i].length; j++) {
 			this.animations[i][j].setAttribute('additive', newAdditive);
@@ -374,15 +395,13 @@ animationGroup.prototype.commitAdditive = function(fromAttribute) {
 }
 
 animationGroup.prototype.commitAccumulate = function(fromAttribute) {
-	var newAccumulate = this.accumulate || this.element.getAttribute('anigen:accumulate');
+	var newAccumulate = this.element.getAttribute('anigen:accumulate') || 'replace';
 	for(var i in this.animations) {
 		for(var j = 0; j < this.animations[i].length; j++) {
 			this.animations[i][j].setAttribute('accumulate', newAccumulate);
 		}
 	}
 }
-
-
 
 animationGroup.prototype.commitAll = function(fromAttribute) {
 	this.commitBegins(fromAttribute);
@@ -530,6 +549,34 @@ animationGroup.prototype.setAccumulate = function(value, makeHistory) {
 
 
 
+animationGroup.prototype.createInbetween = function(one, two, newValue, makeHistory) {
+	if(two < one) {
+		var temp = one;
+		one = two;
+		two = temp;
+	}
+	var ratio = 0.5;
+	
+	this.duplicateValue(one, makeHistory);
+	this.getValues();
+	this.getSplines();
+	
+	this.times[one+1] += (this.times[two+1]-this.times[one])*ratio;
+	if(this.splines) {
+		this.splines[one] = this.splines[one].inbetween(this.splines[two], ratio);
+	}
+	
+	/*
+	this.values[one+1] = this.values[one].inbetween(this.values[two+1], ratio);
+	*/
+	this.values[one+1] = newValue;
+	
+	if(makeHistory) { this.makeHistory(true, true, (this.splines ? true : false)); }
+	if(this.splines) { this.commitSplines(); }
+	this.commitTimes();
+	this.commitValues();
+}
+
 
 animationGroup.prototype.setAttribute = function(attributeName, attributeValue) {
 	this.element.setAttribute(attributeName, attributeValue);
@@ -537,6 +584,10 @@ animationGroup.prototype.setAttribute = function(attributeName, attributeValue) 
 
 animationGroup.prototype.getAttribute = function(attributeName) {
 	return this.element.getAttribute(attributeName);
+}
+
+animationGroup.prototype.removeAttribute = function(attributeName) {
+	return this.element.removeAttribute(attributeName);
 }
 
 animationGroup.prototype.getCurrentTime = function() {
@@ -633,16 +684,16 @@ animationGroup.prototype.makeHistory = function(times, values, splines) {
 	var arrTo = {};
 	
 	if(times) {
-		arrFrom['anigen:keyTimes'] = this.getAttribute('anigen:keyTimes');
-		arrTo['anigen:keyTimes'] = this.times.join(';');
+		arrFrom['anigen:keytimes'] = this.getAttribute('anigen:keytimes');
+		arrTo['anigen:keytimes'] = this.times.join(';');
 	}
 	if(values) {
 		arrFrom['anigen:values'] = this.getAttribute('anigen:values');
 		arrTo['anigen:values'] = this.values.join(';');
 	}
 	if(splines) {
-		arrFrom['anigen:keySplines'] = this.getAttribute('anigen:keySplines');
-		arrTo['anigen:keySplines'] = this.splines.join(';');
+		arrFrom['anigen:keysplines'] = this.getAttribute('anigen:keysplines');
+		arrTo['anigen:keysplines'] = this.splines.join(';');
 	}
 	
 	svg.history.add(new historyAttribute(this.element.id, arrFrom, arrTo, true));

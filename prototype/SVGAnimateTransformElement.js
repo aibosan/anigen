@@ -391,9 +391,15 @@ SVGAnimateTransformElement.prototype.generateAnchors = function() {
 			var vectorZero = { 'x': center.x - zero.x, 'y': center.y - zero.y };
 			
 			var zeroAnchor = new anchor({ 'x': zero.x, 'y': zero.y}, this, 'circle',
-				{ 'move': "this.element.parentNode.setZero(absolute.x, absolute.y, true);",
-						  'mouseup': mouseUpAction },
+				{ 'move': "this.element.setZero(absolute.x, absolute.y, true);",
+					'mouseup': mouseUpAction },
 				new constraintPosition(zero, true));
+				
+			/*
+			var zeroAnchor = new anchor({ 'x': zero.x, 'y': zero.y}, this, 'circle',
+				{ 'mouseup': "this.element.setZero(absolute.x, absolute.y, true);"+mouseUpAction },
+				new constraintPosition(zero, true));
+			*/
 			
 			anchors[3].push(zeroAnchor);
 			

@@ -23,14 +23,20 @@ function treeNode(element) {
 			break;
 		case "svg":
 		case "g":
-			group = true;
-			if (element.getAttribute("inkscape:groupmode") == "layer") {
+			icon = "folder";
+			if(element.getAttribute("inkscape:groupmode") == "layer") {
 				icon = "layers";
 				name = element.getAttribute("inkscape:label");
+			}
+			if(element.getAttribute("anigen:type") == "animationGroup") {
+				icon = "animation";
 			}
 			break;
 		default:
 			icon = "other";
+			if(element.getAttribute("anigen:type") == "animatedViewbox") {
+				icon = "camera";
+			}
 			break;
 	}
 	this.li = document.createElement("li");
@@ -38,7 +44,17 @@ function treeNode(element) {
         nodeName.appendChild(document.createTextNode("<"+element.nodeName.toLowerCase()+">"));
         nodeName.setAttribute("class", "nodeName");
 	
-	if(group || element.children.length > 0) {
+	var validChildren = false;
+	for(var i = 0; i < this.element.children.length; i++) {
+		if(this.element.children[i].getAttribute('anigen:lock')) {
+			continue;
+		} else {
+			validChildren = true;
+			break;
+		}
+	}
+	
+	if(validChildren) {
 		// branch
 		var label = document.createElement("label");
 		var input = document.createElement("input");

@@ -38,17 +38,18 @@ SVGGElement.prototype.ungroup = function(makeHistory) {
 	return children;
 };
 
-SVGElement.prototype.setZero = function(x, y, makeHistory) {
+SVGGElement.prototype.setZero = function(x, y, makeHistory) {
 	var CTM = this.getCTMBase();
 	var zero = CTM.toViewport(0, 0);
 	
 	var adjusted = { 'x': x-zero.x, 'y': y-zero.y };
 	
-	this.translateBy(adjusted.x, adjusted.y, makeHistory);
 	for(var i = 0; i < this.children.length; i++) {
 		this.children[i].translateBy(-1*adjusted.x, -1*adjusted.y, makeHistory);
 	}
+	this.translateBy(adjusted.x, adjusted.y, makeHistory);
 }
+
 
 // returns element's center as the middle of all of it's children centers
 // if viewport is true, value given is adjusted to current viewport
@@ -205,10 +206,11 @@ SVGGElement.prototype.moveBottom = function(makeHistory) {
 	return this;
 }
 
-SVGGElement.prototype.toPath = function() {
+SVGGElement.prototype.toPath = function(recursive) {
+	if(!recursive) { return; }
 	for(var i = 0; i < this.children.length; i++) {
 		if(typeof this.children[i].toPath === 'function') {
-			this.children[i].toPath();
+			this.children[i].toPath(recursive);
 		}
 	}
 }

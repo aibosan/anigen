@@ -20,40 +20,37 @@ function animationState(elem, name, group) {
 		this.element.removeAttribute('transform');
 		this.element.consumeTransform();
 		this.element.stripId(true);
-		this.element.toPath();
+		this.element.toPath(true);
 		
 		this.name = name;
 		this.group = group;
 		
-		if(!this.group) {
-			// generate new group name
-			var groups = [];
-			for(var i in svg.animationStates) {
-				groups.push(i);
+		if(this.group) {
+			var children = svg.defs.getElementsByAttribute('anigen:name', this.group);
+			
+			if(children.length > 0) {
+				// group exists - append
+				this.groupElement = children[0];
+				this.group = this.groupElement.getAttribute('anigen:name');
+				this.number = this.groupElement.childElementCount;
+				this.element.setAttribute('anigen:number', this.groupElement.childElementCount);
+				this.groupElement.appendChild(this.element);
+				svg.animationStates[group].push(this);
+			} else {
+				// group doesn't exist - create
+				this.groupElement = document.createElementNS(svgNS, 'g');
+				this.groupElement.generateId();
+				svg.defs.appendChild(this.groupElement);
+				this.groupElement.appendChild(this.element);
+				this.groupElement.setAttribute('anigen:name', this.group);
+				this.element.setAttribute('anigen:number', 0);
+				this.number = 0;
+				if(!svg.animationStates) { svg.animationStates = {}; }
+				svg.animationStates[group] = [];
+				svg.animationStates[group].push(this);
 			}
-			do {
-				this.group = "group_" + parseInt(Math.random()*10000);
-			} while(groups.indexOf(this.group) != -1)
-		}
-		
-		var children = svg.defs.getElementsByAttribute('anigen:name', this.group);
-		
-		if(children.length > 0) {
-			// group exists - append
-			this.groupElement = children[0];
-			this.group = this.groupElement.getAttribute('anigen:name');
-			this.number = this.groupElement.childElementCount;
-			this.element.setAttribute('anigen:number', this.groupElement.childElementCount);
-			this.groupElement.appendChild(this.element);
 		} else {
-			// group doesn't exist - create
-			this.groupElement = document.createElementNS(svgNS, 'g');
-			this.groupElement.generateId();
-			svg.defs.appendChild(this.groupElement);
-			this.groupElement.appendChild(this.element);
-			this.groupElement.setAttribute('anigen:name', this.group);
-			this.element.setAttribute('anigen:number', 0);
-			this.number = 0;
+			this.groupElement = null;
 		}
 		this.element.generateId(true);
 		
@@ -75,6 +72,10 @@ function animationState(elem, name, group) {
 		}
 		this.number = (this.element.getAttribute('anigen:number') || this.groupElement.children.length-1);
 		this.name = (this.element.getAttribute('anigen:name') || name);
+		if(!svg.animationStates) { svg.animationStates = {}; }
+		if(!svg.animationStates[this.group]) { svg.animationStates[this.group] = []; }
+		svg.animationStates[this.group].push(this);
+		
 	}
 	if(!this.name) { this.name = 'state_'+this.number; }
 	this.element.setAttribute('anigen:name', this.name);
@@ -82,7 +83,9 @@ function animationState(elem, name, group) {
 	
 	this.number = parseInt(this.number);
 	
-	this.groupElement.setAttribute('anigen:name', this.group);
+	if(this.groupElement) {
+		this.groupElement.setAttribute('anigen:name', this.group);
+	}
 	this.element.shepherd = this;
 	
 	var allChildren = this.element.getChildren(true);
@@ -127,3 +130,30 @@ animationState.prototype.destroy = function() {
 		}
 	}
 }
+
+animationState.prototype.inbetween = function(other, ratio, name, append) {
+	if(ratio == null) { ratio = 0; }
+	if(!(other instanceof animationState) || this.group != other.group) { return; }
+	
+	if(!name) { name = this.name+"-"+other.name+"-"+ratio; }
+	
+	var clone = this.element.cloneNode(true);
+	var candidatesOne = clone.getChildren(true);
+	var candidatesTwo = other.element.getChildren(true);
+	
+	for(var i = 0; i < candidatesOne.length; i++) {
+		if(candidatesOne[i] instanceof SVGUseElement) {
+			clone.removeChild(candidatesOne[i]);
+			continue;
+		}
+		if(!candidatesTwo[i] || candidatesOne[i].nodeName != candidatesTwo[i].nodeName) {
+			return;
+		}
+		if(typeof candidatesOne[i].inbetween === 'function') {
+			candidatesOne[i].setAttribute('d', candidatesOne[i].inbetween(candidatesTwo[i], ratio));
+		}
+	}
+	
+	return new animationState(clone, name, (append ? this.group : null));
+}
+

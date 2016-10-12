@@ -10,6 +10,15 @@ SVGRectElement.prototype.consumeTransform = function(matrixIn) {
 	if(matrixIn) {
 		matrix = matrixIn.multiply(matrix);
 	}
+	
+	if(this.style.strokeWidth) {
+		var oldStroke = parseFloat(this.style.strokeWidth);
+		var zero = matrix.toViewport(0,0);
+		var one = matrix.toViewport(1,1);
+		var ratio = Math.sqrt((one.x-zero.x)*(one.x-zero.x)+(one.y-zero.y)*(one.y-zero.y));
+		this.style.strokeWidth = ratio*oldStroke;
+	}
+	
 	if(matrix.isIdentity()) {
 		this.removeAttribute('transform');
 	} else {
@@ -45,20 +54,17 @@ SVGRectElement.prototype.translateBy = function(byX, byY, makeHistory) {
 	var oldX = this.x.baseVal.value;
 	var oldY = this.y.baseVal.value;
 	
-	var transform = this.getTransformBase();
-	var adjusted = transform.toUserspace(byX, byY);
-	var adjustedZero = transform.toUserspace(0, 0);
+	var CTM = this.getCTMBase();
+	var zero = CTM.toViewport(0,0);
+	var adjusted = CTM.toUserspace(zero.x+byX, zero.y+byY);
 	
-	byX = adjusted.x - adjustedZero.x;
-	byY = adjusted.y - adjustedZero.y;
-	
-	this.setAttribute('x', oldX+byX);
-	this.setAttribute('y', oldY+byY);
+	this.setAttribute('x', oldX+adjusted.x);
+	this.setAttribute('y', oldY+adjusted.y);
 	
 	if(makeHistory) {
 		svg.history.add(new historyAttribute(this.id, 
 			{ 'x': oldX, 'y': oldY },
-			{ 'x': oldX+byX, 'y': oldY+byY },
+			{ 'x': oldX+adjusted.x, 'y': oldY+adjusted.y },
 		true));
 	}
 }

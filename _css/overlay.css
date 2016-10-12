@@ -50,12 +50,12 @@ div.overlay input {
 	display: block;
 }
 
-div.overlay input:disabled {
-	background-color: lightgray;
+div.overlay input[type=range], div.overlay input[type=checkbox] {
+	cursor: pointer;
 }
 
-div.overlay input[type=checkbox] {
-	cursor: pointer;
+div.overlay input:disabled {
+	background-color: lightgray;
 }
 
 div.overlay table {

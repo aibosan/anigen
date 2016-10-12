@@ -313,6 +313,7 @@ label[for="files"] {
     border-left: 1px solid gray;
     padding: 1ex 1em;
     cursor: pointer;
+	display: inline-block;
 }
 
 label[for="files"]:hover, label[for="files"].dragover {

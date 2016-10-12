@@ -52,7 +52,7 @@ Element.prototype.getElementsByAttribute = function(attribute, value, deep) {
     return response;
 }
 
-Element.prototype.generateId = function(deep) {
+Element.prototype.generateId = function(deep, name) {
 	var oldId = this.getAttribute('id');
 	
     if((oldId != null && oldId.length != 0 && document.getElementById(oldId) != this) || 
@@ -61,7 +61,11 @@ Element.prototype.generateId = function(deep) {
 		this.removeAttribute('id');
 		var newId;
 		do {
-			newId = this.tagName + "" + parseInt(Math.random()*10000);
+			if(name) {
+				newId = name + "" + parseInt(Math.random()*10000);
+			} else {
+				newId = this.tagName + "" + parseInt(Math.random()*10000);
+			}
 		} while(document.getElementById(newId) != null)
 		this.setAttribute('id', newId);
 	}

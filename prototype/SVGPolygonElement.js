@@ -5,6 +5,7 @@
  *	@brief		Prototypes for SVG "polygon" (rectangle) element
  */
 
+SVGPolygonElement.prototype.consumeTransform = SVGPolylineElement.prototype.consumeTransform;
 SVGPolygonElement.prototype.getValues = SVGPolylineElement.prototype.getValues;
 SVGPolygonElement.prototype.commitValues = SVGPolylineElement.prototype.commitValues;
 SVGPolygonElement.prototype.setValue = SVGPolylineElement.prototype.setValue;

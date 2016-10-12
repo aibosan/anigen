@@ -30,7 +30,6 @@ SVGElement.prototype.setZero = function(x, y, makeHistory) {
 	var CTM = this.getCTMBase();
 	var zero = CTM.toViewport(0, 0);
 	
-//	var adjusted = CTM.toUserspace(x, y);
 	var adjusted = { 'x': x-zero.x, 'y': y-zero.y };
 	
 	this.parentNode.translateBy(adjusted.x, adjusted.y, makeHistory);
@@ -107,8 +106,16 @@ SVGElement.prototype.getTransform = function() {
 SVGElement.prototype.translateBy = function(byX, byY, makeHistory) {
 	var matrix = this.getTransformBase();
 	
-	matrix.e += byX;
-	matrix.f += byY;
+	var CTM = this.getCTMBase();
+	var zero = CTM.toViewport(0,0);
+	var adjusted = CTM.toUserspace(zero.x+byX, zero.y+byY);
+	
+	var matrix2 = document.createElementNS("http://www.w3.org/2000/svg", "svg").createSVGMatrix();
+	
+	matrix2.e = adjusted.x;
+	matrix2.f = adjusted.y;
+	
+	matrix = matrix.multiply(matrix2);
 	
 	if(makeHistory) {
 		var oldTransform = this.getTransformBase();
@@ -202,20 +209,38 @@ SVGElement.prototype.getFarCorner = function() {
 	return { 'x': outX, 'y': outY };
 }
 
+// ends all animations and restores SVG to its static state
+// THIS METHOD IS DESTRUCTIVE!
 SVGElement.prototype.endAnimations = function(reset) {
-	if(this instanceof SVGAnimationElement) {
-		this.endElement();
-	}
 	if(this instanceof SVGAnimateTransformElement && reset) {
-		// counteracts time zero transformations
-		var adjustment = this.getCurrentValueReadable(0, true) || '';
-		var transform = this.parentNode.getAttribute('transform') || '';
-		transform += adjustment;
-		this.parentNode.setAttribute('transform', transform);
-		this.parentNode.transform.baseVal.consolidate();
-		var matrix = this.parentNode.transform.baseVal[0].matrix;
-		matrix.round();
-		this.parentNode.setAttribute('transform', matrix.toString());
+		// counters time zero transformations
+		var originalFill = this.getAttribute('fill');
+		this.setAttribute('fill', 'remove');
+			
+		var base = this.parentNode.getTransformBase();
+		
+		// calculates value at time 0 and subtract them off the transformation
+		var adjustment = this.getCurrentValueReadable(null, true) || '';
+		
+		this.endElement();
+		
+		this.parentNode.setAttribute('transform', base.toString()+adjustment);
+		
+		this.parentNode.setAttribute('transform', this.parentNode.transform.baseVal.consolidate().matrix);
+		
+		this.setAttribute('fill', originalFill);
+	} if(this instanceof SVGAnimationElement) {
+		if(reset) {
+			// this still doesn't really reset animation of 'd' attribute - the old data might be lost?
+			// so it doesn't realy do much of anything
+			// :I
+			var originalFill = this.getAttribute('fill');
+			this.setAttribute('fill', 'remove');
+			this.endElement();
+			this.setAttribute('fill', originalFill);
+		} else {
+			this.endElement();
+		}
 	}
 	for(var i = 0; i < this.children.length; i++) {
 		this.children[i].endAnimations(reset);
@@ -285,9 +310,20 @@ SVGElement.prototype.moveBottom = function(makeHistory) {
 
 SVGElement.prototype.consumeAnimations = function(recursive) {
 	var candidates = [];
+	
+	if(this instanceof SVGPathElement) {
+		var pData = this.getPathData();
+		this.setAttribute('d', pData.animVal);
+	}
+	
 	for(var i = 0; i < this.children.length; i++) {
 		if(this.children[i] instanceof SVGAnimationElement) {
-			candidates.push(this.children[i]);
+			if(this.children[i].getAttribute('attributeName') == 'd') {
+				this.removeChild(this.children[i]);
+				i--;
+			} else {
+				candidates.push(this.children[i]);
+			}
 		}
 	}
 	

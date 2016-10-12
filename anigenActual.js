@@ -2,13 +2,13 @@
  *  @author		Ondrej Benda
  *  @date		2011-2016
  *  @copyright	GNU GPLv3
- *	@version	0.7.4
+ *	@version	0.7.5
  *	@brief		Main event handling class, also links to the instance of svg class
  */
 function anigenActual() {
     this.iconType = 32;
     this.iconHeight = 24;
-    this.version = "0.7.4 Almost Polished";
+    this.version = "0.7.5 Between Frames";
     this.tool = 1;
 	
 	this.tools = [
@@ -21,7 +21,6 @@ function anigenActual() {
 	
 	this.settings = new settings();
 	this.lastEvent = null;
-	this.firstEvent = null;
 	
 	this.focused = null;
 	
@@ -50,12 +49,21 @@ anigenActual.prototype.checkWindows = function() {
 	}
 }
 
+anigenActual.prototype.eventNavigation = function(evt) {
+	/*
+	if(anigenActual.autosave) { svg.save(true); }
+	evt.preventDefault ? evt.preventDefault() : evt.returnValue = false;
+	anigenActual.autosave = true;
+	*/
+	evt.returnValue = "Navigating from this page will cause the loss of any unsaved data.";
+	return "Navigating from this page will cause the loss of any unsaved data.";
+}
+
 // keyboard event handler
 anigenActual.prototype.eventKeyDown = function(evt) {
 	if(evt.keyCode == 116) {		// F5
-		confirm("Refreshing the page will cause the loss of any unsaved data.") ? window.location.reload() : null; 
-		evt.preventDefault ? evt.preventDefault() : evt.returnValue = false;
-		return false;
+		//evt.preventDefault ? evt.preventDefault() : evt.returnValue = false;
+		return;
 	}
 	
 	if(evt.keyCode == 123) { return true; }		// F12
@@ -99,31 +107,31 @@ anigenActual.prototype.eventKeyDown = function(evt) {
 			response = false;
 			break;
 		case 'PageUp':		// page up
-			if(evt.target.nodeName.toLowerCase() == 'input' && !evt.target.isChildOf(document.getElementById('layout_layout_panel_left'))) { return; }
+			if((evt.target instanceof HTMLInputElement || evt.target instanceof HTMLTextAreaElement) && !evt.target.isChildOf(document.getElementById('layout_layout_panel_left'))) { return; }
 			svg.selected.moveUp(true);
 			tree.seed();
 			svg.select();
 			break;
 		case 'PageDown':		// page down
-			if(evt.target.nodeName.toLowerCase() == 'input' && !evt.target.isChildOf(document.getElementById('layout_layout_panel_left'))) { return; }
+			if((evt.target instanceof HTMLInputElement || evt.target instanceof HTMLTextAreaElement) && !evt.target.isChildOf(document.getElementById('layout_layout_panel_left'))) { return; }
 			svg.selected.moveDown(true);
 			tree.seed();
 			svg.select();
 			break;
 		case 'End':		// end
-			if(evt.target.nodeName.toLowerCase() == 'input' && !evt.target.isChildOf(document.getElementById('layout_layout_panel_left'))) { return; }
+			if((evt.target instanceof HTMLInputElement || evt.target instanceof HTMLTextAreaElement) && !evt.target.isChildOf(document.getElementById('layout_layout_panel_left'))) { return; }
 			svg.selected.moveBottom(true);
 			tree.seed();
 			svg.select();
 			break;
 		case 'Home':		// home
-			if(evt.target.nodeName.toLowerCase() == 'input' && !evt.target.isChildOf(document.getElementById('layout_layout_panel_left'))) { return; }
+			if((evt.target instanceof HTMLInputElement || evt.target instanceof HTMLTextAreaElement) && !evt.target.isChildOf(document.getElementById('layout_layout_panel_left'))) { return; }
 			svg.selected.moveTop(true);
 			tree.seed();
 			svg.select();
 			break;
 		case 'ArrowLeft':		// left arrow key
-			if(evt.target.nodeName.toLowerCase() == 'input' && !evt.target.isChildOf(document.getElementById('layout_layout_panel_left'))) { return; }
+			if((evt.target instanceof HTMLInputElement || evt.target instanceof HTMLTextAreaElement) && !evt.target.isChildOf(document.getElementById('layout_layout_panel_left'))) { return; }
 			if(evt.ctrlKey && !evt.altKey) {
 				svg.gotoPreviousKeyFrame();
 				response = false;
@@ -134,14 +142,14 @@ anigenActual.prototype.eventKeyDown = function(evt) {
 			}
 			break;
 		case 'ArrowUp':		// up arrow key
-			if(evt.target.nodeName.toLowerCase() == 'input' && !evt.target.isChildOf(document.getElementById('layout_layout_panel_left'))) { return; }
+			if((evt.target instanceof HTMLInputElement || evt.target instanceof HTMLTextAreaElement) && !evt.target.isChildOf(document.getElementById('layout_layout_panel_left'))) { return; }
 			if(evt.altKey && svg.selected != svg.svgElement) {
 				svg.select(svg.selected.getViableParent());
 				response = false;
 			}
 			break;
 		case 'ArrowRight':		// right arrow key
-			if(evt.target.nodeName.toLowerCase() == 'input' && !evt.target.isChildOf(document.getElementById('layout_layout_panel_left'))) { return; }
+			if((evt.target instanceof HTMLInputElement || evt.target instanceof HTMLTextAreaElement) && !evt.target.isChildOf(document.getElementById('layout_layout_panel_left'))) { return; }
 			if(evt.ctrlKey && !evt.altKey) {
 				svg.gotoNextKeyFrame();
 				response = false;
@@ -152,26 +160,32 @@ anigenActual.prototype.eventKeyDown = function(evt) {
 			}
 			break;
 		case 'ArrowDown':		// down arrow key
-			if(evt.target.nodeName.toLowerCase() == 'input' && !evt.target.isChildOf(document.getElementById('layout_layout_panel_left'))) { return; }
+			if((evt.target instanceof HTMLInputElement || evt.target instanceof HTMLTextAreaElement) && !evt.target.isChildOf(document.getElementById('layout_layout_panel_left'))) { return; }
 			if(evt.altKey && svg.selected.children.length > 0) {
 				svg.select(svg.selected.children[0]);
 				response = false;
 			}
 			break;
 		case 'Delete':		// delete
-			if(evt.target.nodeName.toLowerCase() == 'input' && !evt.target.isChildOf(document.getElementById('layout_layout_panel_left'))) { return; }
+			if((evt.target instanceof HTMLInputElement || evt.target instanceof HTMLTextAreaElement) && !evt.target.isChildOf(document.getElementById('layout_layout_panel_left'))) { return; }
 			svg.delete(svg.selected);
 			response = false;
 			break;
 		case 'a':		// a
 		case 'A':
+			if((evt.target instanceof HTMLInputElement || evt.target instanceof HTMLTextAreaElement) && !evt.target.isChildOf(document.getElementById('layout_layout_panel_left'))) { return; }
+			if(svg.ui.allSelected) {
+				svg.ui.clearSelect();
+			} else {
+				svg.ui.selectAll();
+			}
 			break;
 		case 'b':    	// b
 		case 'B':
 			break;
 		case 'c':		// c
 		case 'C':
-			if(evt.target.nodeName.toLowerCase() == 'input' && !evt.target.isChildOf(document.getElementById('layout_layout_panel_left'))) { return; }
+			if((evt.target instanceof HTMLInputElement || evt.target instanceof HTMLTextAreaElement) && !evt.target.isChildOf(document.getElementById('layout_layout_panel_left'))) { return; }
 			if(evt.ctrlKey) {
 				svg.copy(svg.selected);
 				response = false;
@@ -236,8 +250,12 @@ anigenActual.prototype.eventKeyDown = function(evt) {
 		case 's':		// s
 		case 'S':
 			if(evt.ctrlKey) {
-			  svg.save();
-			  response = false;
+				if(typeof(Storage) === "undefined" || evt.shiftKey) {
+					svg.save();
+				} else {
+					svg.save(true);
+				}
+				response = false;
 			}
 			break;
 		case 't':    	// t
@@ -248,7 +266,7 @@ anigenActual.prototype.eventKeyDown = function(evt) {
 			break;
 		case 'v':		// v
 		case 'V':
-			if(evt.target.nodeName.toLowerCase() == 'input' && !evt.target.isChildOf(document.getElementById('layout_layout_panel_left'))) { return; }
+			if((evt.target instanceof HTMLInputElement || evt.target instanceof HTMLTextAreaElement) && !evt.target.isChildOf(document.getElementById('layout_layout_panel_left'))) { return; }
 			if(evt.ctrlKey) {
 				if(!anigenActual.lastEvent) {
 					anigenActual.lastEvent = { clientX: window.innerWidth/2, clientY: window.innerHeight/2 }
@@ -260,7 +278,7 @@ anigenActual.prototype.eventKeyDown = function(evt) {
 			break;
 		case 'x':		// x
 		case 'X':
-			if(evt.target.nodeName.toLowerCase() == 'input' && !evt.target.isChildOf(document.getElementById('layout_layout_panel_left'))) { return; }
+			if((evt.target instanceof HTMLInputElement || evt.target instanceof HTMLTextAreaElement) && !evt.target.isChildOf(document.getElementById('layout_layout_panel_left'))) { return; }
 			if(evt.ctrlKey && !evt.shiftKey && svg.selected != svg.svgElement) {
 				svg.cut(svg.selected);
 				response = false;
@@ -385,6 +403,7 @@ anigenActual.prototype.eventMouseDown = function(event) {
 		return;
 	}
 	if(!anigenActual.tools[anigenActual.tool]) { return; }
+	anigenActual.lastEvent = event;
 	anigenActual.tools[anigenActual.tool].mouseDown(event);
 }
 anigenActual.prototype.eventMouseUp = function(event) {
@@ -398,7 +417,12 @@ anigenActual.prototype.eventClick = function(event) {
 		return;
 	}
 	if(!anigenActual.tools[anigenActual.tool]) { return; }
-	anigenActual.tools[anigenActual.tool].mouseClick(event);
+	if(anigenActual.lastEvent && Math.abs(anigenActual.lastEvent.clientX - event.clientX) < 5 
+		&& Math.abs(anigenActual.lastEvent.clientY - event.clientY) < 5
+		&& Math.abs(anigenActual.lastEvent.timeStamp - event.timeStamp) < 250) {
+		anigenActual.tools[anigenActual.tool].mouseClick(event);
+	}
+	anigenActual.lastEvent = null;
 }
 anigenActual.prototype.eventDblClick = function(event) {
 	if(anigenActual.tools[0].target) { anigenActual.tools[0].mouseDblClick(event); return; }
@@ -422,7 +446,7 @@ anigenActual.prototype.eventContextMenu = function(event) {
 }
 anigenActual.prototype.eventClickWindow = function(event) {
 	if(menu) { menu.refresh(); }
-	popup.hide();
+	if(event != popup.event) { popup.hide(); }
 }
 
 anigenActual.prototype.eventChange = function(event) {

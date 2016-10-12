@@ -78,6 +78,8 @@ window.addEventListener("contextmenu", anigenActual.eventContextMenu, false);
 window.addEventListener("click", anigenActual.eventClickWindow, false);
 window.addEventListener("change", anigenActual.eventChange, false);
 
+window.addEventListener("beforeunload", anigenActual.eventNavigation, false);
+
 window.addEventListener("dragover", anigenActual.eventPreventDefault, false);
 window.addEventListener("drop", anigenActual.eventFileDrop, false);
 
