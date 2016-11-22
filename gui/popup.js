@@ -325,6 +325,92 @@ popup.prototype.macroContextMenu = function(target) {
 	this.show(target);
 }
 
+popup.prototype.macroAddValue = function(target) {
+	var animation = svg.selected.shepherd || svg.selected;
+	if(!animation || !(animation instanceof SVGAnimationElement)) { return; }
+	
+	this.reset();
+	
+	var closestFrame = animation.getClosestFrame(true);
+	var closestTime = animation.getClosestTime(true);
+	var relativeTime = animation.getCurrentProgress();
+	
+	var isEditing = Math.abs(relativeTime-animation.times[closestFrame]) < 0.00001;
+	
+	if(animation instanceof animationGroup) {
+		var chil = svg.animationStates[animation.groupName];
+		var opt = [];
+		for(var i = 0; i < chil.length; i++) {
+			opt.push({'value': String(i), 'text': String(chil[i].name)});
+		}
+		var stateSelect = build.select(opt);
+		
+		this.add(stateSelect);
+		
+		if(isEditing) {
+			stateSelect.setSelected(animation.values[closestFrame]);
+		}
+	} else {
+		if(animation instanceof SVGAnimateTransformElement) {
+			switch(animation.getAttribute('type')) {
+				case 'rotate':
+					this.add(build.input('number', animation.values[closestFrame].angle));
+				case 'translate':
+				case 'scale':
+					this.add(build.input('number', animation.values[closestFrame].x));
+					this.add(build.input('number', animation.values[closestFrame].y));
+					break;
+				case 'skewX':
+				case 'skewY':
+					this.add(build.input('number', animation.values[closestFrame].angle));
+					break;
+			}
+		} else {
+			return;
+		}
+	}
+	
+	animation.getSplines();
+	if(animation.splines) {
+		var temp = new spline();
+		var splineSelect = temp.getSelect();
+		var optCustom = document.createElement('option');
+			optCustom.setAttribute('value', -1);
+			optCustom.appendChild(document.createTextNode('custom'));
+		splineSelect.appendChild(optCustom);
+		splineSelect.setAttribute('onchange', "if(this.value == '-1') { this.addClass('small');this.nextElementSibling.removeClass('hidden'); } else { this.removeClass('small');this.nextElementSibling.addClass('hidden'); }");
+		
+		var closestSpline;
+		if(closestFrame != null) {
+			closestSpline = closestFrame > 0 ? animation.splines[closestFrame-1] : animation.splines[closestFrame];
+			closestSpline = closestSpline.type;
+		} else {
+			closestSpline = 0;
+		}
+		splineSelect.setSelected(closestSpline);
+		
+		this.add(splineSelect);
+		
+		var ins1 = build.input('number', '0', { 'min': 0, 'max': 1, 'step': 0.05, 'pattern': '[0-9]*' });
+		var ins2 = build.input('number', '0', { 'min': 0, 'max': 1, 'step': 0.05, 'pattern': '[0-9]*' });
+		var ins3 = build.input('number', '1', { 'min': 0, 'max': 1, 'step': 0.05, 'pattern': '[0-9]*' });
+		var ins4 = build.input('number', '1', { 'min': 0, 'max': 1, 'step': 0.05, 'pattern': '[0-9]*' });
+		var contSplineInput = document.createElement('span');
+			contSplineInput.setAttribute('class', 'splineInput hidden');
+			contSplineInput.appendChild(ins1);
+			contSplineInput.appendChild(ins2);
+			contSplineInput.appendChild(ins3);
+			contSplineInput.appendChild(ins4);
+		this.add(contSplineInput);
+	}
+	
+	this.addButtonOk('svg.evaluateAddValue('+(isEditing)+', '+closestFrame+');');
+	this.addButtonCancel();
+	
+	this.show();
+}
+
+
 
 popup.prototype.macroMenuFile = function(target) {
 	this.reset();
@@ -625,6 +711,8 @@ popup.prototype.macroNewAnimationGroup = function(target) {
 popup.prototype.macroSlider = function(target, value, attributes, actionYes, actionNo, hasNumericInput) {
 	this.reset();
 	
+	// TODO: should use build.slider instead
+	
 	if(hasNumericInput) {
 		if(attributes.onchange) { attributes.onchange = 'this.nextElementSibling.value = this.value;' + attributes.onchange; }
 		if(attributes.onmousemove) { attributes.onmousemove = 'if(!event.buttons){return;};this.nextElementSibling.value = this.value;' + attributes.onmousemove; }
@@ -637,7 +725,7 @@ popup.prototype.macroSlider = function(target, value, attributes, actionYes, act
 		if(attributes.onchange) { attrInput.onchange += attributes.onchange; }			
 		if(attributes && attributes.min) { attrInput.min = attributes.min; }
 		if(attributes && attributes.max) { attrInput.max = attributes.max; }
-		if(attributes && attributes.step) { attrInput.min = attributes.step; }
+		if(attributes && attributes.step) { attrInput.step = attributes.step; }
 		
 		this.add(build.input('number', value, attrInput)).focus();
 	}

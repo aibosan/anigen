@@ -237,6 +237,26 @@ animationGroup.prototype.getSplines = function() {
 	return this.splines;
 }
 
+animationGroup.prototype.getIntensity = function() {
+	this.intensity = [];
+	
+	var temp = this.element.getAttribute('anigen:intensity');
+	if(temp == null) {
+		this.getValues();
+		var c = 1 / (this.values.length - 1);
+		for(var i = 0; i < this.values.length; i++) {
+			this.intensity.push(1);
+		}
+	} else {
+		temp = temp.split(';');
+		for(var i = 0; i < temp.length; i++) {
+			this.intensity.push(parseFloat(temp[i]));
+		}
+	}
+	
+	return this.intensity;
+}
+
 animationGroup.prototype.animate = function(attribute) {
 	if(this.animations[attribute] != null) { return; }
 	
@@ -290,6 +310,8 @@ animationGroup.prototype.commitSplines = function(fromAttribute) {
 animationGroup.prototype.commitTimes = function(fromAttribute) {
 	var newTimes = fromAttribute ? this.getAttribute('anigen:keytimes') : this.times.join(';');
 	
+	//this.validateTimes();
+	
 	for(var i in this.animations) {
 		for(var j = 0; j < this.animations[i].length; j++) {
 			this.animations[i][j].setAttribute('keyTimes', newTimes);
@@ -299,25 +321,57 @@ animationGroup.prototype.commitTimes = function(fromAttribute) {
 	this.element.setAttribute('anigen:keytimes', newTimes);
 }
 
-animationGroup.prototype.commitValues = function(fromAttribute) {
+animationGroup.prototype.commitValues = function(fromAttribute, onlyIndex) {
 	var newValues = fromAttribute ? this.getAttribute('anigen:values') : this.values.join(';');
+	this.getIntensity();
 	
 	var grp = svg.animationStates[this.groupName];
 	if(!grp) { return false;}
 	
 	this.element.setAttribute('anigen:values', newValues);
+	this.getValues();
 	
 	for(var i in this.animations) {		// for all groups of animations attributes animated
 		for(var j = 0; j < this.animations[i].length; j++) { // for each animation itself
-			var newValues = [];
+			var lastValue = null;
+		
+			var newValues = this.animations[i][j].getAttribute('values') ? this.animations[i][j].getAttribute('values').split(';') : [];
+			
 			var childIndex = this.animations[i][j].getAttribute('anigen:childindex');
 			if(!childIndex) { continue; }
 			childIndex = parseInt(childIndex);
 			
-			for(var k = 0; k < this.values.length; k++) { // for each keyFrame
-				newValues.push(
-					grp[this.values[k]].children[childIndex].getAttribute(i) || window.getComputedStyle(grp[this.values[k]].children[childIndex])[i]
-				);
+			var k = onlyIndex != null ? onlyIndex : 0;
+			
+			if(onlyIndex != null && onlyIndex > 0) {
+				lastValue = newValues[onlyIndex-1];
+			}
+			
+			for(k; k < this.values.length; k++) { // for each keyFrame
+				var newValue = grp[this.values[k]].children[childIndex].getAttribute(i) || window.getComputedStyle(grp[this.values[k]].children[childIndex])[i];
+				
+				if(i != 'd' || this.intensity[k] == 1) {
+					newValues[k] = newValue;
+					lastValue = newValue;
+				} else {
+					if(lastValue == null) {
+						lastValue = newValue;
+						newValues[k] = newValue;
+					} else {
+						var pathFrom = document.createElementNS(svgNS, 'path');
+							pathFrom.setAttribute('d', lastValue);
+						var pathTo = document.createElementNS(svgNS, 'path');
+							pathTo.setAttribute('d', newValue);
+							
+						var adjValue = pathFrom.inbetween(pathTo, this.intensity[k]);
+							adjValue = adjValue.toString();
+						
+						lastValue = adjValue;
+						newValues[k] = adjValue;
+					}
+				}
+				
+				if(onlyIndex != null && this.intensity[k] == 1) { break; }
 			}
 			
 			newValues = newValues.join(';');
@@ -402,6 +456,14 @@ animationGroup.prototype.commitAccumulate = function(fromAttribute) {
 		}
 	}
 }
+
+animationGroup.prototype.commitIntensity = function(fromAttribute, onlyIndex) {
+	var newIntensity = fromAttribute ? this.getAttribute('anigen:intensity') : this.intensity.join(';');
+		
+	this.element.setAttribute('anigen:intensity', newIntensity);
+	this.commitValues(false, onlyIndex);
+}
+
 
 animationGroup.prototype.commitAll = function(fromAttribute) {
 	this.commitBegins(fromAttribute);
@@ -545,6 +607,23 @@ animationGroup.prototype.setAccumulate = function(value, makeHistory) {
 	this.accumulate = value;
 	
 	this.commitAccumulate();
+}
+
+animationGroup.prototype.setIntensity = function(index, value, makeHistory) {
+	if(isNaN(parseFloat(value))) { return false; }
+	
+	this.getIntensity();
+	
+	this.intensity[index] = parseFloat(value);
+	
+	if(makeHistory && svg && svg.history) {
+		svg.history.add(new historyAttribute(this.element.id, 
+			{ 'anigen:intensity': this.getAttribute('anigen:intensity') },
+			{ 'anigen:calcmode': this.intensity.join(';') }, true));
+	}
+	
+	this.commitIntensity(false, index);
+	return true;
 }
 
 

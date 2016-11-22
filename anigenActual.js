@@ -2,13 +2,13 @@
  *  @author		Ondrej Benda
  *  @date		2011-2016
  *  @copyright	GNU GPLv3
- *	@version	0.7.5
+ *	@version	0.7.6
  *	@brief		Main event handling class, also links to the instance of svg class
  */
 function anigenActual() {
     this.iconType = 32;
     this.iconHeight = 24;
-    this.version = "0.7.5 Between Frames";
+    this.version = "0.7.6 Citrus Revenge Overdrive";
     this.tool = 1;
 	
 	this.tools = [
@@ -223,6 +223,12 @@ anigenActual.prototype.eventKeyDown = function(evt) {
 			break;
 		case 'k':		// k
 		case 'K':
+			if(evt.ctrlKey && !evt.shiftKey) {
+				if(svg.selected instanceof SVGAnimationElement || (svg.selected.shepherd && svg.selected.shepherd instanceof animationGroup)) {
+					popup.macroAddValue();
+				}
+				response = false;
+			}
 			if(evt.ctrlKey && evt.shiftKey) {
 				w2ui['anigenContext'].click('buttonAnimation');
 				response = false;
@@ -246,6 +252,15 @@ anigenActual.prototype.eventKeyDown = function(evt) {
 		case 'p':		// p
 		case 'P':
 			if(evt.ctrlKey) { svg.pauseToggle(); }
+			break;
+		case 'r':		// r
+		case 'R':
+			if(evt.ctrlKey && !evt.shiftKey) {
+				if(svg.selected instanceof SVGAnimationElement || (svg.selected.shepherd && svg.selected.shepherd instanceof animationGroup)) {
+					popup.macroAddValue();
+				}
+				response = false;
+			}
 			break;
 		case 's':		// s
 		case 'S':
@@ -307,6 +322,7 @@ anigenActual.prototype.eventKeyDown = function(evt) {
 			}
 			break; 
 		case '+':		// plus
+			if(document.activeElement instanceof HTMLInputElement) { break; }
 			if(evt.ctrlKey) {
 				var evaluated = svg.evaluateEventPosition();
 				svg.zoomAround(evaluated.x, evaluated.y, true);
@@ -323,6 +339,7 @@ anigenActual.prototype.eventKeyDown = function(evt) {
 			}
 			break;
 		case '-':		// minus
+			if(document.activeElement instanceof HTMLInputElement) { break; }
 			if(evt.ctrlKey) {
 				var evaluated = svg.evaluateEventPosition();
 				svg.zoomAround(evaluated.x, evaluated.y, false);

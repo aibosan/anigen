@@ -305,9 +305,18 @@ SVGAnimationElement.prototype.commitValues = function(fromAttribute) {
 	this.setAttribute('values', this.values.join(';'));
 }
 
+
+// sets times to ascending order, switching values (and splines)
+SVGAnimationElement.prototype.validateTimes = function() {
+	
+}
+
 // commits times into element
 SVGAnimationElement.prototype.commitTimes = function(fromAttribute) {
 	if(fromAttribute) { return; }
+	
+	// this.validateTimes();
+	
 	this.setAttribute('keyTimes', this.times.join(';'));
 }
 
@@ -373,7 +382,7 @@ SVGAnimationElement.prototype.setValue = function(index, value, makeHistory, isA
 	
 	this.values[index] = value;
 	if(makeHistory) { this.makeHistory(false, true, false); }
-	this.commitValues();
+	this.commitValues(false, index);
 }
 
 SVGAnimationElement.prototype.getValue = function(index) {
@@ -475,20 +484,24 @@ SVGAnimationElement.prototype.getCurrentProgress = function(time) {
 }
 
 // returns index of previous keyTime, or null if animation is not running
-SVGAnimationElement.prototype.getPreviousFrame = function() {
+SVGAnimationElement.prototype.getPreviousFrame = function(inclusive) {
 	var progress = this.getCurrentProgress();
 	if(progress == null) { return null; }
 	
 	var last = null;
 	for(var i = 0; i < this.times.length; i++) {
-		if((this.times[i]-progress) < -0.0001) { last = i; } else { break; }
+		if(inclusive) {
+			if((this.times[i]-progress) <= 0) { last = i; } else { break; }
+		} else {
+			if((this.times[i]-progress) < -0.0001) { last = i; } else { break; }
+		}
 	}
 	return last;
 }
 
 // returns absolute time of the previous keyFrame (factoring in begin times, duration, and repeatCount)
-SVGAnimationElement.prototype.getPreviousTime = function() {
-	var previousFrame = this.getPreviousFrame();
+SVGAnimationElement.prototype.getPreviousTime = function(inclusive) {
+	var previousFrame = this.getPreviousFrame(inclusive);
 	
 	var currentLoop = this.getCurrentLoop();
 	var currentBegin = this.getCurrentLoopBeginTime();
@@ -504,20 +517,24 @@ SVGAnimationElement.prototype.getPreviousTime = function() {
 }
 
 // returns index of next keyTime, or null if no future time exists
-SVGAnimationElement.prototype.getNextFrame = function() {
+SVGAnimationElement.prototype.getNextFrame = function(inclusive) {
 	var progress = this.getCurrentProgress();
 	if(progress == null) { return null; }
 	
 	var next = null;
 	for(var i = this.times.length-1; i >= 0; i--) {
-		if((this.times[i]-progress) > 0.0001) { next = i; } else { break; }
+		if(inclusive) {
+			if((this.times[i]-progress) >= 0) { next = i; } else { break; }
+		} else {
+			if((this.times[i]-progress) > 0.0001) { next = i; } else { break; }
+		}
 	}
 	return next;
 }
 
 // returns absolute time of the previous keyFrame (factoring in begin times, duration, and repeatCount)
-SVGAnimationElement.prototype.getNextTime = function() {
-	var nextFrame = this.getNextFrame();
+SVGAnimationElement.prototype.getNextTime = function(inclusive) {
+	var nextFrame = this.getNextFrame(inclusive);
 	if(nextFrame == null) { return null; }
 	
 	var currentBegin = this.getCurrentLoopBeginTime();
@@ -525,16 +542,33 @@ SVGAnimationElement.prototype.getNextTime = function() {
 }
 
 // returns index of closest keyTime
-SVGAnimationElement.prototype.getClosestFrame = function() {
+SVGAnimationElement.prototype.getClosestFrame = function(inclusive) {
 	var progress = this.getCurrentProgress();
 	if(progress == null) { return null; }
 	
-	var previous = this.getPreviousFrame();
-	var next = this.getNextFrame();
+	var previous = this.getPreviousFrame(inclusive);
+	var next = this.getNextFrame(inclusive);
 	
 	if(previous == null) { return next; }
 	if(next == null) { return previous; }
-	if(Math.abs(progress - this.times(previous)) < Math.abs(progress - this.times(next))) {
+	if(Math.abs(progress - this.times[previous]) < Math.abs(progress - this.times[next])) {
+		return previous;
+	} else {
+		return next;
+	}
+}
+
+// returns index of closest keyTime
+SVGAnimationElement.prototype.getClosestTime = function(inclusive) {
+	var progress = this.getCurrentProgress();
+	if(progress == null) { return null; }
+	
+	var previous = this.getPreviousTime(inclusive);
+	var next = this.getNextTime(inclusive);
+	
+	if(previous == null) { return next; }
+	if(next == null) { return previous; }
+	if(Math.abs(progress - previous) < Math.abs(progress - next)) {
 		return previous;
 	} else {
 		return next;
@@ -561,27 +595,52 @@ SVGAnimationElement.prototype.moveValue = function(movedIndex, targetIndex, make
 	this.commitValues();
 }
 
-// duplicates value (and if applicable, its spline) at given index
-// throws DOMException if index is out of bounds
-SVGAnimationElement.prototype.duplicateValue = function(index, makeHistory) {
-	if(isNaN(index) || index < 0 || index >= this.values.length) { throw new DOMException(1); }
+
+
+SVGAnimationElement.prototype.addValue = function(value, relativeTime, splineString, makeHistory) {
+//	if(isNaN(index) || index < 0 || index >= this.values.length) { throw new DOMException(1); }
 	this.getSplines();
 	this.getValues();
 	this.getTimes();
 	
-	this.values.splice(index, 0, this.values[index]);
+	var index = 0;
 	
-	this.times.splice(index, 0, this.times[index]);
+	for(var i = 0; i < this.times.length; i++) {
+		if(this.times[i] < relativeTime) {
+			index = i;
+		} else {
+			break;
+		}
+	}
+	this.duplicateValue(index);
+	this.times[index+1] = relativeTime;
 	
+	this.values[index+1] = value;
 	if(this.splines) {
-		if(index == 0) { index++; }
-		this.splines.splice(index-1, 0, this.splines[index-1].clone());
+		var newSpline;
+		if(splineString instanceof spline) {
+			newSpline = splineString.clone();
+		} else {
+			newSpline = new spline(splineString);
+		}
+		this.splines[index] = newSpline;
 	}
 	
 	if(makeHistory) { this.makeHistory(true, true, (this.splines ? true : false)); }
 	if(this.splines) { this.commitSplines(); }
 	this.commitTimes();
 	this.commitValues();
+}
+
+// duplicates value (and if applicable, its spline) at given index
+// throws DOMException if index is out of bounds
+SVGAnimationElement.prototype.duplicateValue = function(index) {
+	this.getKeyframes();
+	try {
+		this.keyframes.duplicate(index);
+	} catch(err) {
+		throw err;
+	}
 }
 
 SVGAnimationElement.prototype.createInbetween = function(one, two, ratio, makeHistory) {
@@ -869,7 +928,7 @@ SVGAnimationElement.prototype.getCurrentValue = function(time) {
 		} catch(e) {
 			return null;
 		}
-	}
+	}	
 }
 
 

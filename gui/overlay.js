@@ -325,8 +325,8 @@ overlay.prototype.macroStateInbetweenRefresh = function(groupName, hard) {
 	}
 	
 	if(hard) {
-		var state1Preview = new imageSVG(states[state1Index].element, { width: 100, height: 50 });
-		var state2Preview = new imageSVG(states[state2Index].element, { width: 100, height: 50 });
+		var state1Preview = new imageSVG(states[state1Index].element, { width: 100, height: 100 });
+		var state2Preview = new imageSVG(states[state2Index].element, { width: 100, height: 100 });
 		this.content.children[0].children[1].children[0].removeChildren();
 		this.content.children[0].children[1].children[0].appendChild(state1Preview.container);
 		this.content.children[0].children[1].children[2].removeChildren();
@@ -334,7 +334,7 @@ overlay.prototype.macroStateInbetweenRefresh = function(groupName, hard) {
 	}
 	
 	var inbetween = states[state1Index].inbetween(states[state2Index], ratio);
-	var inbetweenPreview = new imageSVG(inbetween.element, { width: 100, height: 50 });
+	var inbetweenPreview = new imageSVG(inbetween.element, { width: 250, height: 250 });
 	this.content.children[0].children[1].children[1].removeChildren();
 	this.content.children[0].children[1].children[1].appendChild(inbetweenPreview.container);
 	

@@ -77,6 +77,9 @@ function animationState(elem, name, group) {
 		svg.animationStates[this.group].push(this);
 		
 	}
+	
+	this.preview = new imageSVG(this.element, { width: 100, height: 50 });
+	
 	if(!this.name) { this.name = 'state_'+this.number; }
 	this.element.setAttribute('anigen:name', this.name);
 	this.element.setAttribute('anigen:type', 'animationState');

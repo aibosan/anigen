@@ -167,7 +167,11 @@ windowAnimation.prototype.refreshKeyframes = function(dontEdit) {
 		headings.push("Height");
 	} else if(this.animation instanceof animationGroup) {
 		type = 6;
+		
+		this.animation.getIntensity();
+		
 		headings.push("State");
+		headings.push("Intensity");
 		headings.push("Preview");
 		if(!svg.animationStates || !svg.animationStates[this.animation.groupName]) { return; }
 		
@@ -208,6 +212,8 @@ windowAnimation.prototype.refreshKeyframes = function(dontEdit) {
 	
 	
 	var array = [];
+	
+	var lastState;
 	
 	for(var i = 0; i < this.animation.times.length; i++) {
 		var subArray = [ '_' ];
@@ -324,13 +330,35 @@ windowAnimation.prototype.refreshKeyframes = function(dontEdit) {
 				subArray.push(cont);
 				break;
 			case 6:		// animation group
-				var state = svg.animationStates[this.animation.groupName][this.animation.values[i]];
+				var preview;
+				if(lastState == null || this.animation.intensity[i] == 1) {
+					lastState = svg.animationStates[this.animation.groupName][this.animation.values[i]];
+					preview = lastState.preview.container.cloneNode(true);
+				} else {
+					var newState = lastState.inbetween(svg.animationStates[this.animation.groupName][this.animation.values[i]], this.animation.intensity[i]);
+					newState.group = lastState.group;
+					lastState = newState;
+					preview = newState.preview.container.cloneNode(true);
+				}
+				
 				var sel = groupSelection.cloneNode(true);
 				sel.setSelected(parseInt(this.animation.values[i]));
 				subArray.push(sel);
 				
-				var preview = new imageSVG(state.element, { width: 100, height: 50 });
-				subArray.push(preview.container);
+				if(i > 0) {
+					subArray.push(
+						build.slider(this.animation.intensity[i], {
+							'min': 0, 'max': 1, 'step': 0.01 }, true, true)
+					);
+				} else {
+					subArray.push(
+						build.slider(this.animation.intensity[i], { 
+							'disabled': 'disabled',
+							'min': 0, 'max': 1, 'step': 0.01 }, true, true)
+					);
+				}
+				
+				subArray.push(preview);
 				break;
 			case 7:		// animated viewbox
 				subArray.push(build.input('number', this.animation.values[i].x));
@@ -419,11 +447,11 @@ windowAnimation.prototype.refreshBegins = function() {
 		var iTime = document.createElement("input");
 			iTime.setAttribute('type', 'number');
 			iTime.setAttribute('value', beginList[i].value);
-			iTime.setAttribute('onchange', 'if(!windowAnimation.animation){return;};windowAnimation.animation=windowAnimation.animation.setBegin('+i+', this.value, true);windowAnimation.refreshBegins();');
+			iTime.setAttribute('onchange', 'if(!windowAnimation.animation){return;};windowAnimation.animation=windowAnimation.animation.setBegin('+i+', this.value, true);windowAnimation.refresh();');
 		
 		var iRemove = document.createElement("button");
 			iRemove.appendChild(document.createTextNode("Remove"));
-			iRemove.setAttribute('onclick', 'if(!windowAnimation.animation){return;};windowAnimation.animation=windowAnimation.animation.removeBegin('+i+', true);windowAnimation.refreshBegins();');
+			iRemove.setAttribute('onclick', 'if(!windowAnimation.animation){return;};windowAnimation.animation=windowAnimation.animation.removeBegin('+i+', true);windowAnimation.refresh();');
 		
 		if(i < beginList.length-1) {
 			iTime.setAttribute('max', beginList[i+1].value);
@@ -447,7 +475,7 @@ windowAnimation.prototype.refreshBegins = function() {
 	
 	var addBegin = document.createElement("button");
 		addBegin.appendChild(document.createTextNode("Add"));
-		addBegin.setAttribute('onclick', 'if(!windowAnimation.animation){return;};windowAnimation.animation=windowAnimation.animation.addBegin(this.previousElementSibling.value, true);windowAnimation.refreshBegins();');
+		addBegin.setAttribute('onclick', 'if(!windowAnimation.animation){return;};windowAnimation.animation=windowAnimation.animation.addBegin(this.previousElementSibling.value, true);windowAnimation.refresh();');
 		
 	var cont = document.createElement('div');
 		cont.appendChild(iNew);
@@ -556,7 +584,7 @@ windowAnimation.prototype.select = function(index, event) {
 			this.selected.splice(this.selected.indexOf(index), 1);
 		} else {
 			this.selected.push(index);
-			this.selected.sort();
+			this.selected.sort(function(a,b){ return (a-b); });
 		}
 	} else if(event.shiftKey && this.selected[0] != index) {
 		if(index > this.selected[0]) {
@@ -578,7 +606,7 @@ windowAnimation.prototype.select = function(index, event) {
 			}
 			this.selected = newSelected;
 		}
-		this.selected.sort();
+		this.selected.sort(function(a,b){ return (a-b); });
 	} else {
 		if(this.selected.indexOf(index) != -1 && this.selected.length == 1) {
 			this.selected = [];
@@ -837,7 +865,7 @@ windowAnimation.prototype.eventChange = function(event) {
 			anim.setValue(row, col-2, value, true);
 		}
 	} else if(anim instanceof animationGroup) {
-		splineRow = 4;
+		splineRow = 5;
 		if(col == 2) {
 			var value = parseInt(val);
 			if(windowAnimation.selected.length == 0 || windowAnimation.selected.indexOf(row) == -1) {
@@ -845,6 +873,15 @@ windowAnimation.prototype.eventChange = function(event) {
 			} else {
 				for(var i = 0; i < windowAnimation.selected.length; i++) {
 					anim.setValue(windowAnimation.selected[i], value, true);
+				}
+			}
+		}
+		if(col == 3) {
+			if(windowAnimation.selected.length == 0 || windowAnimation.selected.indexOf(row) == -1) {
+				anim.setIntensity(row, val, true);
+			} else {
+				for(var i = 0; i < windowAnimation.selected.length; i++) {
+					anim.setIntensity(windowAnimation.selected[i], val, true);
 				}
 			}
 		}
@@ -873,7 +910,8 @@ windowAnimation.prototype.eventChange = function(event) {
 	
 	if(col == splineRow) {
 		if(event.target instanceof HTMLSelectElement) {
-			if(event.target.value == "-1") {
+			var splineType = parseInt(event.target.value);
+			if(splineType == -1) {
 				var data = [
 					event.target.nextElementSibling.children[0].value,
 					event.target.nextElementSibling.children[1].value,
@@ -891,11 +929,11 @@ windowAnimation.prototype.eventChange = function(event) {
 				}
 			} else {
 				if(windowAnimation.selected.length == 0 || windowAnimation.selected.indexOf(row) == -1) {
-					anim.setSplineType(row-1, event.target.value, true);
+					anim.setSplineType(row-1, splineType, true);
 				} else {
 					for(var i = 0; i < windowAnimation.selected.length; i++) {
 						if(windowAnimation.selected[i] == 0) { continue; }
-						anim.setSplineType(windowAnimation.selected[i]-1, event.target.value, true);
+						anim.setSplineType(windowAnimation.selected[i]-1, splineType, true);
 					}
 				}
 				windowAnimation.refreshKeyframes();
@@ -951,7 +989,9 @@ windowAnimation.prototype.eventClick = function(event) {
 	
 	event.stopPropagation();
 	
-	if(index == 0 || index == anim.times.length-1) { return; }
+	
+	if(index == 0 && anim.times[0] == 0) { return; }	// first value
+	if(index == anim.times.length-1 && anim.times[anim.times.length-1] == 1) { return; }	// last value
 	
 	var min, max, step, value;
 	var attrOut = { 'onchange': '', 'onmousemove': '' };

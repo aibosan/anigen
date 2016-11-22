@@ -542,6 +542,84 @@ root.prototype.evaluateGroupInbetween = function(valueIndex, groupName) {
 	windowAnimation.refreshKeyframes();
 }
 
+root.prototype.evaluateAddValue = function(hasValue, index) {
+	var animation = this.selected.shepherd || this.selected;
+	if(!animation || !(animation instanceof SVGAnimationElement)) { return; }
+	
+	var newValue;
+	var splinePosition = 1;
+	
+	if(animation instanceof animationGroup) {
+		newValue = parseInt(popup.content.children[0].value);
+	} else {
+		if(animation instanceof SVGAnimateTransformElement) {
+			
+			switch(animation.getAttribute('type')) {
+				case 'rotate':
+					newValue = new angle(
+						parseFloat(popup.content.children[0].value),
+						parseFloat(popup.content.children[1].value),
+						parseFloat(popup.content.children[2].value)
+					);
+					splinePosition = 3;
+					break;
+				case 'translate':
+				case 'scale':
+					newValue = new coordinates(
+						parseFloat(popup.content.children[0].value),
+						parseFloat(popup.content.children[1].value)
+					);
+					splinePosition = 2;
+					break;
+				case 'skewX':
+				case 'skewY':
+					newValue = new angle(
+						parseFloat(popup.content.children[0].value)
+					);
+					break;
+			}
+		} else {
+			return;
+		}
+	}
+	
+	
+	
+	if(hasValue && index != null) {
+		animation.setValue(index, newValue, true);
+	}
+	
+	var newSpline, newSplineType;
+	if(animation.splines) {
+		newSplineType = parseInt(popup.content.children[splinePosition].value);
+		var newSpline;
+		if(newSplineType == -1) {
+			newSpline = new spline(
+				popup.content.children[2].children[0].value,
+				popup.content.children[2].children[1].value,
+				popup.content.children[2].children[2].value,
+				popup.content.children[2].children[3].value
+			);
+		} else {
+			newSpline = new spline(newSplineType);
+		}
+		
+		if(hasValue && index != null) {
+			animation.setSpline(index, newSpline, true);
+		}
+		
+	}
+	
+	var relativeTime = animation.getCurrentProgress();
+	
+	if(!hasValue || index == null) {
+		animation.addValue(newValue, relativeTime, newSpline, true);
+	}
+	windowAnimation.refreshKeyframes();
+	this.gotoTime();
+}
+
+
 // toggles target's "display" attribute between "none" and no attribute (default - displayed)
 root.prototype.toggleVisibility = function(target) {
 	if(!target) { return; }

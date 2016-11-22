@@ -195,7 +195,14 @@ div.progress.indefinite > div:first-child {
 	to { background-position: 0 0; }
 }
 
+span.slider > * {
+	vertical-align: middle;
+	display: table-cell;
+}
 
+span.slider input:last-child {
+	width: 3.5em;
+}
 
 
 
@@ -333,7 +340,7 @@ label[for="files"]:hover, label[for="files"].dragover {
 }
 
 .hidden {
-    display: none;
+    display: none !important;
 }
 
 

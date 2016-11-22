@@ -14,7 +14,7 @@ function spline() {
 	var input = [];
 	
 	if(arguments.length == 1) {
-		if(!isNaN(arguments[0])) {
+		if(typeof arguments[0] === 'number') {
 			this.setType(parseInt(arguments[0]));
 		} else if(typeof arguments[0] === 'string') {
 			input = arguments[0];

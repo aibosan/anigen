@@ -59,7 +59,9 @@ SVGGElement.prototype.getCenter = function(viewport) {
 	
 	for(var i = 0; i < this.children.length; i++) {
 		if(!(this.children[i] instanceof SVGAnimationElement) && typeof this.children[i].getCenter === 'function') {
+			
 			var coords = this.children[i].getCenter(viewport);
+			
 			if(!coords) { continue; }
 			if(coords.x != null && (xMax == null || xMax < coords.x)) { xMax = coords.x; }
 			if(coords.x != null && (xMin == null || xMin > coords.x)) { xMin = coords.x; }

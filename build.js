@@ -210,5 +210,37 @@ build.icon = function(picture) {
 	return span;
 }
 
-
+build.slider = function(value, attributes, numericInput, soft) {
+	if(numericInput) {
+		var attrInput = { 'onchange': 'this.previousElementSibling.value = this.value;' };
+		if(attributes.onchange) { attrInput.onchange += attributes.onchange; }			
+		if(attributes && attributes.min && !soft) { attrInput.min = attributes.min; }
+		if(attributes && attributes.max && !soft) { attrInput.max = attributes.max; }
+		if(attributes && attributes.step) { attrInput.step = attributes.step; }
+		
+		var field = build.input('number', value, attrInput);
+		
+		if(attributes.onchange) {
+			attributes.onchange = 'this.nextElementSibling.value = this.value;' + attributes.onchange;
+		} else {
+			attributes.onchange = 'this.nextElementSibling.value = this.value;';
+		}
+		if(attributes.onmousemove) {
+			attributes.onmousemove = 'if(!event.buttons){return;};this.nextElementSibling.value = this.value;' + attributes.onmousemove;
+		} else {
+			attributes.onmousemove = 'if(!event.buttons){return;};this.nextElementSibling.value = this.value;';
+		}
+		
+		var slider = build.input('range', value, attributes);
+		
+		
+		var container = document.createElement('span');
+		container.setAttribute('class', 'slider');
+		container.appendChild(slider);
+		container.appendChild(field);
+		return container;
+	} else {
+		return build.input('range', value, attributes);
+	}
+}
 

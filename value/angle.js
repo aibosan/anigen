@@ -3,18 +3,23 @@
  *  @date		2011-2016
  *  @copyright	GNU GPLv3
  */
-function angle(input) {
+function angle() {
     this.angle = null;
     this.x = null;
     this.y = null;
-
-    if(input == null) { return; }
-    input = input.replace(/,/g, ' ').replace(/^\s+|\s+$/g, '').replace(/\s+/g, ' ');
-    input = input.split(" ");
 	
-    if(input.length >= 1 && !isNaN(input[0])) { this.angle = parseFloat(input[0]); }
-    if(input.length >= 2 && !isNaN(input[1])) { this.x = parseFloat(input[1]); }
-    if(input.length >= 3 && !isNaN(input[0])) { this.y = parseFloat(input[2]); }
+	if(typeof arguments[0] === 'string') {
+		var input = arguments[0].replace(/,/g, ' ').replace(/^\s+|\s+$/g, '').replace(/\s+/g, ' ');
+		input = input.split(" ");
+	
+		if(input.length >= 1 && !isNaN(input[0])) { this.angle = parseFloat(input[0]); }
+		if(input.length >= 2 && !isNaN(input[1])) { this.x = parseFloat(input[1]); }
+		if(input.length >= 3 && !isNaN(input[0])) { this.y = parseFloat(input[2]); }
+	} else {
+		if(typeof arguments[0] === 'number') { this.angle = arguments[0]; }
+		if(typeof arguments[1] === 'number') { this.x = arguments[1]; }
+		if(typeof arguments[2] === 'number') { this.y = arguments[2]; }
+	}
 }
 
 angle.prototype.invert = function() {

@@ -679,10 +679,12 @@ SVGPathElement.prototype.getCenter = function(viewport) {
 		if(pathData.baseVal.getItem(i).x != null && (xMin == null || xMin > pathData.baseVal.getItem(i).x)) { xMin = pathData.baseVal.getItem(i).x; }
 		if(pathData.baseVal.getItem(i).y != null && (yMax == null || yMax < pathData.baseVal.getItem(i).y)) { yMax = pathData.baseVal.getItem(i).y; }
 		if(pathData.baseVal.getItem(i).y != null && (yMin == null || yMin > pathData.baseVal.getItem(i).y)) { yMin = pathData.baseVal.getItem(i).y; }
-		if(pathData.animVal.getItem(i).x != null && (xMax_anim == null || xMax_anim < pathData.animVal.getItem(i).x)) { xMax_anim = pathData.animVal.getItem(i).x; }
-		if(pathData.animVal.getItem(i).x != null && (xMin_anim == null || xMin_anim > pathData.animVal.getItem(i).x)) { xMin_anim = pathData.animVal.getItem(i).x; }
-		if(pathData.animVal.getItem(i).y != null && (yMax_anim == null || yMax_anim < pathData.animVal.getItem(i).y)) { yMax_anim = pathData.animVal.getItem(i).y; }
-		if(pathData.animVal.getItem(i).y != null && (yMin_anim == null || yMin_anim > pathData.animVal.getItem(i).y)) { yMin_anim = pathData.animVal.getItem(i).y; }
+		if(i < pathData.animVal.length) {
+			if(pathData.animVal.getItem(i).x != null && (xMax_anim == null || xMax_anim < pathData.animVal.getItem(i).x)) { xMax_anim = pathData.animVal.getItem(i).x; }
+			if(pathData.animVal.getItem(i).x != null && (xMin_anim == null || xMin_anim > pathData.animVal.getItem(i).x)) { xMin_anim = pathData.animVal.getItem(i).x; }
+			if(pathData.animVal.getItem(i).y != null && (yMax_anim == null || yMax_anim < pathData.animVal.getItem(i).y)) { yMax_anim = pathData.animVal.getItem(i).y; }
+			if(pathData.animVal.getItem(i).y != null && (yMin_anim == null || yMin_anim > pathData.animVal.getItem(i).y)) { yMin_anim = pathData.animVal.getItem(i).y; }
+		}
 	}
 	
 	if(xMax == null || xMin == null || yMax == null || yMin == null) { return; }

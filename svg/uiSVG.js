@@ -89,7 +89,7 @@ uiSVG.prototype.rebuildSelect = function(soft) {
 	}
 	this.selected = [];
 	for(var i = 0; i < this.selectedIndexes.length; i++) {
-		if(this.anchorContainer.children[this.selectedIndexes[i]] && this.anchorContainer.children[this.selectedIndexes[i]].shepherd) {
+		if(this.anchorContainer.children[this.selectedIndexes[i]] && this.anchorContainer.children[this.selectedIndexes[i]].shepherd && typeof this.anchorContainer.children[this.selectedIndexes[i]].shepherd.select === 'function') {
 			this.anchorContainer.children[this.selectedIndexes[i]].shepherd.select(true);
 			this.selected.push(this.anchorContainer.children[this.selectedIndexes[i]].shepherd);
 		}
