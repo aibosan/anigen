@@ -28,6 +28,7 @@ popup.prototype.hide = function() {
 	this.container.style.opacity = '0';
 	this.hidden = true;
 	this.event = null;
+	document.body.focus();
 }
 
 popup.prototype.show = function(target) {
@@ -176,29 +177,42 @@ popup.prototype.macroAnimationContextMenu = function(event, index) {
 	var tArray = [];
 	var rAttributes = [];
 	
-	var selText = windowAnimation.selected.length > 0 ? "selected" : "keyframes";
+	var canInbetween = false;
+	for(var i = 0; i < windowAnimation.selected.length-1; i++) {
+		if(windowAnimation.selected[i] == windowAnimation.selected[i+1]-1) {
+			canInbetween = true;
+			break;
+		}
+	}
+	
+	var hasSelection = windowAnimation.selected.length > 1;
 	
 	tArray.push([ build.icon("arrow-up-white"), "Move up" ]);
 	tArray.push([ build.icon("plus-white"), "Duplicate" ]);
 	tArray.push([ build.icon("arrow-down-white"), "Move down" ]);
 	tArray.push([ "", "" ]);
 	tArray.push([ build.icon("plus-black"), "Create inbetween" ]);
-	tArray.push([ build.icon("clock-black"), "Balance " + selText ]);
-	tArray.push([ build.icon("arrow-double-horizontal-black"), "Invert " + selText ]);
-	tArray.push([ build.icon("trash-black"), "Remove " + selText ]);
+	tArray.push([ build.icon("clock-black"), "Balance " + (canInbetween ? 'selected' : 'keyframes') ]);
+	tArray.push([ build.icon("arrow-double-horizontal-black"), "Invert " + (windowAnimation.selected.length > 1 ? 'selected' : 'keyframe') ]);
+	tArray.push([ build.icon("trash-black"), "Remove " + (windowAnimation.selected.length > 1 ? 'selected' : 'keyframe') ]);
 	
 	rAttributes.push({ 'onclick': 'popup.hide();windowAnimation.contextMenuEvaluate("up", '+index+');' });
 	rAttributes.push({ 'onclick': 'popup.hide();windowAnimation.contextMenuEvaluate("duplicate", '+index+');' });
 	rAttributes.push({ 'onclick': 'popup.hide();windowAnimation.contextMenuEvaluate("down", '+index+');' });
 	rAttributes.push({ 'class': 'hr' });
-	
-	if(windowAnimation.selected.length == 2 && windowAnimation.selected[0]+1 == windowAnimation.selected[1] ) {
+
+	if(canInbetween) {
 		rAttributes.push({ 'onclick': 'popup.hide();windowAnimation.contextMenuEvaluate("inbetween", '+index+');' });
 	} else {
 		rAttributes.push({ 'class': 'disabled' });
 	}
 	
-	rAttributes.push({ 'onclick': 'popup.hide();windowAnimation.contextMenuEvaluate("balance", '+index+');' });
+	if(canInbetween || windowAnimation.selected.length == 0) {
+		rAttributes.push({ 'onclick': 'popup.hide();windowAnimation.contextMenuEvaluate("balance", '+index+');' });
+	} else {
+		rAttributes.push({ 'class': 'disabled' });
+	}
+	
 	if(windowAnimation.animation.isInvertible()) {
 		rAttributes.push({ 'onclick': 'popup.hide();windowAnimation.contextMenuEvaluate("invert", '+index+');' });
 	} else {
@@ -245,7 +259,6 @@ popup.prototype.macroLayerContextMenu = function(event, targetId) {
 
 popup.prototype.macroContextMenu = function(target) {
 	this.reset();
-	
 	var evaluated = svg.evaluateEventPosition( { 'clientX': target.x, 'clientY': target.y } );
 	
 	var tArray = [];
@@ -255,10 +268,21 @@ popup.prototype.macroContextMenu = function(target) {
 	
 	tArray.push([ build.icon("arrow-undo-black"), "Undo" ]);
 	tArray.push([ build.icon("arrow-redo-black"), "Redo" ]);
+	
+	if(!(svg.selected instanceof SVGSVGElement) && svg.selected.getAttribute('anigen:type') != 'animationGroup' && !svg.selected.hasAnimation()) {
+		tArray.push([ "", "" ]);
+		tArray.push([ build.icon("gears-white"), "To animation state..." ]);
+	} else if(svg.selected instanceof SVGAnimationElement || (svg.selected.shepherd && svg.selected.shepherd instanceof animationGroup)) {
+		tArray.push([ "", "" ]);
+		tArray.push([ build.icon("plus-white"), "Set value..." ]);
+		tArray.push([ build.icon("gears-white"), "Create new state..." ]);
+	}
+	
 	tArray.push([ "", "" ]);
 	tArray.push([ build.icon("ex-white"), "Cut" ]);
 	tArray.push([ build.icon("edit-white"), "Paste" ]);
 	tArray.push([ build.icon("copy-white"), "Copy" ]);
+	
 	/*
 	tArray.push([ "", "" ]);
 	tArray.push([ build.icon("arrow-circle-white"), "Rotate..." ]);
@@ -280,19 +304,27 @@ popup.prototype.macroContextMenu = function(target) {
 		rAttributes.push({ 'class': 'disabled' });
 	}
 	
-	if(svg.selected != svg.svgElement) {
+	if(!(svg.selected instanceof SVGSVGElement) && svg.selected.getAttribute('anigen:type') != 'animationGroup' && !svg.selected.hasAnimation()) {
 		rAttributes.push({ 'class': 'hr' });
+		rAttributes.push({ 'onclick': 'event.stopPropagation();popup.hide();popup.macroToAnimationState(null, svg.selected);' });
+	} else if(svg.selected instanceof SVGAnimationElement || (svg.selected.shepherd && svg.selected.shepherd instanceof animationGroup)) {
+		rAttributes.push({ 'class': 'hr' });
+		rAttributes.push({ 'onclick': 'event.stopPropagation();popup.hide();popup.macroAddValue();' });
+		rAttributes.push({ 'onclick': 'event.stopPropagation();popup.hide();popup.macroAddState();' });
+	}
+	
+	rAttributes.push({ 'class': 'hr' });
+	if(svg.selected != svg.svgElement) {
 		rAttributes.push({ 'onclick': 'event.stopPropagation();popup.hide();svg.cut(svg.selected);' });
 	} else {
-		rAttributes.push({ 'class': 'hr' });
 		rAttributes.push({ 'class': 'disabled' });
 	}
 	
 	if(svg.elementTemp) {
 		if(svg.selected.getAttribute('inkscape:groupmode') == 'layer' || svg.selected == svg.svgElement) {
-			rAttributes.push({ 'onclick': 'event.stopPropagation();popup.hide();svg.paste('+evaluated.x+', '+evaluated.y+', svg.selected);'});
+			rAttributes.push({ 'onclick': 'event.stopPropagation();popup.hide();svg.paste({ "x": '+evaluated.x+', "y": '+evaluated.y+' }, svg.selected);'});
 		} else {
-			rAttributes.push({ 'onclick': 'event.stopPropagation();popup.hide();svg.paste('+evaluated.x+', '+evaluated.y+', svg.selected.parentNode, svg.selected);'});
+			rAttributes.push({ 'onclick': 'event.stopPropagation();popup.hide();svg.paste({ "x": '+evaluated.x+', "y": '+evaluated.y+' }, svg.selected.parentNode, svg.selected);'});
 		}
 	} else {
 		rAttributes.push({ 'class': 'disabled' });
@@ -329,13 +361,17 @@ popup.prototype.macroAddValue = function(target) {
 	var animation = svg.selected.shepherd || svg.selected;
 	if(!animation || !(animation instanceof SVGAnimationElement)) { return; }
 	
+	animation.getKeyframes();
+	
 	this.reset();
 	
 	var closestFrame = animation.getClosestFrame(true);
 	var closestTime = animation.getClosestTime(true);
 	var relativeTime = animation.getCurrentProgress();
 	
-	var isEditing = Math.abs(relativeTime-animation.times[closestFrame]) < 0.00001;
+	var closestItem = animation.keyframes.getItem(closestFrame);
+	
+	var isEditing = Math.abs(relativeTime-closestItem.time) < 0.00001;
 	
 	if(animation instanceof animationGroup) {
 		var chil = svg.animationStates[animation.groupName];
@@ -347,22 +383,20 @@ popup.prototype.macroAddValue = function(target) {
 		
 		this.add(stateSelect);
 		
-		if(isEditing) {
-			stateSelect.setSelected(animation.values[closestFrame]);
-		}
+		stateSelect.setSelected(closestItem.value);
 	} else {
 		if(animation instanceof SVGAnimateTransformElement) {
 			switch(animation.getAttribute('type')) {
 				case 'rotate':
-					this.add(build.input('number', animation.values[closestFrame].angle));
+					this.add(build.input('number', closestItem.value.angle));
 				case 'translate':
 				case 'scale':
-					this.add(build.input('number', animation.values[closestFrame].x));
-					this.add(build.input('number', animation.values[closestFrame].y));
+					this.add(build.input('number', closestItem.value.x));
+					this.add(build.input('number', closestItem.value.y));
 					break;
 				case 'skewX':
 				case 'skewY':
-					this.add(build.input('number', animation.values[closestFrame].angle));
+					this.add(build.input('number', closestItem.value.angle));
 					break;
 			}
 		} else {
@@ -370,8 +404,7 @@ popup.prototype.macroAddValue = function(target) {
 		}
 	}
 	
-	animation.getSplines();
-	if(animation.splines) {
+	if(animation.getCalcMode() == 'spline') {
 		var temp = new spline();
 		var splineSelect = temp.getSelect();
 		var optCustom = document.createElement('option');
@@ -382,7 +415,13 @@ popup.prototype.macroAddValue = function(target) {
 		
 		var closestSpline;
 		if(closestFrame != null) {
-			closestSpline = closestFrame > 0 ? animation.splines[closestFrame-1] : animation.splines[closestFrame];
+			try {
+				closestSpline = closestItem.spline ? closestItem.spline : animation.keyframes.getItem(closestFrame+1).spline;
+			} catch(err) {
+				// only one keyframe - no spline
+				closestSpline = new spline();
+			}
+			
 			closestSpline = closestSpline.type;
 		} else {
 			closestSpline = 0;
@@ -407,7 +446,54 @@ popup.prototype.macroAddValue = function(target) {
 	this.addButtonOk('svg.evaluateAddValue('+(isEditing)+', '+closestFrame+');');
 	this.addButtonCancel();
 	
-	this.show();
+	this.show(target);
+}
+
+popup.prototype.macroAddState = function(target) {
+	var animation = svg.selected.shepherd || svg.selected;
+	if(!animation || !(animation instanceof animationGroup)) { return; }
+	
+	this.reset();
+	
+	animation.getKeyframes();
+	
+	var relativeTime = animation.getCurrentProgress();
+	var prevFrame = animation.getPreviousFrame(true);
+	var nextFrame = animation.getNextFrame(true);
+	
+	if(relativeTime == null || prevFrame == null || nextFrame == null ||
+		!animation.getAttribute('anigen:group') || !svg.animationStates) { return; }
+	
+	var prevItem = animation.keyframes.getItem(prevFrame);
+	var nextItem = animation.keyframes.getItem(nextFrame);
+	
+	var states = svg.animationStates[animation.getAttribute('anigen:group')];
+	
+	if(!states) { return; }
+	
+	var progression;
+	
+	if(nextItem.time == prevItem.time) {
+		progression = 0;
+	} else {
+		progression = (relativeTime-prevItem.time)/(nextItem.time-prevItem.time);
+		if(nextItem.spline) {
+			progression = nextItem.spline.getValue(progression);
+		}
+	}
+		
+	var inbetween = states[prevItem.value].inbetween(states[nextItem.value], progression);
+	
+	var preview = new imageSVG(inbetween.element, { width: 250, height: 250 });
+	
+	this.add(preview.container);
+	
+	this.add(build.input('text', states[prevItem.value].name+'-'+(Math.abs(progression*100)/100)+'-'+states[nextItem.value].name));
+	
+	this.addButtonOk('svg.evaluateGroupInbetween(null, "'+animation.getAttribute('anigen:group')+'", this.previousElementSibling.value, '+prevItem.value+', '+nextItem.value+', '+progression+');');
+	this.addButtonCancel();
+	
+	this.show(target);
 }
 
 
@@ -466,9 +552,9 @@ popup.prototype.macroMenuEdit = function(target) {
 	rAttributes.push({ 'onclick': 'popup.hide();svg.cut(svg.selected);' });
 	
 	if(svg.selected.getAttribute('inkscape:groupmode') == 'layer' || svg.selected == svg.svgElement) {
-		rAttributes.push({ 'onclick': 'event.stopPropagation();popup.hide();svg.paste(null, null, svg.selected);'});
+		rAttributes.push({ 'onclick': 'event.stopPropagation();popup.hide();svg.paste(null, svg.selected);'});
 	} else {
-		rAttributes.push({ 'onclick': 'event.stopPropagation();popup.hide();svg.paste(null, null, svg.selected.parentNode, svg.selected);'});
+		rAttributes.push({ 'onclick': 'event.stopPropagation();popup.hide();svg.paste(null, svg.selected.parentNode, svg.selected);'});
 	}
 	
 	rAttributes.push({ 'onclick': 'popup.hide();svg.copy(svg.selected);' });
@@ -681,8 +767,17 @@ popup.prototype.macroToAnimationState = function(target, element) {
 	}
 	
 	this.add(build.input('text', element.id, { 'onfocus': 'if(this.value == "'+element.id+'") { this.value = null; }' } ));
-	this.add(build.select(options, { 'onchange': 'this.nextSibling.style.display = this.value == "" ? null : "none";' } ));
-	this.add(build.input('text', 'New group', { 'onfocus': 'if(this.value == "New group") { this.value = null; }' } ));
+	
+	var stateSelect = build.select(options, { 'onchange': 'this.nextSibling.style.display = this.value == "" ? null : "none";' } );
+	var groupName = build.input('text', 'New group', { 'onfocus': 'if(this.value == "New group") { this.value = null; }' } );
+	
+	if(options.length > 1) {
+		stateSelect.setSelected(1);
+		groupName.style.display = 'none';
+	}
+	
+	this.add(stateSelect);
+	this.add(groupName);
 	
 	this.addButtonOk('svg.newAnimState("'+element.id+'", this.previousElementSibling.previousElementSibling.previousElementSibling.value, this.previousElementSibling.previousElementSibling.value != "" ? this.previousElementSibling.previousElementSibling.value : this.previousElementSibling.value);');
 	this.addButtonCancel();

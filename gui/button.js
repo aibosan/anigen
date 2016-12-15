@@ -7,13 +7,17 @@
 function button(icon, action, title) {
     this.container = document.createElement('div');
 	
+	this.container.setAttribute('class', 'button');
+	this.container.addClass(icon);
+	
+	/*
 	var img = document.createElement('div');
-	img.setAttribute("class", "w2ui-tb-image w2ui-icon");
+	//img.setAttribute("class", "w2ui-tb-image w2ui-icon");
 	img.addClass(icon);
 	
 	this.container.appendChild(img);
-	this.container.setAttribute('class', 'button');
 	
+	*/
 	if(action) { this.container.setAttribute('onclick', action); }
 	if(title) { this.container.setAttribute('title', title); }
 	

@@ -30,6 +30,10 @@ highlight.prototype.refresh = function() {
     this.clone.setAttribute("anigen:lock", "interface");
 	this.clone.style.fill = 'none';
 	this.clone.style.stroke = this.color.getHex();
+	this.clone.style.filter = null;
+	this.clone.removeAttribute('filter');
+	this.clone.style.clipPath = null;
+	this.clone.removeAttribute('clip-path');
 	
 	this.container.appendChild(this.clone);
 	this.adjustZoom();

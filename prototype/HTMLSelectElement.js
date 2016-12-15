@@ -8,7 +8,10 @@
 HTMLSelectElement.prototype.setSelected = function(index) {
 	index = parseInt(index);
 	if(index == null || isNaN(index)) { return; }
-	if(index < 0 || index >= this.children.length) { throw new DOMException(1); }
+	if(index < 0 || index >= this.children.length) {
+		// out of bounds
+		return;
+	}
 	for(var i = 0; i < this.children.length; i++) {
 		if(index == i) {
 			this.children[i].setAttribute('selected', 'selected');

@@ -6,6 +6,7 @@
  */
  
 SVGAnimateMotionElement.prototype.getPath = function() {
+	if(this.path) { return this.path; }
 	this.path = null;
 	for(var i = 0; i < this.children.length; i++) {
 		if(this.children[i] instanceof SVGMPathElement) {
@@ -20,18 +21,24 @@ SVGAnimateMotionElement.prototype.getPath = function() {
 	if(!this.getAttribute('path')) { return null; }
 	this.path = document.createElementNS("http://www.w3.org/2000/svg", "path");
 	this.path.setD(this.getAttribute('path'));
-	var center = this.getCenter();
+	var center = this.getCenter(true);
+	
+	//var CTMBase = this.parentNode.getCTMBase();
+	//this.path.setAttribute('transform', CTMBase.toString()+' translate('+center.x+', '+center.y+')');
+	
 	this.path.setAttribute('transform', 'translate('+center.x+', '+center.y+')');
 	return this.path;
 }
 
 SVGAnimateMotionElement.prototype.setPathData = function(data) {
+	this.path = null;
 	this.setAttribute('path', data);
 }
 
 SVGAnimateMotionElement.prototype.setPath = function(target, absolute) {
 	if(!(target instanceof SVGPathElement)) { return; }
 	
+	this.path = null;
 	var path = target.cloneNode(false);
 		path.consumeTransform();
 		path.setStartAtZero();
@@ -52,38 +59,147 @@ SVGAnimateMotionElement.prototype.setPath = function(target, absolute) {
 	svg.gotoTime();
 }
 
-SVGAnimateMotionElement.prototype.getValues = function() {
-	this.values = [];
-	var temp = this.getAttribute('keyPoints');
-	if(!temp) { return this.values; }
-	temp = temp.split(';');
-	for(var i = 0; i < temp.length; i++) {
-		this.values.push(parseFloat(temp[i]));
+SVGAnimateMotionElement.prototype.getKeyframes = function() {
+	if(this.keyframes) {
+		return this.keyframes;
 	}
-	return this.values;
+	
+	var timesArray = this.getAttribute('keyTimes') ? this.getAttribute('keyTimes').split(';') : [];
+	var splineArray = this.getAttribute('keySplines') ? this.getAttribute('keySplines').split(';') : [];
+	var valueArray = this.getAttribute('keyPoints') ? this.getAttribute('keyPoints').split(';') : [];
+	
+	this.keyframes = new keyframeList();
+	
+	for(var i = 0; i < timesArray.length; i++) {
+		this.keyframes.push(
+			new keyframe(parseFloat(timesArray[i]),
+				(splineArray[i-1] ? new spline(splineArray[i-1]) : null),
+				parseFloat(valueArray[i])
+			)
+		);
+	}
+	return this.keyframes;
 }
 
 
 
 // commits values into element
-SVGAnimateMotionElement.prototype.commitValues = function() {
-	this.setAttribute('keyPoints', this.values.join(';'));
-}
-
-SVGAnimateMotionElement.prototype.setValue = function(index, value, makeHistory) {
-	this.getValues();
-	if(index < 0 || index >= this.values.length) { throw new DOMException(1); }
-	if(value < 0) { value = 0; }
-	if(value > 1) { value = 1; }
+SVGAnimateMotionElement.prototype.commit = function(noHistory) {
+	if(noHistory) { this.wipe(); }
+	this.getKeyframes();
 	
-	if(makeHistory && svg && svg.history) {
-		svg.history.add(new historyGeneric(this.id, 
-			'target.setValue('+index+', '+this.values[index]+');',
-			'target.setValue('+index+', '+value+');', true));
+	var out = this;
+	var count = 0;
+	
+	var newTimes = this.keyframes.getTimes().join(';');
+	var newSplines = this.keyframes.getSplines().join(';');
+	var newValues = this.keyframes.getValues().join(';');
+	
+	var newBegin = this.getBeginList().join(';');
+	var newDur = this.getDur().toString();
+	
+	var newRepeatCount = String(this.getRepeatCount());
+	var newCalcMode = this.getCalcMode();
+	var newFill = this.getFill();
+	var newAdditive = this.getAdditive();
+	var newAccumulate = this.getAccumulate();
+	
+	var newRotate = String(this.getRotate());
+	
+	var histFrom = {};
+	var histTo = {};
+	
+	if(newTimes != this.getAttribute('keyTimes') && newTimes.length != 0 && this.getAttribute('keyTimes')) {
+		histFrom['keyTimes'] = this.getAttribute('keyTimes');
+		histTo['keyTimes'] = newTimes;
+		this.setAttribute('keyTimes', newTimes);
+		count++;
+	}
+	if(newSplines != this.getAttribute('keySplines') && newSplines.length != 0 && this.getAttribute('keySplines')) {
+		histFrom['keySplines'] = this.getAttribute('keySplines');
+		histTo['keySplines'] = newSplines;
+		this.setAttribute('keySplines', newSplines);
+		count++;
+	}
+	if(newValues != this.getAttribute('keyPoints') && newValues.length != 0 && this.getAttribute('keyPoints')) {
+		histFrom['keyPoints'] = this.getAttribute('keyPoints');
+		histTo['keyPoints'] = newValues;
+		this.setAttribute('keyPoints', newValues);
+		count++;
 	}
 	
-	this.values[index] = value;
-	this.commitValues();
+	
+	if(newDur != this.getAttribute('dur') && newDur.length != 0 && this.getAttribute('dur')) {
+		histFrom['dur'] = this.getAttribute('dur');
+		histTo['dur'] = newDur;
+		this.setAttribute('dur', newDur);
+		count++;
+	}
+	
+	if(newRepeatCount != this.getAttribute('repeatCount') && newRepeatCount.length != 0 && this.getAttribute('repeatCount')) {
+		histFrom['repeatCount'] = this.getAttribute('repeatCount');
+		histTo['repeatCount'] = newRepeatCount;
+		this.setAttribute('repeatCount', newRepeatCount);
+		count++;
+	}
+	if(newCalcMode != this.getAttribute('calcMode') && newCalcMode.length != 0 && this.getAttribute('calcMode')) {
+		histFrom['calcMode'] = this.getAttribute('calcMode');
+		histTo['calcMode'] = newCalcMode;
+		this.setAttribute('calcMode', newCalcMode);
+		count++;
+	}
+	if(newFill != this.getAttribute('fill') && newFill.length != 0 && this.getAttribute('fill')) {
+		histFrom['fill'] = this.getAttribute('fill');
+		histTo['fill'] = newFill;
+		this.setAttribute('fill', newFill);
+		count++;
+	}
+	if(newAdditive != this.getAttribute('additive') && newAdditive.length != 0 && this.getAttribute('additive')) {
+		histFrom['additive'] = this.getAttribute('additive');
+		histTo['additive'] = newAdditive;
+		this.setAttribute('additive', newAdditive);
+		count++;
+	}
+	if(newAccumulate != this.getAttribute('accumulate') && newAccumulate.length != 0 && this.getAttribute('accumulate')) {
+		histFrom['accumulate'] = this.getAttribute('accumulate');
+		histTo['accumulate'] = newAccumulate;
+		this.setAttribute('accumulate', newAccumulate);
+		count++;
+	}
+	
+	if(newRotate != this.getAttribute('rotate') && newRotate.length != 0 && this.getAttribute('rotate')) {
+		histFrom['rotate'] = this.getAttribute('rotate');
+		histTo['rotate'] = newRotate;
+		this.setAttribute('rotate', newRotate);
+		count++;
+	}
+	
+	if(newBegin != this.getAttribute('begin') && newBegin.length != 0 && this.getAttribute('begin')) {
+		histFrom['begin'] = this.getAttribute('begin');
+		histTo['begin'] = newBegin;
+		this.setAttribute('begin', newBegin);
+		
+		var clone = this.cloneNode(true);
+		clone.wipe();
+		this.parentNode.insertBefore(clone, this);
+		this.parentNode.removeChild(this);
+		out = clone;
+		
+		if(svg.selected == this) { svg.selected = clone; }
+		if(windowAnimation.animation == this) { windowAnimation.animation = clone; }
+		tree.seed();
+		tree.select(svg.selected);
+		svg.select();
+		
+		count++;
+	}
+	
+	if(!noHistory && svg && svg.history && count > 0) {
+		svg.history.add(new historyAttribute(this.id, histFrom, histTo, true));
+	}
+	
+	svg.gotoTime();
+	return out;
 }
 
 SVGAnimateMotionElement.prototype.getRotate = function(value) {
@@ -98,8 +214,8 @@ SVGAnimateMotionElement.prototype.setRotate = function(value) {
 	if(isNaN(value) && (value != 'auto' || value != 'auto-reverse')) { return; }
 	if(!isNaN(value)) { value = parseFloat(value); }
 	this.rotate = value;
-	this.setAttribute('rotate', this.rotate);
 }
+
 
 SVGAnimateMotionElement.prototype.generateAnchors = function() {
 	this.getPath();
@@ -120,26 +236,3 @@ SVGAnimateMotionElement.prototype.generateAnchors = function() {
 	return generated;
 }
 
-SVGAnimateMotionElement.prototype.createInbetween = function(one, two, ratio, makeHistory) {
-	if(two < one) {
-		var temp = one;
-		one = two;
-		two = temp;
-	}
-	if(ratio == null || ratio < 0 || ratio > 1) { ratio = 0.5; }
-	
-	this.duplicateValue(one, makeHistory);
-	this.getValues();
-	this.getSplines();
-	
-	this.times[one+1] += (this.times[two+1]-this.times[one])*ratio;
-	if(this.splines) {
-		this.splines[one] = this.splines[one].inbetween(this.splines[two], ratio);
-	}
-	
-	this.values[one+1] += (this.values[two+1]-this.values[one])*ratio;
-	if(makeHistory) { this.makeHistory(true, true, (this.splines ? true : false)); }
-	if(this.splines) { this.commitSplines(); }
-	this.commitTimes();
-	this.commitValues();
-}

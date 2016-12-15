@@ -22,6 +22,10 @@ function angle() {
 	}
 }
 
+angle.prototype.isInvertible = function() {
+	return true;
+}
+
 angle.prototype.invert = function() {
 	if(this.angle != null) { this.angle *= -1; }
 }
@@ -35,7 +39,7 @@ angle.prototype.toString = function() {
 }
 
 angle.prototype.clone = function() {
-	return new angle(this.angle + " " + this.x + " " + this.y);
+	return new angle(this.angle, this.x, this.y);
 }
 
 angle.prototype.inbetween = function(other, ratio) {

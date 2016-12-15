@@ -37,6 +37,7 @@ uiSVG.prototype.addSelect = function(target) {
 	if(!target.selectable) { return; }
 	for(var i = 0; i < this.anchorContainer.children.length; i++) {
 		if(this.anchorContainer.children[i] == target.container) {
+			if(this.selectedIndexes.indexOf(i) != -1) { return; }	// already selected
 			this.selectedIndexes.push(i);
 			this.selectedIndexes.sort();
 			this.selected.push(target);
@@ -107,6 +108,9 @@ uiSVG.prototype.addAnchor = function(anchor, anchorGroup) {
 	if(this.anchors[anchorGroup] == null) { this.anchors[anchorGroup] = []; }
 	this.anchors[anchorGroup].push(anchor);
 	this.anchorContainer.appendChild(anchor.container || anchor);
+	if(anchor.selectable) {
+		if(anchor.selected) { this.addSelect(anchor); } else { this.removeSelect(anchor); }
+	}
 }
 
 // removes anchor from the UI group

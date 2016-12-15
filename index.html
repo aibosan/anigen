@@ -17,7 +17,9 @@
     <meta http-equiv="Expires" content="0" />
     <title id="page_title">aniGen</title>
 	
+	<!--
     <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+	-->
 
     <link rel="alternate icon" type="image/png" href="_png/favicon.png">
 
@@ -31,12 +33,13 @@
 	<link rel="stylesheet" type="text/css" href="_css/popup.css">
 	<link rel="stylesheet" type="text/css" href="_css/window.css">
 	
-	<!-- jquery up to date -->
-    <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+	<!-- jquery local -->
+	<script type="text/javascript" src="_libs/jquery/jquery-3.1.1.min.js"></script>
 	
-	<!-- jquery local
-	<script type="text/javascript" src="_libs/jquery/jquery-1.8.3.min.js"></script> 
+	<!-- jquery up to date
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
 	-->
+	
 	
     <script type="text/javascript" src="_libs/w2ui/w2ui-1.4.3.js"></script>
 	
@@ -55,6 +58,7 @@
 <div id="anigenGUI" style="height: 100%"></div>
 
 <div id="anigenCanvas" style="height: 100%"></div>
+
 </body>
 
 <script type="text/javascript" src="formula.js"></script>
@@ -76,6 +80,8 @@
 <script type="text/javascript" src="value/rectangle.js"></script>
 <script type="text/javascript" src="value/spline.js"></script>
 <script type="text/javascript" src="value/time.js"></script>
+<script type="text/javascript" src="value/keyframe.js"></script>
+<script type="text/javascript" src="value/keyframeList.js"></script>
 
 <script type="text/javascript" src="pathSeg/pathSeg.js"></script>
 <script type="text/javascript" src="pathSeg/pathSegArc.js"></script>

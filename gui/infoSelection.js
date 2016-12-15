@@ -48,6 +48,12 @@ infoSelection.prototype.refresh = function() {
 		case "animate":
 			this.info.appendChild(document.createTextNode(element.getAttribute('attributeName')));
 			break;
+		case "use":
+			var ownerId = element.getAttribute('xlink:href');
+			if(!ownerId) { break; }
+			ownerId = ownerId.substring(1);
+			this.info.appendChild(new button('icon-chain-black', 'svg.select("'+ownerId+'")', 'Select linked element'));
+			break;
 	}
 	if(element.getAttribute('inkscape:groupmode') == 'layer') {
 		this.info.appendChild(document.createTextNode(element.getAttribute('inkscape:label')));

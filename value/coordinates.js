@@ -19,6 +19,10 @@ function coordinates() {
 	}
 }
 
+coordinates.prototype.isInvertible = function() {
+	return true;
+}
+
 coordinates.prototype.invert = function() {
 	this.x *= -1;
 	this.y *= -1;
@@ -29,7 +33,7 @@ coordinates.prototype.toString = function() {
 }
 
 coordinates.prototype.clone = function() {
-	return new coordinates(this.toString());
+	return new coordinates(this.x, this.y);
 }
 
 coordinates.prototype.inbetween = function(other, ratio) {

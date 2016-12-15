@@ -108,10 +108,17 @@ spline.prototype.getValue = function(x) {
 	var lY = [ 0, 1 ];
 	
 	var intersection = computeIntersections(pX,pY,lX,lY);
+	
 	if(intersection[0].y >= 0 && intersection[0].y <= 1) { return intersection[0].y; }
 	if(intersection[1].y >= 0 && intersection[1].y <= 1) { return intersection[1].y; }
 	if(intersection[2].y >= 0 && intersection[2].y <= 1) { return intersection[2].y; }
-	return intersection[intersection.length-1].y;
+	
+	// something something precision TODO
+	if(x < 0.01) {
+		return 0;
+	} else {
+		return 1;
+	}
 }
 
 // returns clone of this element (for deep copies)

@@ -66,7 +66,7 @@ toolGroup.prototype.mouseDblClick = function(event) {
 		selectionTarget = selectionTarget.getAnimations()[0];
 	}
 	if(!selectionTarget.getViableParent()) { return; }		// in case no viable parent exists
-	while((selectionTarget.getViableParent().getAttribute('inkscape:groupmode') != 'layer') && selectionTarget.getViableParent() instanceof SVGElement
+	while(selectionTarget.getViableParent() && (selectionTarget.getViableParent().getAttribute('inkscape:groupmode') != 'layer') && selectionTarget.getViableParent() instanceof SVGElement
 		&& selectionTarget.getViableParent() != svg.selected) {
 			// works up from the clicked element to one just inside the currently selected object
 		selectionTarget = selectionTarget.getViableParent();

@@ -8,7 +8,7 @@
 SVGAnimateElement.prototype.generateAnchors = function() {
 	if(this.getAttribute('attributeName') == 'd' && windowAnimation.selected.length != 0) {
 		svg.ui.selectionBox.hide();
-		this.getValues();
+		this.getKeyframes();
 		var CTM = this.parentNode.getCTMBase();
 		var transform = CTM.toString();
 		
@@ -31,9 +31,9 @@ SVGAnimateElement.prototype.generateAnchors = function() {
 			originalPath.setAttribute('d', this.parentNode.getAttribute('d'));
 		
 		for(var i = 0; i < windowAnimation.selected.length; i++) {
-			if(i == 0 || this.values[windowAnimation.selected[i]] != this.values[windowAnimation.selected[i-1]]) {
+			if(i == 0 || this.keyframes.getItem(windowAnimation.selected[i]).value != this.keyframes.getItem(windowAnimation.selected[i-1]).value) {
 				lastPath = document.createElementNS(svgNS, 'path');
-				lastPath.setAttribute('d', this.values[windowAnimation.selected[i]]);
+				lastPath.setAttribute('d', this.keyframes.getItem(windowAnimation.selected[i]).value);
 				lastPath.setAttribute('transform', transform);
 				lastPath.setAttribute("anigen:lock", "interface");
 				
@@ -50,7 +50,7 @@ SVGAnimateElement.prototype.generateAnchors = function() {
 				
 				if(firstAnchors == null) { firstAnchors = currentAnchors; }
 				
-				if(windowAnimation.selected.length != 1 && i == windowAnimation.selected.length-1 && this.values[windowAnimation.selected[i]] == this.values[windowAnimation.selected[0]]) {
+				if(windowAnimation.selected.length != 1 && i == windowAnimation.selected.length-1 && this.keyframes.getItem(windowAnimation.selected[i]).value == this.keyframes.getItem(windowAnimation.selected[0]).value) {
 					currentAnchors = firstAnchors;
 				} else {
 					allAnchors = allAnchors.concat(currentAnchors.anchors);
@@ -62,7 +62,8 @@ SVGAnimateElement.prototype.generateAnchors = function() {
 			}
 			for(var j = 0; j < currentAnchors.anchors[0].length; j++) {
 				currentAnchors.anchors[0][j].animation = this;
-				currentAnchors.anchors[0][j].actions.move += 'this.animation.setValue('+windowAnimation.selected[i]+', this.element.getAttribute("d"), true);';
+				currentAnchors.anchors[0][j].actions.move += 'this.animation.setValue('+windowAnimation.selected[i]+', this.element.getAttribute("d"));';
+				currentAnchors.anchors[0][j].actions.move += 'this.animation.commit();';
 				currentAnchors.anchors[0][j].actions.mouseup = '';
 			}
 			if(anigenActual.settings.get('progressCurve') && lastAnchors && currentAnchors && currentAnchors != lastAnchors) {
@@ -78,35 +79,43 @@ SVGAnimateElement.prototype.generateAnchors = function() {
 	}
 }
 
-SVGAnimateElement.prototype.createInbetween = function(one, two, ratio, makeHistory) {
-	if(this.getAttribute('attributeName') != 'd') { return; }
+
+SVGAnimateElement.prototype.inbetween = function(one, two, ratio) {
+	this.getKeyframes();
 	if(two < one) {
 		var temp = one;
 		one = two;
 		two = temp;
 		ratio = 1-ratio;
 	}
-	if(ratio == null || ratio < 0 || ratio > 1) { ratio = 0.5; }
+	if(ratio == null) { ratio = 0.5; }
 	
-	this.duplicateValue(one, makeHistory);
-	this.getValues();
-	this.getSplines();
-	
-	this.times[one+1] += (this.times[two+1]-this.times[one])*ratio;
-	if(this.splines) {
-		this.splines[one] = this.splines[one].inbetween(this.splines[two], ratio);
+	var item1, item2;
+	try {
+		item1 = this.keyframes.getItem(one);
+		item2 = this.keyframes.getItem(two);
+	} catch(err) {
+		throw err;
 	}
+	
+	var newSpline = null;
+	if(item1.spline && item2.spline) {
+		newSpline = item1.spline.inbetween(item2.spline, ratio);
+	} else {
+		if(item1.spline) { newSpline = item1.spline.clone(); }
+		else if(item2.spline) { newSpline = item2.spline.clone(); }
+	}
+	var clone = new keyframe(item1.time+ratio*(item2.time-item1.time), newSpline, '', item1.intensity+ratio*(item2.intensity-item1.intensity));
 	
 	var p1 = document.createElementNS(svgNS, 'path');
 	var p2 = document.createElementNS(svgNS, 'path');
-	p1.setAttribute('d', this.values[one]);
-	p2.setAttribute('d', this.values[two+1]);
+	p1.setAttribute('d', item1.value);
+	p2.setAttribute('d', item2.value);
 	var pData = p1.inbetween(p2, ratio);
-	this.values[one+1] = pData.toString();
+	clone.value = pData.toString();
 	
-	if(makeHistory) { this.makeHistory(true, true, (this.splines ? true : false)); }
-	if(this.splines) { this.commitSplines(); }
-	this.commitTimes();
-	this.commitValues();
+	this.keyframes.push(clone);
+	
+	this.keyframes.sort();
 }
 

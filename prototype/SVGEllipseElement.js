@@ -15,7 +15,7 @@ SVGEllipseElement.prototype.consumeTransform = function(matrixIn) {
 		var oldStroke = parseFloat(this.style.strokeWidth);
 		var zero = matrix.toViewport(0,0);
 		var one = matrix.toViewport(1,1);
-		var ratio = Math.sqrt((one.x-zero.x)*(one.x-zero.x)+(one.y-zero.y)*(one.y-zero.y));
+		var ratio = Math.sqrt((one.x-zero.x)*(one.x-zero.x)+(one.y-zero.y)*(one.y-zero.y))/Math.sqrt(2);
 		this.style.strokeWidth = ratio*oldStroke;
 	}
 	

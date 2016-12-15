@@ -46,7 +46,11 @@ function time(input) {
 	
 	// CONSTRUCTOR ENDS
 }
-	// returns readable string version of value
+
+time.prototype.clone = function() {
+	return new time(this.seconds+'s');
+}
+
 time.prototype.toString = function() {
 	if(this.special) { return this.value; }
 	return this.value + this.unit;

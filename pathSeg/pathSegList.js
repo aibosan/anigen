@@ -12,6 +12,7 @@ function pathSegList() {
 // removes all items
 pathSegList.prototype.clear = function() {
 	this.arr = [];
+	this.length = 0;
 }
 
 // throws DOMException if index is out of bounds

@@ -23,8 +23,9 @@ function historyAttribute(targetId, attributesFrom, attributesTo, collapsible) {
 				el.setAttribute(i, this.attributesFrom[i]);
 			}
 		}
+		if(typeof el.commit === 'function') { el.commit(true); }
 		if(el.shepherd && el.shepherd instanceof SVGAnimationElement) {
-			el.shepherd.commitAll(true);
+			el.shepherd.commit(true);
 		}
 		return true;
 	};
@@ -39,8 +40,9 @@ function historyAttribute(targetId, attributesFrom, attributesTo, collapsible) {
 				el.setAttribute(i, this.attributesTo[i]);
 			}
 		}
+		if(typeof el.commit === 'function') { el.commit(true); }
 		if(el.shepherd && el.shepherd instanceof SVGAnimationElement) {
-			el.shepherd.commitAll(true);
+			el.shepherd.commit(true);
 		}
 		return true;
 	};

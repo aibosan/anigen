@@ -87,12 +87,12 @@ window.addEventListener("drop", anigenActual.eventFileDrop, false);
 var popup = new popup();
 var overlay = new overlay();
 
-
 if(anigenActual.isConfirmed()) {
     overlay.macroOpen();
 } else {
     overlay.macroDisclaimer();
 }
+overlay.animate = true;
 
 window.addEventListener('resize', anigenActual.eventResize, false);
 

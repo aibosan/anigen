@@ -16,361 +16,395 @@ SVGAnimationElement.prototype.consumeTransform = function(matrixIn) {
 SVGAnimationElement.prototype.setZero = function(x, y, makeHistory) {
 	this.parentNode.setZero(x, y, makeHistory);
 }
+
+
+SVGAnimationElement.prototype.getKeyframes = function() {
+	if(this.keyframes) {
+		return this.keyframes;
+	}
 	
+	if(this instanceof animationGroup) {
+		var timesArray = this.getAttribute('anigen:keytimes') ? this.getAttribute('anigen:keytimes').split(';') : [];
+		var splineArray = this.getAttribute('anigen:keysplines') ? this.getAttribute('anigen:keysplines').split(';') : [];
+		var valueArray = this.getAttribute('anigen:values') ? this.getAttribute('anigen:values').split(';') : [];
+		var intensityArray = this.getAttribute('anigen:intensity') ? this.getAttribute('anigen:intensity').split(';') : [];
+	} else {
+		var timesArray = this.getAttribute('keyTimes') ? this.getAttribute('keyTimes').split(';') : [];
+		var splineArray = this.getAttribute('keySplines') ? this.getAttribute('keySplines').split(';') : [];
+		var valueArray = this.getAttribute('values') ? this.getAttribute('values').split(';') : [];
+	}
+	
+	this.keyframes = new keyframeList();
+	
+	for(var i = 0; i < timesArray.length; i++) {
+		var newValue = valueArray[i];
+		if(!isNaN(newValue)) {
+			newValue = parseFloat(newValue);
+		}
+		this.keyframes.push(
+			new keyframe(parseFloat(timesArray[i]),
+				(splineArray[i-1] ? new spline(splineArray[i-1]) : null),
+				newValue,
+				(intensityArray && intensityArray[i] ? parseFloat(intensityArray[i]) : null)
+			)
+		);
+	}
+	return this.keyframes;
+}
+
+
 // returns a parsed list of time objects corresponding to the "begin" attribute values
 // copies the same list as element.beginList
 SVGAnimationElement.prototype.getBeginList = function() {
+	if(this.beginList) { return this.beginList; }
 	this.beginList = [];
-	if(!this.getAttribute('begin')) { return this.beginList; }
-	var temp = this.getAttribute('begin').split(';');
+	if(!this.getAttribute('begin') && !this.getAttribute('anigen:begin')) { return this.beginList; }
+	var temp = this instanceof animationGroup ? this.getAttribute('anigen:begin').split(';') : this.getAttribute('begin').split(';');
 	for(var i = 0; i < temp.length; i++) {
 		this.beginList.push(new time(temp[i]));
 	}
 	return this.beginList;
 }
 
-// returns dur as time object
-// copies the same object as element.dur
-SVGAnimationElement.prototype.getDur = function() {
-	this.dur = new time(this.getAttribute('dur'));
-	return this.dur;
-}
-
-// returns repeatCount attribute; integer for numeric value, string for "indefinite"
-// copies the same as element.repeatCount
-SVGAnimationElement.prototype.getRepeatCount = function() {
-	this.repeatCount = this.getAttribute('repeatCount');
-	if(!isNaN(this.repeatCount)) { this.repeatCount = parseInt(this.repeatCount); }
-	return this.repeatCount;
-}
-
-SVGAnimationElement.prototype.getCalcMode = function() {
-	this.calcMode = this.getAttribute('calcMode');
-	return this.calcMode;
-}
-
-SVGAnimationElement.prototype.getFill = function() {
-	this.fill = this.getAttribute('fill') || 'replace';
-	return this.fill;
-}
-
-SVGAnimationElement.prototype.getAdditive = function() {
-	this.additive = this.getAttribute('additive') || 'replace';
-	return this.additive;
-}
-
-SVGAnimationElement.prototype.getAccumulate = function() {
-	this.accumulate = this.getAttribute('accumulate') || 'none';
-	return this.accumulate;
-}
-
 // sets begin of given index to given time object, and remakes (clones and deletes) the element to stop lingering begins
 // throws DOMException if index is out of bounds
 // returns new element
-SVGAnimationElement.prototype.setBegin = function(index, value, makeHistory) {
+SVGAnimationElement.prototype.setBegin = function(index, value) {
 	this.getBeginList();
 	
 	if(index < 0 || index >= this.beginList.length) { throw new DOMException(1); }
 	
 	this.beginList[index] = new time(value);
-	
-	if(makeHistory && svg && svg.history) {
-		svg.history.add(new historyAttribute(this.id, 
-			{ 'begin': this.getAttribute('begin') },
-			{ 'begin': this.beginList.join(';') },
-			true));
-	}
-	
-	this.setAttribute('begin', this.beginList.join(';'));
-	if(this.timelineObject) { this.timelineObject.takeValues(); }
-	
-	var par = this.parentNode;
-	var nextSibling = this.nextElementSibling;
-	var clone = this.cloneNode(true);
-	this.parentNode.insertBefore(clone, this);
-	this.parentNode.removeChild(this);
-	
-	return clone;
 }
 
-SVGAnimationElement.prototype.removeBegin = function(index, makeHistory) {
+SVGAnimationElement.prototype.removeBegin = function(index) {
 	this.getBeginList();
 	
 	if(index < 0 || index >= this.beginList.length) { throw new DOMException(1); }
 	
 	this.beginList.splice(index, 1);
-	
-	if(makeHistory && svg && svg.history) {
-		svg.history.add(new historyAttribute(this.id, 
-			{ 'begin': this.getAttribute('begin') },
-			{ 'begin': this.beginList.length == 0 ? null : this.beginList.join(';') },
-			true));
-	}
-	
-	if(this.beginList.length == 0) {
-		this.removeAttribute('begin');
-	} else {
-		this.setAttribute('begin', this.beginList.join(';'));
-	}
-	if(this.timelineObject) { this.timelineObject.takeValues(); }
-	
-	var par = this.parentNode;
-	var nextSibling = this.nextElementSibling;
-	var clone = this.cloneNode(true);
-	this.parentNode.insertBefore(clone, this);
-	this.parentNode.removeChild(this);
-	
-	return clone;
 }
 
-SVGAnimationElement.prototype.addBegin = function(timeValue, makeHistory) {
+SVGAnimationElement.prototype.addBegin = function(timeValue) {
 	this.getBeginList();
 	
 	var newTime = new time(timeValue);
 	
 	this.beginList.push(newTime);
 	this.beginList.sort(function(a,b) { return a.seconds-b.seconds; });
-	
-	if(makeHistory && svg && svg.history) {
-		svg.history.add(new historyAttribute(this.id, 
-			{ 'begin': this.getAttribute('begin') },
-			{ 'begin': this.beginList.join(';') },
-			true));
+}
+
+SVGAnimationElement.prototype.setBeginList = function(arr) {
+	var newList = [];
+	for(var i = 0; i < arr.length; i++) {
+		if(!(arr[i] instanceof time)) { return false; } 
+		newList.push(arr[i].clone());
 	}
-	
-	this.setAttribute('begin', this.beginList.join(';'));
-	if(this.timelineObject) { this.timelineObject.takeValues(); }
-	
-	var par = this.parentNode;
-	var nextSibling = this.nextElementSibling;
-	var clone = this.cloneNode(true);
-	this.parentNode.insertBefore(clone, this);
-	this.parentNode.removeChild(this);
-	
-	return clone;
+	this.beginList = newList;
 }
 
 
-// sets dur to given value (not time object)
-SVGAnimationElement.prototype.setDur = function(value, makeHistory, keepTimes) {
-	var newDur = new time(value);
-	if(keepTimes) {
-		this.getTimes();
-		this.getDur();
-		
-		var ratio = this.dur.seconds/newdur.seconds;
-		
-		for(var i = 0; i < this.times.length; i++) {
-			this.times[i] *= ratio;
-			if(this.times[i] > 1) { this.times[i] = 1; }
-		}
-		
-		if(makeHistory && svg && svg.history) {
-			svg.history.add(new historyAttribute(this.id, 
-				{ 'keyTimes': this.getAttribute('keyTimes'), 'dur': this.getAttribute('dur') },
-				{ 'keyTimes': this.times.join(';'), 'dur': newDur.toString() }, true));
-		}
-		
-		this.dur = newDur;
-		this.setAttribute('dur', this.dur);
-		this.commitTimes();
-		if(this.timelineObject) {	this.timelineObject.takeValues();	}
-		
+// returns dur as time object
+// copies the same object as element.dur
+SVGAnimationElement.prototype.getDur = function() {
+	if(this.dur) { return this.dur; }
+	this.dur = this instanceof animationGroup ? new time(this.getAttribute('anigen:dur')) : new time(this.getAttribute('dur'));
+	return this.dur;
+}
+
+SVGAnimationElement.prototype.setDur = function(value, keepTimes, adjustBegins) {
+	this.getDur();
+	if(typeof value !== 'object') {
+		value = new time(value);
 	} else {
-		if(makeHistory && svg && svg.history) {
-			svg.history.add(new historyAttribute(this.id, 
-				{ 'dur': this.getAttribute('dur') },
-				{ 'dur': newDur.toString() }, true));
-		}
-		
-		this.dur = newDur;
-		this.setAttribute('dur', this.dur);
-		if(this.timelineObject) {	this.timelineObject.takeValues();	}
+		if(!(value instanceof time)) { return; }
+		value = value.clone();
 	}
+	var ratio = this.dur.seconds/value.seconds;
+	
+	if(keepTimes) {
+		this.getKeyframes();
+		
+		for(var i = 0; i < this.keyframes.arr.length; i++) {
+			this.keyframes.getItem(i).time *= ratio;
+			if(this.keyframes.getItem(i).time > 1) { this.keyframes.getItem(i).time = 1; }
+		}
+	}
+	
+	if(adjustBegins) {
+		this.getBeginList();
+		
+		for(var i = 0; i < this.beginList.length; i++) {
+			this.beginList[i].seconds /= ratio;
+			this.beginList[i].value /= ratio;
+		}
+	}
+	
+	this.dur = value;
 }
 
-// sets repeatCount to given value
-SVGAnimationElement.prototype.setRepeatCount = function(value, makeHistory) {
+
+// returns repeatCount attribute; integer for numeric value, string for "indefinite"
+// copies the same as element.repeatCount
+SVGAnimationElement.prototype.getRepeatCount = function() {
+	if(this.repeatCount != null) { return this.repeatCount; }
+	this.repeatCount = (this instanceof animationGroup ? this.getAttribute('anigen:repeatcount') : this.getAttribute('repeatCount')) || 0;
+	if(!isNaN(this.repeatCount)) { this.repeatCount = parseInt(this.repeatCount); }
+	return this.repeatCount;
+}
+
+SVGAnimationElement.prototype.setRepeatCount = function(value) {
 	if(isNaN(value) && value != 'indefinite') { return; }
 	if(value != 'indefinite') { value = parseInt(value); }
 	
-	if(makeHistory && svg && svg.history) {
-		svg.history.add(new historyAttribute(this.id, 
-			{ 'repeatCount': this.getAttribute('repeatCount') },
-			{ 'repeatCount': value }, true));
-	}
-	
 	this.repeatCount = value;
-	this.setAttribute('repeatCount', value);
-	
-	if(this.timelineObject) { this.timelineObject.takeValues(); }
 }
 
-// returns array of animation values ("values" attribute)
-// 		if animation has "from" and "to" attributes, they are changed into the general "values" attribute and removed
-SVGAnimationElement.prototype.getValues = function() {
-	this.values = [];
-	var temp = this.getAttribute('values');
-	if(!temp) {
-		var vFrom = this.getAttribute('from');
-		var vTo = this.getAttribute('to');
-		if(vFrom && vTo) {
-			this.values.push(vFrom);
-			this.values.push(vTo);
-			this.setAttribute('values', this.values.join(';'));
-			this.removeAttribute('from');
-			this.removeAttribute('to');
-		}
-	} else {
-		temp = temp.split(';');
-		for(var i = 0; i < temp.length; i++) {
-			this.values.push(temp[i]);
-		}
-	}
-	return this.values;
+
+
+SVGAnimationElement.prototype.getCalcMode = function() {
+	if(this.calcMode) { return this.calcMode; }
+	this.calcMode = this instanceof animationGroup ? this.getAttribute('anigen:calcmode') : this.getAttribute('calcMode');
+	return this.calcMode;
 }
 
-// returns array of floats corresponding to "keyTimes" attribute
-//		if no "keyTimes" attribute exists, creates it according to the number of values
-SVGAnimationElement.prototype.getTimes = function() {
-	this.times = [];
-	
-	var temp = this.getAttribute('keyTimes');
-	if(temp == null) {
-		this.getValues();
-		var c = 1 / (this.values.length - 1);
-		for(var i = 0; i < this.values.length; i++) {
-			this.times.push(i*c);
-		}
-	} else {
-		temp = temp.split(';');
-		for(var i = 0; i < temp.length; i++) {
-			this.times.push(parseFloat(temp[i]));
-		}
-	}
-	
-	return this.times;
+SVGAnimationElement.prototype.setCalcMode = function(value) {
+	this.calcMode = value || 'linear';
 }
 
-// returns null if "calcMode" is not "spline"
-// returns array of spline objects ("keySplines" attribute)
-//		if no "keySpline" attribute exists, creates it according to the number of values; new splines have linear (0 0 1 1) progression
-SVGAnimationElement.prototype.getSplines = function() {
-	this.calcMode = this.getAttribute('calcMode');
-	if(this.calcMode != 'spline') { return null; }
-	this.splines = [];
-	
-	var temp = this.getAttribute('keySplines');
-	if(temp == null) {
-		this.getTimes();
-		for(var i = 0; i < this.times.length-1; i++) {
-			this.splines.push(new spline(null));
-		}
+
+SVGAnimationElement.prototype.getFill = function() {
+	if(this.fill) { return this.fill; }
+	this.fill = (this instanceof animationGroup ? this.getAttribute('anigen:fill') : this.getAttribute('fill')) || 'replace';
+	return this.fill;
+}
+
+SVGAnimationElement.prototype.setFill = function(value) {
+	if(typeof value === 'boolean') {
+		this.fill = value ? 'freeze' : 'remove';
 	} else {
-		temp = temp.split(';');
-		for(var i = 0; i < temp.length; i++) {
-			var newSpline = new spline(temp[i]);
-			this.splines.push(newSpline);
+		this.fill = value || 'remove';
+	}
+}
+
+
+SVGAnimationElement.prototype.getAdditive = function() {
+	if(this.additive) { return this.additive; }
+	this.additive = (this instanceof animationGroup ? this.getAttribute('anigen:additive') : this.getAttribute('additive')) || 'replace';
+	return this.additive;
+}
+
+SVGAnimationElement.prototype.setAdditive = function(value) {
+	if(this.getAttribute('attributeName') == 'd') {
+		this.getKeyframes();
+		
+		var originalPath = document.createElementNS(svgNS, 'path');
+			originalPath.setAttribute('d', this.parentNode.getPathData().baseVal);
+		if(this.getAttribute('additive') == 'replace') {
+			// will be sum -> original data has to be subtraced instead of added
+			originalPath.negate();
+		}
+		
+		for(var i = 0; i < this.keyframes.length; i++) {
+			var path = document.createElementNS(svgNS, 'path');
+			path.setAttribute('d', this.keyframes.getItem(i).value);
+			path.sum(originalPath);
+			this.keyframes.getItem(i).value = path.getAttribute('d');
 		}
 	}
-	return this.splines;
+	
+	if(typeof value === 'boolean') {
+		this.additive = value ? 'sum' : 'replace';
+	} else {
+		this.additive = value;
+	}
+	
 }
+
+
+
+SVGAnimationElement.prototype.getAccumulate = function() {
+	if(this.accumulate) { return this.accumulate; }
+	this.accumulate = (this instanceof animationGroup ? this.getAttribute('anigen:accumulate') : this.getAttribute('accumulate')) || 'none';
+	return this.accumulate;
+}
+
+SVGAnimationElement.prototype.setAccumulate = function(value) {
+	if(typeof value === 'boolean') {
+		this.accumulate = value ? 'sum' : 'none';
+	} else {
+		this.accumulate = value;
+	}
+}
+
+
+
+// commits all changes into the element and returns element (for cases of change of begin)
+// also makes history
+SVGAnimationElement.prototype.commit = function(noHistory) {
+	if(noHistory) { this.wipe(); }
+	
+	this.getKeyframes();
+	
+	var out = this;
+	var count = 0;
+	
+	var newTimes = this.keyframes.getTimes().join(';');
+	var newSplines = this.keyframes.getSplines().join(';');
+	var newValues = this.keyframes.getValues().join(';');
+	
+	var newBegin = this.getBeginList().join(';');
+	
+	var newDur = this.getDur().toString();
+	
+	var newRepeatCount = String(this.getRepeatCount());
+	var newCalcMode = this.getCalcMode();
+	var newFill = this.getFill();
+	var newAdditive = this.getAdditive();
+	var newAccumulate = this.getAccumulate();
+	
+	var histFrom = {};
+	var histTo = {};
+	
+	if(newTimes != this.getAttribute('keyTimes') && newTimes.length != 0 && this.getAttribute('keyTimes')) {
+		histFrom['keyTimes'] = this.getAttribute('keyTimes');
+		histTo['keyTimes'] = newTimes;
+		this.setAttribute('keyTimes', newTimes);
+		count++;
+	}
+	if(newSplines != this.getAttribute('keySplines') && newSplines.length != 0 && this.getAttribute('keySplines')) {
+		histFrom['keySplines'] = this.getAttribute('keySplines');
+		histTo['keySplines'] = newSplines;
+		this.setAttribute('keySplines', newSplines);
+		count++;
+	}
+	if(newValues != this.getAttribute('values') && newValues.length != 0 && this.getAttribute('values')) {
+		histFrom['values'] = this.getAttribute('values');
+		histTo['values'] = newValues;
+		this.setAttribute('values', newValues);
+		count++;
+	}
+	
+	
+	if(newDur != this.getAttribute('dur') && newDur.length != 0 && this.getAttribute('dur')) {
+		histFrom['dur'] = this.getAttribute('dur');
+		histTo['dur'] = newDur;
+		this.setAttribute('dur', newDur);
+		count++;
+	}
+	
+	if(newRepeatCount != this.getAttribute('repeatCount') && newRepeatCount.length != 0 && this.getAttribute('repeatCount')) {
+		histFrom['repeatCount'] = this.getAttribute('repeatCount');
+		histTo['repeatCount'] = newRepeatCount;
+		this.setAttribute('repeatCount', newRepeatCount);
+		count++;
+	}
+	if(newCalcMode != this.getAttribute('calcMode') && newCalcMode.length != 0 && this.getAttribute('calcMode')) {
+		histFrom['calcMode'] = this.getAttribute('calcMode');
+		histTo['calcMode'] = newCalcMode;
+		this.setAttribute('calcMode', newCalcMode);
+		count++;
+	}
+	if(newFill != this.getAttribute('fill') && newFill.length != 0 && this.getAttribute('fill')) {
+		histFrom['fill'] = this.getAttribute('fill');
+		histTo['fill'] = newFill;
+		this.setAttribute('fill', newFill);
+		count++;
+	}
+	if(newAdditive != this.getAttribute('additive') && newAdditive.length != 0 && this.getAttribute('additive')) {
+		histFrom['additive'] = this.getAttribute('additive');
+		histTo['additive'] = newAdditive;
+		this.setAttribute('additive', newAdditive);
+		count++;
+	}
+	if(newAccumulate != this.getAttribute('accumulate') && newAccumulate.length != 0 && this.getAttribute('accumulate')) {
+		histFrom['accumulate'] = this.getAttribute('accumulate');
+		histTo['accumulate'] = newAccumulate;
+		this.setAttribute('accumulate', newAccumulate);
+		count++;
+	}
+	
+	if(newBegin != this.getAttribute('begin') && newBegin.length != 0 && this.getAttribute('begin')) {
+		histFrom['begin'] = this.getAttribute('begin');
+		histTo['begin'] = newBegin;
+		this.setAttribute('begin', newBegin);
+		
+		var clone = this.cloneNode(true);
+		clone.wipe();
+		this.parentNode.insertBefore(clone, this);
+		this.parentNode.removeChild(this);
+		out = clone;
+		
+		if(svg.selected == this) { svg.selected = clone; }
+		if(windowAnimation.animation == this) { windowAnimation.animation = clone; }
+		tree.seed();
+		
+		if(svg.selected == this) { svg.selected = clone; }
+		
+		tree.select(svg.selected);
+		svg.select();
+		
+		count++;
+	}
+	
+	if(!noHistory && svg && svg.history && count > 0) {
+		svg.history.add(new historyAttribute(this.id, histFrom, histTo, true));
+	}
+	
+	svg.gotoTime();
+	return out;
+}
+
+SVGAnimationElement.prototype.wipe = function() {
+	this.keyframes = null;
+	this.beginList = null;
+	this.dur = null;
+	this.repeatCount = null;
+	this.calcMode = null;
+	this.fill = null;
+	this.additive = null;
+	this.accumulate = null;
+	
+	this.path = null;
+	this.xlink = null;
+	this.rotate = null;
+	
+	this.intensity = null;
+}
+
+
 
 // sets keyTime at given index
 // throws DOMException if index is out of bounds
-SVGAnimationElement.prototype.setTime = function(index, value, makeHistory) {
-	this.getTimes();
-	if(index < 0 || index >= this.times.length) { throw new DOMException(1); }
-	
-	if(value < 0 || value > 1) { throw new Error('Value out of bounds'); }
-	if(index == 0 && value != 0) { throw new Error('Value out of bounds'); }
-	if(index == this.times.length-1 && value != 1) { throw new Error('Value out of bounds'); }
-	if(index > 0 && index-1 < this.times.length && (this.times[index-1] > value || this.times[index+1] < value)) { throw new Error('Value out of bounds'); }
-	
-	if(Math.abs(this.times[index]-value) < 0.00001) { return; }
-	
-	if(makeHistory && svg && svg.history) {
-		svg.history.add(new historyGeneric(this.id, 
-			'target.setTime('+index+', '+this.times[index]+');',
-			'target.setTime('+index+', '+value+');', true));
+SVGAnimationElement.prototype.setTime = function(index, value) {
+	if(value < 0) { value = 0; }
+	if(value > 1) { value = 1; }
+	this.getKeyframes();
+	try {
+		if(this.keyframes.getItem(index).time == value) { return true; }
+		this.keyframes.getItem(index).time = value;
+	} catch(err) {
+		throw err;
 	}
-	
-	this.times[index] = value;
-	this.setAttribute('keyTimes', this.times.join(';'));
-}
-
-// commits values into element
-SVGAnimationElement.prototype.commitValues = function(fromAttribute) {
-	if(fromAttribute) { return; }
-	this.setAttribute('values', this.values.join(';'));
 }
 
 
-// sets times to ascending order, switching values (and splines)
-SVGAnimationElement.prototype.validateTimes = function() {
-	
-}
-
-// commits times into element
-SVGAnimationElement.prototype.commitTimes = function(fromAttribute) {
-	if(fromAttribute) { return; }
-	
-	// this.validateTimes();
-	
-	this.setAttribute('keyTimes', this.times.join(';'));
-}
-
-// commits splines into element
-SVGAnimationElement.prototype.commitSplines = function(fromAttribute) {
-	if(fromAttribute) { return; }
-	this.setAttribute('keySplines', this.splines.join(';'));
-}
-
-SVGAnimationElement.prototype.commitAll = function(fromAttribute) {
-	this.commitTimes(fromAttribute);
-	this.commitSplines(fromAttribute);
-	this.commitValues(fromAttribute);
-}
-
-// makes history (separated to allow inheritance by animationGroup)
-// times, values, splines are NEW attributes to be added - old ones have to still be in the element itself
-SVGAnimationElement.prototype.makeHistory = function(times, values, splines) {
-	if(!svg || !svg.history || !(times || values || splines)) { return; }
-	
-	var arrFrom = {};
-	var arrTo = {};
-	
-	if(times) {
-		arrFrom['keyTimes'] = this.getAttribute('keyTimes');
-		arrTo['keyTimes'] = this.times.join(';');
+SVGAnimationElement.prototype.getValue = function(index) {
+	this.getKeyframes();
+	try {
+		return this.keyframes.getItem(index).value;
+	} catch(err) {
+		throw err;
 	}
-	if(values) {
-		arrFrom['values'] = this.getAttribute('values');
-		arrTo['values'] = this.values.join(';');
-	}
-	if(splines) {
-		arrFrom['keySplines'] = this.getAttribute('keySplines');
-		arrTo['keySplines'] = this.splines.join(';');
-	}
-	
-	svg.history.add(new historyAttribute(this.id, arrFrom, arrTo, true));
-}
-
-SVGAnimationElement.prototype.getSpline = function(index) {
-	this.getSplines();
-	if(index < 0 || index >= this.splines.length) { throw new DOMException(1); }
-	return this.splines[index].toString();
 }
 
 // sets value at given index
 // throws DOMException if index is out of bounds
-SVGAnimationElement.prototype.setValue = function(index, value, makeHistory, isAbsolute) {
-	this.getValues();
-	if(index < 0 || index >= this.values.length) { throw new DOMException(1); }
+SVGAnimationElement.prototype.setValue = function(index, value, isAbsolute) {
+	this.getKeyframes();
 	
 	if(!isAbsolute && this.getAttribute('attributeName') == 'd' && this.getAttribute('additive') == 'sum') {
 		// assumes absolute values -> need to subtract original path data
-		
 		var originalPath = document.createElementNS(svgNS, 'path');
 			originalPath.setAttribute('d', this.parentNode.getPathData().baseVal);
 			originalPath.negate();
@@ -380,41 +414,40 @@ SVGAnimationElement.prototype.setValue = function(index, value, makeHistory, isA
 			value = newPath.getAttribute('d');
 	}
 	
-	this.values[index] = value;
-	if(makeHistory) { this.makeHistory(false, true, false); }
-	this.commitValues(false, index);
+	try {
+		this.keyframes.getItem(index).value = value;
+	} catch(err) {
+		throw err;
+	}
 }
 
-SVGAnimationElement.prototype.getValue = function(index) {
-	this.getValues();
-	if(index < 0 || index >= this.values.length) { throw new DOMException(1); }
-	return this.values[index];
+
+SVGAnimationElement.prototype.getSpline = function(index) {
+	this.getSplines();
+	if(index < 0 || index >= this.splines.length) { throw new DOMException(1); }
+	return this.splines[index].toString();
 }
 
 // sets spline at given index
 // throws DOMException if index is out of bounds
-SVGAnimationElement.prototype.setSpline = function(index, value, makeHistory) {
-	this.getSplines();
-	if(!(value instanceof spline)) { return; }
-	if(index < 0 || index >= this.splines.length) { throw new DOMException(1); }
-	this.splines[index] = value;
-	if(makeHistory) { this.makeHistory(false, false, true); }
-	this.commitSplines();
+SVGAnimationElement.prototype.setSpline = function(index, value) {
+	if(index == 0) { return; }
+	if(typeof value !== 'object') {
+		value = new spline(value);
+	}
+	if(!(value instanceof spline)) {
+		return;
+	}
+	
+	this.getKeyframes();
+	
+	try {
+		this.keyframes.getItem(index).spline = new spline(value);
+	} catch(err) {
+		throw err;
+	}
 }
 
-// sets spline at given index to specific spline type (see spline object)
-// throws DOMException if index is out of bounds
-SVGAnimationElement.prototype.setSplineType = function(index, value, makeHistory) {
-	var newSpline = new spline(value);
-	if(!newSpline) { return; }
-	if(index < 0 || index >= this.splines.length) { throw new DOMException(1); }
-	this.setSpline(index, newSpline, makeHistory);
-}
-
-SVGAnimationElement.prototype.setSplineData = function(index, data, makeHistory) {
-	var newSpline = new spline(data);
-	this.setSpline(index, newSpline, makeHistory);
-}
 
 // returns the begin time of current loop
 //		if animation is no longer running, returns last viable loop begin time
@@ -434,6 +467,7 @@ SVGAnimationElement.prototype.getCurrentLoopBeginTime = function() {
 		if(targetTime == null || targetTime < this.beginList[i].seconds) { targetTime = this.beginList[i].seconds; }
 	}
 	// targetTime is now last begin
+	if(targetTime > time) { return null; }	// animation didn't start yet
 	
 	var loopNumber = Math.floor((time-targetTime)/this.dur.seconds);
 	if(repeatCount != 'indefinite' && repeatCount < loopNumber) { loopNumber = repeatCount; }
@@ -471,8 +505,7 @@ SVGAnimationElement.prototype.getCurrentProgress = function(time) {
 	
 	this.getDur();
 	this.getBeginList();
-	this.getTimes();
-
+	
 	var repeatCount = this.getRepeatCount();
 	var progress = null;
 	var currentBeginTime = this.getCurrentLoopBeginTime();
@@ -487,13 +520,14 @@ SVGAnimationElement.prototype.getCurrentProgress = function(time) {
 SVGAnimationElement.prototype.getPreviousFrame = function(inclusive) {
 	var progress = this.getCurrentProgress();
 	if(progress == null) { return null; }
+	this.getKeyframes();
 	
 	var last = null;
-	for(var i = 0; i < this.times.length; i++) {
+	for(var i = 0; i < this.keyframes.length; i++) {
 		if(inclusive) {
-			if((this.times[i]-progress) <= 0) { last = i; } else { break; }
+			if((this.keyframes.getItem(i).time-progress) <= 0) { last = i; } else { break; }
 		} else {
-			if((this.times[i]-progress) < -0.0001) { last = i; } else { break; }
+			if((this.keyframes.getItem(i).time-progress) < -0.0001) { last = i; } else { break; }
 		}
 	}
 	return last;
@@ -505,15 +539,16 @@ SVGAnimationElement.prototype.getPreviousTime = function(inclusive) {
 	
 	var currentLoop = this.getCurrentLoop();
 	var currentBegin = this.getCurrentLoopBeginTime();
+	if(currentBegin == null) { return null; }
 	
 	if(previousFrame == null) {
-		if(currentLoop == 0 || this.times.length <= 1) { return null; } else {
+		if(currentLoop == 0 || this.keyframes.length <= 1) { return null; } else {
 			currentBegin -= this.dur.seconds;
-			previousFrame = this.times.length-2;
+			previousFrame = this.keyframes.length-2;
 		}
 	}
 	
-	return currentBegin + this.times[previousFrame]*this.dur.seconds;
+	return currentBegin + this.keyframes.getItem(previousFrame).time*this.dur.seconds;
 }
 
 // returns index of next keyTime, or null if no future time exists
@@ -522,11 +557,11 @@ SVGAnimationElement.prototype.getNextFrame = function(inclusive) {
 	if(progress == null) { return null; }
 	
 	var next = null;
-	for(var i = this.times.length-1; i >= 0; i--) {
+	for(var i = this.keyframes.length-1; i >= 0; i--) {
 		if(inclusive) {
-			if((this.times[i]-progress) >= 0) { next = i; } else { break; }
+			if((this.keyframes.getItem(i).time-progress) >= 0) { next = i; } else { break; }
 		} else {
-			if((this.times[i]-progress) > 0.0001) { next = i; } else { break; }
+			if((this.keyframes.getItem(i).time-progress) > 0.0001) { next = i; } else { break; }
 		}
 	}
 	return next;
@@ -538,7 +573,8 @@ SVGAnimationElement.prototype.getNextTime = function(inclusive) {
 	if(nextFrame == null) { return null; }
 	
 	var currentBegin = this.getCurrentLoopBeginTime();
-	return currentBegin + this.times[nextFrame]*this.dur.seconds;
+	if(currentBegin == null) { return null; }
+	return currentBegin + this.keyframes.getItem(nextFrame).time*this.dur.seconds;
 }
 
 // returns index of closest keyTime
@@ -551,7 +587,7 @@ SVGAnimationElement.prototype.getClosestFrame = function(inclusive) {
 	
 	if(previous == null) { return next; }
 	if(next == null) { return previous; }
-	if(Math.abs(progress - this.times[previous]) < Math.abs(progress - this.times[next])) {
+	if(Math.abs(progress - this.keyframes.getItem(previous).time) < Math.abs(progress - this.keyframes.getItem(next).time)) {
 		return previous;
 	} else {
 		return next;
@@ -575,201 +611,90 @@ SVGAnimationElement.prototype.getClosestTime = function(inclusive) {
 	}
 }
 
+
+
 // moves value and (if applicable) its spline to given targetIndex
-SVGAnimationElement.prototype.moveValue = function(movedIndex, targetIndex, makeHistory) {
-	this.getSplines();
-	this.getValues();
-	
-	if(targetIndex == movedIndex || targetIndex > this.values.length || movedIndex < 0 || targetIndex < 0 || movedIndex >= this.values.length || targetIndex >= this.values.length)  { return; }
-	
-	var movedValue = this.values.splice(movedIndex, 1);
-	this.values.splice(targetIndex, 0, movedValue[0]);
-	
-	if(this.splines && movedIndex != 0 && targetIndex != 0) {
-		var movedSpline = this.splines.splice(movedIndex-1, 1);
-		this.splines.splice(targetIndex-1, 0, movedSpline[0]);
+SVGAnimationElement.prototype.moveValue = function(movedIndex, targetIndex) {
+	this.getKeyframes();
+	try {
+		this.keyframes.switchItems(movedIndex, targetIndex);
+	} catch(err) {
+		throw err;
 	}
-	
-	if(makeHistory) { this.makeHistory(false, true, (this.splines ? true : false)); }
-	if(this.splines) { this.commitSplines(); }
-	this.commitValues();
 }
 
-
-
-SVGAnimationElement.prototype.addValue = function(value, relativeTime, splineString, makeHistory) {
-//	if(isNaN(index) || index < 0 || index >= this.values.length) { throw new DOMException(1); }
-	this.getSplines();
-	this.getValues();
-	this.getTimes();
+SVGAnimationElement.prototype.addValue = function(value, time, spline) {
+	this.getKeyframes();
 	
-	var index = 0;
-	
-	for(var i = 0; i < this.times.length; i++) {
-		if(this.times[i] < relativeTime) {
-			index = i;
-		} else {
-			break;
-		}
-	}
-	this.duplicateValue(index);
-	this.times[index+1] = relativeTime;
-	
-	this.values[index+1] = value;
-	if(this.splines) {
-		var newSpline;
-		if(splineString instanceof spline) {
-			newSpline = splineString.clone();
-		} else {
-			newSpline = new spline(splineString);
-		}
-		this.splines[index] = newSpline;
-	}
-	
-	if(makeHistory) { this.makeHistory(true, true, (this.splines ? true : false)); }
-	if(this.splines) { this.commitSplines(); }
-	this.commitTimes();
-	this.commitValues();
+	var newKeyframe = new keyframe(time, spline, value);
+	this.keyframes.push(newKeyframe);
+	this.keyframes.sort();
 }
+
 
 // duplicates value (and if applicable, its spline) at given index
 // throws DOMException if index is out of bounds
 SVGAnimationElement.prototype.duplicateValue = function(index) {
 	this.getKeyframes();
 	try {
-		this.keyframes.duplicate(index);
+		return this.keyframes.duplicate(index);
 	} catch(err) {
 		throw err;
 	}
 }
 
-SVGAnimationElement.prototype.createInbetween = function(one, two, ratio, makeHistory) {
-	if(two < one) {
-		var temp = one;
-		one = two;
-		two = temp;
+SVGAnimationElement.prototype.inbetween = function(one, two, ratio) {
+	this.getKeyframes();
+	try {
+		return this.keyframes.inbetween(one, two, ratio);
+	} catch(err) {
+		throw err;
 	}
-	if(ratio == null || ratio < 0 || ratio > 1) { ratio = 0.5; }
-	
-	this.duplicateValue(one, makeHistory);
-	this.getValues();
-	this.getSplines();
-	
-	this.times[one+1] += (this.times[two+1]-this.times[one])*ratio;
-	if(this.splines) {
-		this.splines[one] = this.splines[one].inbetween(this.splines[two], ratio);
-	}
-	
-	this.values[one+1] = this.values[one].inbetween(this.values[two+1], ratio);
-	if(makeHistory) { this.makeHistory(true, true, (this.splines ? true : false)); }
-	if(this.splines) { this.commitSplines(); }
-	this.commitTimes();
-	this.commitValues();
 }
 
 // removes value (and if applicable, its spline) at given index
 // throws DOMException if index is out of bounds
 SVGAnimationElement.prototype.removeValue = function(index, makeHistory) {
-	this.getSplines();
-	this.getValues();
-	this.getTimes();
-	
-	if(isNaN(index) || index < 0 || index >= this.values.length) { throw new DOMException(1); }
-	
-	this.values.splice(index, 1);
-	
-	this.times.splice(index, 1);
-	this.times[0] = 0;
-	this.times[this.times.length-1] = 1;
-	
-	if(this.splines) {
-		if(index == 0) { index++; }
-		this.splines.splice(index-1, 1);
+	this.getKeyframes();
+	try {
+		this.keyframes.remove(index);
+	} catch(err) {
+		throw err;
 	}
-	
-	if(makeHistory) { this.makeHistory(true, true, (this.splines ? true : false)); }
-	if(this.splines) { this.commitSplines(); }
-	this.commitTimes();
-	this.commitValues();
-}
-
-// inserts a value to the given index
-SVGAnimationElement.prototype.insertValue = function(index, time, value, splineData, makeHistory) {
-	this.values.splice(index, 0, value);
-	this.times.splice(index, 0, time);
-	
-	if(this.splines) {
-		if(!splineData) { splineData = "0 0 1 1"; }
-		newSpline = new spline(splineData)
-		if(index == 0) { index++; }
-		this.splines.splice(index-1, 0, newSpline);
-	}
-	
-	if(makeHistory) { this.makeHistory(true, true, (this.splines ? true : false)); }
-	if(this.splines) { this.commitSplines(); }
-	this.commitTimes();
-	this.commitValues();
 }
 
 // returns true if values of animation can be inverted (e.g. visibility; "visible" <-> "hidden")
 // this should be overriden by SVGAnimateTransform and SVGAnimateMotion implementations
 SVGAnimationElement.prototype.isInvertible = function() {
-	var attr = this.getAttribute('attributeName');
-	if(attr == 'display' || attr == 'visibility') {
-		return true;
-	} else {
+	if(this.getAttribute('attributeName') == 'display' || this.getAttribute('attributeName') == 'visibility') { return true; }
+	
+	this.getKeyframes();
+	try {
+		return this.keyframes.getItem(0).isInvertible();
+	} catch(err) {
 		return false;
 	}
 }
 
 // inverts all values (if .isInvertible() is true)
 // this should be overriden by SVGAnimateTransform and SVGAnimateMotion implementations
-SVGAnimationElement.prototype.invertValues = function(index, makeHistory) {
-	if(!this.isInvertible()) { return false; }
-	this.getValues();
-	var attr = this.getAttribute('attributeName');
-	
-	if(index != null) {
-		if(attr == 'display') {
-			this.values[index] = this.values[index] == 'none' ? 'inline' : 'none';
-		} else if(attr == 'visibility') {
-			this.values[index] = this.values[index]== 'hidden' ? 'visible' : 'hidden';
-		}
-	} else {
-		for(var i = 0; i < this.values.length; i++) {
-			if(attr == 'display') {
-				this.values[i] = this.values[i] == 'none' ? 'inline' : 'none';
-			} else if(attr == 'visibility') {
-				this.values[i] = this.values[i]== 'hidden' ? 'visible' : 'hidden';
-			}
-		}
+SVGAnimationElement.prototype.invertValues = function(index) {
+	this.getKeyframes();
+	try { 
+		return this.keyframes.invertValues(index);
+	} catch(err) {
+		throw err;
 	}
-	
-	
-	if(makeHistory) { this.makeHistory(false, true, false); }
-	this.commitValues();
 }
 	
 // balances keyTime values between given indexes so that they are evenly spaced
-SVGAnimationElement.prototype.balanceFrames = function(first, last, makeHistory) {
-	if(first == null) { first = 0; }
-	if(last == null) { last = this.times.length-1; }
-	if(last < first) { var temp = last; last = first; first = temp; }
-	
-	this.getTimes();
-	
-	if(first == last || first < 0 || first >= this.times.length || last < 0 || last >= this.times.length) { return; }
-		
-	var delta = (this.times[last] - this.times[first])/(last-first);
-	
-	var offset = this.times[first];
-	for(var i = 1; i+first < last; i++) {
-		this.times[i+first] = (offset + i*delta);
+SVGAnimationElement.prototype.balanceFrames = function(first, last) {
+	this.getKeyframes();
+	try { 
+		return this.keyframes.balance(first, last);
+	} catch(err) {
+		throw err;
 	}
-	
-	
-	if(makeHistory) { this.makeHistory(true, false, false); }
-	this.commitTimes();
 }
 
 // pastes timing attributes from another SVGAnimationElement;
@@ -781,81 +706,27 @@ SVGAnimationElement.prototype.balanceFrames = function(first, last, makeHistory)
 //		- keySplines (if applicable)
 // trims values if donor has less values than this element
 // duplicates last value if donor has more more values than this element
-SVGAnimationElement.prototype.pasteTiming = function(donor, makeHistory) {
+SVGAnimationElement.prototype.pasteTiming = function(donor) {
 	if(!(donor instanceof SVGAnimationElement)) { return; }
 	
-	donor.getSplines();
-	donor.getTimes();
+	this.getKeyframes();
+	donor.getKeyframes();
 	
-	this.getTimes();
-	
-	var oldTimes = this.getAttribute('keyTimes');
-	var oldSplines = this.getAttribute('keySplines');
-	var oldCalcMode = this.getAttribute('calcMode');
-	var oldDur = this.getAttribute('dur');
-	var oldRepeatCount = this.getAttribute('repeatCount');
-	var oldBegin = this.getAttribute('begin');
-	
-	while(donor.times.length > this.times.length) {
-		this.duplicateValue(this.times.length-1, makeHistory);
-	}
-	while(donor.times.length < this.times.length) {
-		this.removeValue(this.times.length-1, makeHistory);
+	try { 
+		this.keyframes.pasteTimes(donor.keyframes);
+	} catch(err) {
+		throw err;
 	}
 	
-	this.setAttribute('keyTimes', donor.getAttribute('anigen:keytimes') || donor.getAttribute('keyTimes'));
+	this.setCalcMode(donor.getCalcMode());
+	this.setDur(donor.getDur());
+	this.setRepeatCount(donor.getRepeatCount());
+	this.setBeginList(donor.getBeginList());
+//	this.setAccumulate(donor.getAccumulate());
+//	this.setAdditive(donor.getAdditive());
+	this.setFill(donor.getFill());
 	
-	this.setAttribute('calcMode', donor.getAttribute('anigen:calcmode') || donor.getAttribute('calcMode'));
-	if(donor.splines) {
-		this.setAttribute('keySplines', donor.getAttribute('anigen:keysplines') || donor.getAttribute('keySplines'));
-	} else {
-		this.splines = null;
-		this.removeAttribute('keySplines');
-	}
-	
-	this.setAttribute('dur', donor.getAttribute('anigen:dur') || donor.getAttribute('dur'));
-	this.setAttribute('repeatCount', donor.getAttribute('anigen:repeatcount') || donor.getAttribute('repeatCount'));
-	this.setAttribute('begin', donor.getAttribute('anigen:begin') || donor.getAttribute('begin'));
-	
-	if(this.timelineObject) { this.timelineObject.takeValues(); }
-	
-	var clone = this.cloneNode(true);
-	var par = this.parentNode;
-	var sibl = this.nextElementSibling;
-	
-	par.removeChild(this);
-	if(sibl) {
-		par.insertBefore(clone, sibl);
-	} else {
-		par.appendChild(clone);
-	}
-	
-	if(makeHistory) {
-		var arrFrom = {
-			'keyTimes': oldTimes,
-			'keySplines': oldSplines,
-			'calcMode': oldCalcMode,
-			'dur': oldDur,
-			'repeatCount': oldRepeatCount,
-			'begin': oldBegin
-		};
-		var arrTo = {
-			'keyTimes': this.getAttribute('keyTimes'),
-			'keySplines': this.getAttribute('keySplines'),
-			'calcMode': this.getAttribute('calcMode'),
-			'dur': this.getAttribute('dur'),
-			'repeatCount': this.getAttribute('repeatCount'),
-			'begin': this.getAttribute('begin')
-		};
-		
-		svg.history.add(new historyAttribute(this.id, arrFrom, arrTo, true));
-	}
-	
-	clone.getTimes();
-	clone.getValues();
-	clone.getSplines();
-	
-	return clone;
+	this.commit();
 }
 
 // returns current value this animation imposes upon its parent
@@ -864,8 +735,12 @@ SVGAnimationElement.prototype.pasteTiming = function(donor, makeHistory) {
 SVGAnimationElement.prototype.getCurrentValue = function(time) {
 	if(this.getAttribute('attributeName') == 'd') {
 		var progress = this.getCurrentProgress(time);
-		var times = this.getTimes();
-		var values = this.getValues();
+		if(progress == null) {		// animation not running and/or duration = 0s
+			var temp = document.createElementNS("http://www.w3.org/2000/svg", "path");
+				temp.setAttribute('d', (this.parentNode.getAttribute('anigen:original-d') || this.parentNode.getAttribute('d')));
+			return temp.getPathData().baseVal;
+		}
+		this.getKeyframes();
 		
 		var timeBefore, timeAfter;
 		var before, after;
@@ -874,31 +749,32 @@ SVGAnimationElement.prototype.getCurrentValue = function(time) {
 			return null;
 		}
 		
-		for(var i = 0; i < times.length; i++) {
-			if(this.times[i] == progress) {
+		for(var i = 0; i < this.keyframes.length; i++) {
+			if(this.keyframes.getItem(i).time == progress) {
 				timeBefore = progress;
 				before = i;
 				break;
-			} else if(this.times[i] < progress) {
-				timeBefore = this.times[i];
+			} else if(this.keyframes.getItem(i).time < progress) {
+				timeBefore = this.keyframes.getItem(i).time;
 				before = i;
 			} else if(timeAfter == null) {
-				timeAfter = this.times[i];
+				timeAfter = this.keyframes.getItem(i).time;
 				after = i;
 				break;
 			}
 		}
 		
+		
 		if(timeBefore == progress) {
 			var temp = document.createElementNS("http://www.w3.org/2000/svg", "path");
-				temp.setAttribute('d', values[before]);
+				temp.setAttribute('d', this.keyframes.getItem(before).value);
 			return temp.getPathData().baseVal;
 		}
 		
 		if(after == null) {
 			if(this.getAttribute('fill') == 'freeze') {
 				var temp = document.createElementNS("http://www.w3.org/2000/svg", "path");
-					temp.setAttribute('d', values[before]);
+					temp.setAttribute('d', this.keyframes.getItem(before).value);
 				return temp.getPathData().baseVal;
 			} else {
 				return null;
@@ -912,14 +788,13 @@ SVGAnimationElement.prototype.getCurrentValue = function(time) {
 		var pathBefore = document.createElementNS("http://www.w3.org/2000/svg", "path");
 		var pathAfter = document.createElementNS("http://www.w3.org/2000/svg", "path");
 		
-		pathBefore.setAttribute('d', values[before]);
-		pathAfter.setAttribute('d', values[after]);
+		pathBefore.setAttribute('d', this.keyframes.getItem(before).value);
+		pathAfter.setAttribute('d', this.keyframes.getItem(after).value);
 		
-		var splines = this.getSplines();
-		
-		if(splines && splines[before]) {
-			ratio = splines[before].getValue(ratio);
+		if(this.keyframes.getItem(before).spline) {
+			ratio = this.keyframes.getItem(before).spline.getValue(ratio);
 		}
+		
 		return pathBefore.inbetween(pathAfter, ratio);
 		
 	} else {
@@ -928,7 +803,7 @@ SVGAnimationElement.prototype.getCurrentValue = function(time) {
 		} catch(e) {
 			return null;
 		}
-	}	
+	}
 }
 
 
@@ -946,87 +821,6 @@ SVGAnimationElement.prototype.getCenter = function(viewport) {
 
 SVGAnimationElement.prototype.getFarCorner = function(reference) {
 	return this.getViableParent().getFarCorner(reference);
-}
-
-SVGAnimationElement.prototype.setCalcMode = function(value, makeHistory) {
-	if(makeHistory && svg && svg.history) {
-		svg.history.add(new historyAttribute(this.id, 
-			{ 'calcMode': this.getAttribute('calcMode') },
-			{ 'calcMode': value },
-			true));
-	}
-	if(value == null) {
-		this.removeAttribute('calcMode');
-	} else {
-		this.setAttribute('calcMode', value);
-	}
-}
-SVGAnimationElement.prototype.setFill = function(value, makeHistory) {
-	if(makeHistory && svg && svg.history) {
-		svg.history.add(new historyAttribute(this.id, 
-			{ 'fill': this.getAttribute('fill') },
-			{ 'fill': value },
-			true));
-	}
-	if(value == null) {
-		this.removeAttribute('fill');
-	} else {
-		this.setAttribute('fill', value);
-	}
-}
-SVGAnimationElement.prototype.setAdditive = function(value, makeHistory) {
-	var oldValues = this.getAttribute('values');
-	
-	if(this.getAttribute('attributeName') == 'd') {
-		this.getValues();
-		
-		var originalPath = document.createElementNS(svgNS, 'path');
-			originalPath.setAttribute('d', this.parentNode.getPathData().baseVal);
-		if(this.getAttribute('additive') == 'replace') {
-			// will be sum -> original data has to be subtraced instead of added
-			originalPath.negate();
-		}
-		
-		for(var i = 0; i < this.values.length; i++) {
-			var path = document.createElementNS(svgNS, 'path');
-			path.setAttribute('d', this.values[i]);
-			path.sum(originalPath);
-			this.values[i] = path.getAttribute('d');
-		}
-		
-		this.commitValues();
-	}
-	
-	var newValues = this.getAttribute('values');
-	
-	
-	if(makeHistory && svg && svg.history) {
-		svg.history.add(new historyAttribute(this.id, 
-			{ 'additive': this.getAttribute('additive'), 'values': oldValues },
-			{ 'additive': value, 'values': newValues },
-			true));
-	}
-	if(value == null) {
-		this.removeAttribute('additive');
-	} else {
-		this.setAttribute('additive', value);
-	}
-	
-	windowAnimation.refreshKeyframes();
-	
-}
-SVGAnimationElement.prototype.setAccumulate = function(value, makeHistory) {
-	if(makeHistory && svg && svg.history) {
-		svg.history.add(new historyAttribute(this.id, 
-			{ 'accumulate': this.getAttribute('accumulate') },
-			{ 'accumulate': value },
-			true));
-	}
-	if(value == null) {
-		this.removeAttribute('accumulate');
-	} else {
-		this.setAttribute('accumulate', value);
-	}
 }
 
 SVGAnimationElement.prototype.getBBox = function() {

@@ -58,21 +58,22 @@ SVGGElement.prototype.getCenter = function(viewport) {
 	var yMax, yMin, yMax_anim, yMin_anim;
 	
 	for(var i = 0; i < this.children.length; i++) {
-		if(!(this.children[i] instanceof SVGAnimationElement) && typeof this.children[i].getCenter === 'function') {
-			
-			var coords = this.children[i].getCenter(viewport);
-			
-			if(!coords) { continue; }
-			if(coords.x != null && (xMax == null || xMax < coords.x)) { xMax = coords.x; }
-			if(coords.x != null && (xMin == null || xMin > coords.x)) { xMin = coords.x; }
-			if(coords.y != null && (yMax == null || yMax < coords.y)) { yMax = coords.y; }
-			if(coords.y != null && (yMin == null || yMin > coords.y)) { yMin = coords.y; }
-			
-			if(coords.x_anim != null && (xMax_anim == null || xMax_anim < coords.x_anim)) { xMax_anim = coords.x_anim; }
-			if(coords.x_anim != null && (xMin_anim == null || xMin_anim > coords.x_anim)) { xMin_anim = coords.x_anim; }
-			if(coords.y_anim != null && (yMax_anim == null || yMax_anim < coords.y_anim)) { yMax_anim = coords.y_anim; }
-			if(coords.y_anim != null && (yMin_anim == null || yMin_anim > coords.y_anim)) { yMin_anim = coords.y_anim; }
-		}
+		if(this.children[i] instanceof SVGAnimationElement || typeof this.children[i].getCenter !== 'function' ||
+			this.children[i].style.display == 'none' || this.children[i].getAttribute('display') == 'none') { continue; }
+			// TODO: get better solution for invisible USEs in animationGroup
+	
+		var coords = this.children[i].getCenter(viewport);
+		
+		if(!coords) { continue; }
+		if(coords.x != null && (xMax == null || xMax < coords.x)) { xMax = coords.x; }
+		if(coords.x != null && (xMin == null || xMin > coords.x)) { xMin = coords.x; }
+		if(coords.y != null && (yMax == null || yMax < coords.y)) { yMax = coords.y; }
+		if(coords.y != null && (yMin == null || yMin > coords.y)) { yMin = coords.y; }
+		
+		if(coords.x_anim != null && (xMax_anim == null || xMax_anim < coords.x_anim)) { xMax_anim = coords.x_anim; }
+		if(coords.x_anim != null && (xMin_anim == null || xMin_anim > coords.x_anim)) { xMin_anim = coords.x_anim; }
+		if(coords.y_anim != null && (yMax_anim == null || yMax_anim < coords.y_anim)) { yMax_anim = coords.y_anim; }
+		if(coords.y_anim != null && (yMin_anim == null || yMin_anim > coords.y_anim)) { yMin_anim = coords.y_anim; }
 	}
 	
 	if(xMax == null || xMin == null || yMax == null || yMin == null) { return; }

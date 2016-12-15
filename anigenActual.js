@@ -8,7 +8,7 @@
 function anigenActual() {
     this.iconType = 32;
     this.iconHeight = 24;
-    this.version = "0.7.6 Citrus Revenge Overdrive";
+    this.version = "0.7.7 Keyframe Rewrite";
     this.tool = 1;
 	
 	this.tools = [
@@ -193,7 +193,7 @@ anigenActual.prototype.eventKeyDown = function(evt) {
 			break;
 		case 'd':		// d
 		case 'D':
-			if(evt.ctrlKey) {
+			if(evt.ctrlKey && !evt.altKey) {
 				svg.duplicate(svg.selected);
 				response = false;
 			}
@@ -236,6 +236,10 @@ anigenActual.prototype.eventKeyDown = function(evt) {
 			break;
 		case 'l':		// l
 		case 'L':
+			if(!evt.ctrlKey && evt.altKey) {
+				svg.createLink(svg.selected);
+				response = false;
+			}
 			if(evt.ctrlKey && evt.shiftKey) {
 				w2ui['anigenContext'].click('buttonLayers');
 				response = false;
@@ -287,7 +291,7 @@ anigenActual.prototype.eventKeyDown = function(evt) {
 					anigenActual.lastEvent = { clientX: window.innerWidth/2, clientY: window.innerHeight/2 }
 				}
 				var evaluated = svg.evaluateEventPosition(anigenActual.lastEvent);
-				svg.paste(evaluated.x, evaluated.y, svg.selected);
+				svg.paste((evt.altKey ? null : evaluated), svg.selected);
 				response = false;
 			}
 			break;
@@ -440,6 +444,9 @@ anigenActual.prototype.eventClick = function(event) {
 		anigenActual.tools[anigenActual.tool].mouseClick(event);
 	}
 	anigenActual.lastEvent = null;
+	if(!(event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement)) {
+		document.body.focus();
+	}
 }
 anigenActual.prototype.eventDblClick = function(event) {
 	if(anigenActual.tools[0].target) { anigenActual.tools[0].mouseDblClick(event); return; }
@@ -447,6 +454,7 @@ anigenActual.prototype.eventDblClick = function(event) {
 	anigenActual.tools[anigenActual.tool].mouseDblClick(event);
 }
 anigenActual.prototype.eventMouseMove = function(event) {
+	anigenActual.lastEvent = event;
 	if(anigenActual.tools[0].target) {
 		anigenActual.tools[0].mouseMove(event);
 		return;

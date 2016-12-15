@@ -2,6 +2,32 @@
 
 /* body */
 
+@font-face {
+	font-family: 'Open Sans';
+	font-weight: normal;
+	src: url('../_fonts/OpenSans/OpenSans-Regular.ttf');
+}
+
+@font-face {
+	font-family: 'Open Sans';
+	font-weight: bold;
+	src: url('../_fonts/OpenSans/OpenSans-Bold.ttf');
+}
+
+@font-face {
+	font-family: 'Open Sans';
+	font-style: italic;
+	font-weight: normal;
+	src: url('../_fonts/OpenSans/OpenSans-Italic.ttf');
+}
+
+@font-face {
+	font-family: 'Open Sans';
+	font-style: italic;
+	font-weight: bold;
+	src: url('../_fonts/OpenSans/OpenSans-BoldItalic.ttf');
+}
+
 *:not(input) {
     -webkit-user-select: none;
     -moz-user-select: -moz-none;

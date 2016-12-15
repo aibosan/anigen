@@ -16,6 +16,12 @@ history.prototype.clear = function() {
 	this.histArray = [];
 }
 
+history.prototype.remove = function(index) {
+	if(index == null || index < 0 || this.histArray.length >= index) { throw new DOMException(1); }
+	if(index <= this.index) { this.index--; }
+	this.histArray.splice(index, 1);
+}
+
 history.prototype.add = function(addition) {
 	if(	!(addition instanceof historyAttribute) && 
 		!(addition instanceof historyCreation) && 
@@ -53,7 +59,6 @@ history.prototype.undo = function() {
 	if(anigenActual) { anigenActual.eventUIRefresh(); }
 	windowAnimation.refresh();
 	svg.select();
-	
 	return true;
 }
 

@@ -22,17 +22,22 @@ function overlay() {
 	document.body.appendChild(overlay);
 	
 	this.hidden = false;
+	this.animate = false;
 }
 
 overlay.prototype.hide = function() {
-	this.container.parentNode.style.transition = "opacity .25s ease-in 0s, height 0s linear 0.25s"; 
+	if(this.animate) {
+		this.container.parentNode.style.transition = "opacity .25s ease-in 0s, height 0s linear 0.25s"; 
+	}
 	this.container.parentNode.style.opacity = 0;
 	this.container.parentNode.style.height = "0%";
 	this.hidden = true;
 	document.body.focus();
 }
 overlay.prototype.show = function() {
-	this.container.parentNode.style.transition = "opacity .25s ease-in 0s, height 0s linear 0s"; 
+	if(this.animate) {
+		this.container.parentNode.style.transition = "opacity .25s ease-in 0s, height 0s linear 0s"; 
+	}
 	this.container.parentNode.style.opacity = 1;
 	this.container.parentNode.style.height = "100%";
 	this.hidden = false;
@@ -122,6 +127,8 @@ overlay.prototype.macroAbout = function() {
 	
 	this.add(build.a("w2ui", "http://w2ui.com/"));
 	this.add(build.br());
+	this.add(build.a("Open Sans", "https://fonts.google.com/specimen/Open+Sans"));
+	this.add(build.br());
 	this.add(build.a("SVGRender", "https://github.com/adasek/svg-render"));
 	
 	this.add(build.p("Created by Ondřej 'Aibo' Benda."));
@@ -206,9 +213,15 @@ overlay.prototype.macroAnimationStatesManager = function() {
 	
 	for(var i in svg.animationStates) {
 		this.add(build.h(i, 2, {
-			'onclick': 'this.nextElementSibling.style.display = this.nextElementSibling.style.display ? null : "none";',
+			'onclick': 'this.nextElementSibling.style.display = this.nextElementSibling.style.display ? null : "none";this.nextElementSibling.nextElementSibling.style.display = this.nextElementSibling.nextElementSibling.style.display ? null : "none";',
 			'title': 'Hide/show this group'
 		}));
+		
+		var stateDemo = new animationGroup(svg.animationStates[i][0], null, null, [ 'd' ]);
+			stateDemo.demo();
+		var stateDemoPreview = new imageSVG(stateDemo.element, { 'width': 300, 'height': 200 });
+		
+		this.add(stateDemoPreview.container);
 		
 		tArray = [];
 		
@@ -236,7 +249,7 @@ overlay.prototype.macroAnimationStatesManager = function() {
 	this.show();
 }
 
-overlay.prototype.macroStateInbetween = function(index1, index2, firstValueIndex, groupName) {
+overlay.prototype.macroStateInbetween = function(value1, value2, firstValueIndex, groupName) {
 	this.reset();
 	this.setHeader("Animation states inbetween creation");
 	
@@ -252,9 +265,9 @@ overlay.prototype.macroStateInbetween = function(index1, index2, firstValueIndex
 		groupName = windowAnimation.animation.getAttribute('anigen:group');
 	}
 	
-	if(index1 == null) { index1 = 0; }
-	if(index2 == null) { index2 = 0; }
-	if(!states[index1] || !states[index2]) { return; }
+	if(value1 == null) { value1 = 0; }
+	if(value2 == null) { value2 = 0; }
+	if(!states[value1] || !states[value2]) { return; }
 	
 	var tArray = [];
 	
@@ -267,12 +280,12 @@ overlay.prototype.macroStateInbetween = function(index1, index2, firstValueIndex
 	
 	var stateSelection2 = stateSelection1.cloneNode(true);
 	
-	stateSelection1.setSelected(parseInt(index1));
-	stateSelection2.setSelected(parseInt(index2));
+	stateSelection1.setSelected(parseInt(value1));
+	stateSelection2.setSelected(parseInt(value2));
 	
 	tArray.push([
 		stateSelection1,
-		build.input('text', states[index1].name+'-'+states[index2].name),
+		build.input('text', states[value1].name+'-'+states[value2].name),
 		stateSelection2
 	]);
 	
@@ -301,7 +314,7 @@ overlay.prototype.macroStateInbetween = function(index1, index2, firstValueIndex
 	
 	this.add(build.table(tArray));
 	
-	this.addButtonOk("svg.evaluateGroupInbetween("+firstValueIndex+", '"+groupName+"');", true);
+	this.addButtonOk("svg.evaluateGroupInbetween("+firstValueIndex+", '"+groupName+"', overlay.content.children[0].children[0].children[1].children[0].value, overlay.content.children[0].children[0].children[0].children[0].value, overlay.content.children[0].children[0].children[2].children[0].value, parseFloat(overlay.content.children[0].children[2].children[1].children[1].value));", true);
 	this.addButtonCancel(null, true);
 	
 	this.macroStateInbetweenRefresh(groupName, true);
@@ -343,6 +356,8 @@ overlay.prototype.macroStateInbetweenRefresh = function(groupName, hard) {
 overlay.prototype.macroExport = function() {
 	this.reset();
 	this.setHeader("Export file");
+	
+	this.add(build.p("Warning: Exporting files can sometimes break gradients - you should save your work before exporting."))
 	
 	this.add(build.table([
 		[ "Begin at", build.input('number', '0', { 'id': 'anigenInputBegin' }), build.button("←", { "onclick": "this.parentNode.previousSibling.children[0].value = 0;" }) ],

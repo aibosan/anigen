@@ -120,106 +120,168 @@ animatedViewbox.prototype.adjustZoom = function() {
 	this.element.setAttribute("stroke-width", 2/svg.zoom+"px");
 }
 
-animatedViewbox.prototype.getValues = function() {
-	this.values = [];
-	var temp = this.getAttribute('anigen:values');
-	temp = temp.split(';');
-	
-	for(var i = 0; i < temp.length; i++) {
-		this.values.push(new rectangle(temp[i]));
-	}
-	return this.values;
-}
 
-animatedViewbox.prototype.commitValues = function(fromAttribute) {
-	var newValues = [];
-	
-	if(fromAttribute) {
-		this.getValues();
+animatedViewbox.prototype.getKeyframes = function() {
+	if(this.keyframes) {
+		return this.keyframes;
 	}
 	
-	for(var i = 0; i < this.values.length; i++) {
-		var pData = [];
-			pData.push('M');
-			pData.push(this.values[i].x);
-			pData.push(this.values[i].y);
-			pData.push('L');
-			pData.push(this.values[i].x+this.values[i].width);
-			pData.push(this.values[i].y);
-			pData.push('L');
-			pData.push(this.values[i].x+this.values[i].width);
-			pData.push(this.values[i].y+this.values[i].height);
-			pData.push('L');
-			pData.push(this.values[i].x);
-			pData.push(this.values[i].y+this.values[i].height);
-			pData.push('Z');
-		newValues.push(pData.join(' '));
+	var timesArray = this.getAttribute('anigen:keytimes') ? this.getAttribute('anigen:keytimes').split(';') : [];
+	var splineArray = this.getAttribute('anigen:keysplines') ? this.getAttribute('anigen:keysplines').split(';') : [];
+	var valueArray = this.getAttribute('anigen:values') ? this.getAttribute('anigen:values').split(';') : [];
+	var intensityArray = this.getAttribute('anigen:intensity') ? this.getAttribute('anigen:intensity').split(';') : [];
+	
+	this.keyframes = new keyframeList();
+	
+	for(var i = 0; i < timesArray.length; i++) {
+		var newValue = new rectangle(valueArray[i]);
+		this.keyframes.push(
+			new keyframe(parseFloat(timesArray[i]),
+				(splineArray[i-1] ? new spline(splineArray[i-1]) : null),
+				newValue,
+				(intensityArray && intensityArray[i] ? parseFloat(intensityArray[i]) : null)
+			)
+		);
 	}
-	newValues = newValues.join(';');
+	return this.keyframes;
+}
+
+animatedViewbox.prototype.commit = function(noHistory) {
+	if(noHistory) { this.wipe(); }
+	this.getKeyframes();
 	
-	if(!fromAttribute) {
-		this.element.setAttribute('anigen:values', this.values.join(';'));
+	var out = this;
+	var count = 0;
+	var intensityChanged = false;
+	
+	var newTimes = this.keyframes.getTimes().join(';');
+	var newSplines = this.keyframes.getSplines().join(';');
+	var newIntensity = this.keyframes.getIntensity().join(';');
+	var newValues = this.keyframes.getValues().join(';');
+	
+	var newBegin = this.getBeginList().join(';');
+	var newDur = this.getDur().toString();
+	
+	var newRepeatCount = String(this.getRepeatCount());
+	var newCalcMode = this.getCalcMode();
+	var newFill = this.getFill();
+	var newAdditive = this.getAdditive();
+	var newAccumulate = this.getAccumulate();
+	
+	var histFrom = {};
+	var histTo = {};
+	
+	if(newTimes != this.getAttribute('anigen:keytimes') && newTimes.length != 0 && this.getAttribute('anigen:keytimes')) {
+		histFrom['anigen:keytimes'] = this.getAttribute('anigen:keytimes');
+		histTo['anigen:keytimes'] = newTimes;
+		this.setAttribute('anigen:keytimes', newTimes);
+		this.animation.setAttribute('keyTimes', newTimes);
+		count++;
 	}
-	this.animation.setAttribute('values', newValues);
+	if(newSplines != this.getAttribute('anigen:keysplines') && newSplines.length != 0 && this.getAttribute('anigen:keysplines')) {
+		histFrom['anigen:keysplines'] = this.getAttribute('anigen:keysplines');
+		histTo['anigen:keysplines'] = newSplines;
+		this.setAttribute('anigen:keysplines', newSplines);
+		this.animation.setAttribute('keySplines', newSplines);
+		count++;
+	}
 	
-	return true;
+	if(newValues != this.getAttribute('anigen:values') && newValues.length != 0 && this.getAttribute('anigen:values')) {
+		var oldValues = this.getAttribute('anigen:values').split(';');
+		histFrom['anigen:values'] = this.getAttribute('anigen:values');
+		histTo['anigen:values'] = newValues;
+		this.setAttribute('anigen:values', newValues);
+		
+		var newValues = [];
+		for(var i = 0; i < this.keyframes.length; i++) {
+			var currentFrame = this.keyframes.getItem(i);
+			var pData = [];
+				pData.push('M');
+				pData.push(currentFrame.x);
+				pData.push(currentFrame.y);
+				pData.push('L');
+				pData.push(currentFrame.x+currentFrame.width);
+				pData.push(currentFrame.y);
+				pData.push('L');
+				pData.push(currentFrame.x+currentFrame.width);
+				pData.push(currentFrame.y+currentFrame.height);
+				pData.push('L');
+				pData.push(currentFrame.x);
+				pData.push(currentFrame.y+currentFrame.height);
+				pData.push('Z');
+			newValues.push(pData.join(' '));
+		}
+		newValues = newValues.join(';');
+		
+		this.animation.setAttribute('values', newValues);
+		count++;
+	}
+	
+	
+	if(newDur != this.getAttribute('anigen:dur') && newDur.length != 0 && this.getAttribute('anigen:dur')) {
+		histFrom['anigen:dur'] = this.getAttribute('anigen:dur');
+		histTo['anigen:dur'] = newDur;
+		this.setAttribute('anigen:dur', newDur);
+		this.animation.setAttribute('dur', newDur);
+		count++;
+	}
+	
+	if(newRepeatCount != this.getAttribute('anigen:repeatcount') && newRepeatCount.length != 0 && this.getAttribute('anigen:repeatcount')) {
+		histFrom['anigen:repeatcount'] = this.getAttribute('anigen:repeatcount');
+		histTo['anigen:repeatcount'] = newRepeatCount;
+		this.setAttribute('anigen:repeatcount', newRepeatCount);
+		this.animation.setAttribute('repeatCount', newRepeatCount);
+		count++;
+	}
+	if(newCalcMode != this.getAttribute('anigen:calcmode') && newCalcMode.length != 0 && this.getAttribute('anigen:calcmode')) {
+		histFrom['anigen:calcmode'] = this.getAttribute('anigen:calcmode');
+		histTo['anigen:calcmode'] = newCalcMode;
+		this.setAttribute('anigen:calcmode', newCalcMode);
+		this.animation.setAttribute('calcMode', newCalcMode);
+		count++;
+	}
+	if(newFill != this.getAttribute('anigen:fill') && newFill.length != 0 && this.getAttribute('anigen:fill')) {
+		histFrom['anigen:fill'] = this.getAttribute('anigen:fill');
+		histTo['anigen:fill'] = newFill;
+		this.setAttribute('anigen:fill', newFill);
+		this.animation.setAttribute('fill', newFill);
+		count++;
+	}
+	if(newAdditive != this.getAttribute('anigen:additive') && newAdditive.length != 0 && this.getAttribute('anigen:additive')) {
+		histFrom['anigen:additive'] = this.getAttribute('anigen:additive');
+		histTo['anigen:additive'] = newAdditive;
+		this.setAttribute('anigen:additive', newAdditive);
+		this.animation.setAttribute('additive', newAdditive);
+		count++;
+	}
+	if(newAccumulate != this.getAttribute('anigen:accumulate') && newAccumulate.length != 0 && this.getAttribute('anigen:accumulate')) {
+		histFrom['anigen:accumulate'] = this.getAttribute('anigen:accumulate');
+		histTo['anigen:accumulate'] = newAccumulate;
+		this.setAttribute('anigen:accumulate', newAccumulate);
+		this.animation.setAttribute('accumulate', newAccumulate);
+		count++;
+	}
+	
+	
+	if(newBegin != this.getAttribute('anigen:begin') && newBegin.length != 0 && this.getAttribute('anigen:begin')) {
+		histFrom['anigen:begin'] = this.getAttribute('anigen:begin');
+		histTo['anigen:begin'] = newBegin;
+		this.setAttribute('anigen:begin', newBegin);
+		this.animation.setAttribute('begin', newBegin);
+		var clone = this.animation.cloneNode(true);
+		this.animation.parentNode.insertBefore(clone, this.animation);
+		this.animation.removeChild(this.animation);
+		this.animation = clone;
+		count++;
+	}
+	
+	if(!noHistory && svg && svg.history && count > 0) {
+		svg.history.add(new historyAttribute(this.element.id, histFrom, histTo, true));
+	}
+	
+	return out;
 }
 
-animatedViewbox.prototype.commitSplines = function(fromAttribute) {
-	var newSplines = fromAttribute ? this.getAttribute('anigen:keysplines') : this.splines.join(';');
-	this.animation.setAttribute('keySplines', newSplines);
-	this.element.setAttribute('anigen:keysplines', newSplines);
-}
-
-animatedViewbox.prototype.commitTimes = function(fromAttribute) {
-	var newTimes = fromAttribute ? this.getAttribute('anigen:keytimes') : this.times.join(';');
-	
-	this.animation.setAttribute('keyTimes', newTimes);
-	this.element.setAttribute('anigen:keytimes', newTimes);
-}
-
-animatedViewbox.prototype.commitBegins = function(fromAttribute) {
-	var newBegin = fromAttribute ? this.element.getAttribute('anigen:begin') : this.beginList.join(';');
-	
-	this.animation.setAttribute('begin', newBegin);
-	this.element.setAttribute('anigen:begin', newBegin);
-}
-
-animatedViewbox.prototype.commitRepeatCount = function(fromAttribute) {
-	var newRepeatCount = fromAttribute ? this.element.getAttribute('anigen:repeatcount') : this.repeatCount;
-	
-	this.element.appendChild(this.animation);
-	this.animation.setAttribute('repeatCount', newRepeatCount);
-	this.element.setAttribute('anigen:repeatcount', newRepeatCount);
-}
-
-animatedViewbox.prototype.commitDur = function(fromAttribute) {
-	var newDur = fromAttribute ? this.element.getAttribute('anigen:dur') : this.dur;
-	
-	this.animation.setAttribute('dur', newDur);
-	this.element.setAttribute('anigen:dur', newDur);
-}
-
-animatedViewbox.prototype.commitCalcMode = function(fromAttribute) {
-	var newCalcMode = fromAttribute ? this.element.getAttribute('anigen:calcmode') : this.calcMode;
-	
-	this.animation.setAttribute('calcMode', newCalcMode);
-	this.element.setAttribute('anigen:calcmode', newCalcMode);
-}
-
-animatedViewbox.prototype.commitFill = function() {
-	var newFill = this.fill || this.element.getAttribute('anigen:fill');
-	
-	this.animation.setAttribute('fill', newFill);
-	this.element.setAttribute('anigen:fill', newFill);
-}
-
-animatedViewbox.prototype.commitAdditive = function(fromAttribute) {
-	var newAdditive = this.additive || this.element.getAttribute('anigen:additive');
-	
-	this.animation.setAttribute('additive', newAdditive);
-	this.element.setAttribute('anigen:additive', newAdditive);
-}
 
 animatedViewbox.prototype.transferOut = function() {
 	this.getBeginList();

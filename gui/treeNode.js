@@ -26,7 +26,11 @@ function treeNode(element) {
 			icon = "folder";
 			if(element.getAttribute("inkscape:groupmode") == "layer") {
 				icon = "layers";
-				name = element.getAttribute("inkscape:label");
+				name = element.getAttribute("inkscape:label")+'#'+name;
+			}
+			if(element.getAttribute("anigen:name")) {
+				icon = "animation";
+				name = element.getAttribute("anigen:name")+'#'+name;
 			}
 			if(element.getAttribute("anigen:type") == "animationGroup") {
 				icon = "animation";
@@ -60,7 +64,22 @@ function treeNode(element) {
 		var input = document.createElement("input");
 
 		label.setAttribute("for", "anigenTree_"+element.getAttribute('id'));
-		label.appendChild(document.createTextNode(name));
+		
+		if(name.indexOf('#') >= 0) {
+			var part1span = document.createElement('span');
+			var part2span = document.createElement('span');
+			part2span.setAttribute('class', 'nodeName');
+			
+			part1span.appendChild(document.createTextNode(name.substr(0, name.indexOf('#'))));
+			part2span.appendChild(document.createTextNode(name.substr(name.indexOf('#'))));
+			
+			label.appendChild(part1span);
+			label.appendChild(part2span);
+		} else {
+			label.appendChild(document.createTextNode(name));
+		}
+		
+		
 		if(element.children.length > 0) {
 			label.setAttribute("class", icon);
 		} else {

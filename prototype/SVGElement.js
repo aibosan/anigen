@@ -61,7 +61,7 @@ SVGElement.prototype.getAnimations = function() {
 
 SVGElement.prototype.isInsensitive = function() {
     var node = this;
-    while(node != null) {
+    while(node != null && node.parentNode) {
         if (node.getAttribute('anigen:lock') == 'interface') { return true; }
         node = node.parentNode;
         if(!(node instanceof SVGElement)) { return false; }
@@ -209,10 +209,52 @@ SVGElement.prototype.getFarCorner = function() {
 	return { 'x': outX, 'y': outY };
 }
 
+
+SVGElement.prototype.getFingerprint = function(previous) {
+	var raw = this.nodeName;
+	for(var i in this.attributes) {
+		if(isNaN(i)) { continue; }
+		var name = this.attributes[i].name;
+		if(name == 'id' || name == 'style' || name.startsWith('inkscape:')
+			|| name.startsWith('sodipodi:') || name.startsWith('anigen:')) { continue; }
+		raw += name;
+		raw += this.attributes[i].value;
+	}
+	var print = 0;
+	for(var i = 0; i < raw.length; i++) {
+		print += (1+i%32)*raw.charCodeAt(i);
+	}
+	for(var i = 0; i < this.children.length; i++) {
+		if(typeof this.children[i].getFingerprint !== 'function') { continue; }
+		print += parseInt(this.children[i].getFingerprint(), 16);
+	}
+	print &= 0xffffffff;
+	return ('00000000' + print.toString(16)).slice(-8);
+}
+
+
+
 // ends all animations and restores SVG to its static state
 // THIS METHOD IS DESTRUCTIVE!
 SVGElement.prototype.endAnimations = function(reset) {
 	if(this instanceof SVGAnimateTransformElement && reset) {
+		
+		// TODO: BUG
+		// this is a 'fix' for transformations creating a time 0 value for animation, if said animation 
+		// has fill = 'freeze', begin 0s, and last value != 0; basically, the animation "runs" once and 
+		// is frozen in the last value instead of returning to the initial one
+		var begins = this.getAttribute('begin');
+		if(begins) {
+			begins = begins.split(';');
+			if(parseFloat(begins[0]) == 0) {
+				//begins[0] = '-0.0000000000000000000000000000000000000000000000000000000000000001s';
+				//this.setAttribute('begin', begins.join(';'));
+				this.setAttribute('fill', 'remove');
+			}
+		}
+		
+		
+		
 		// counters time zero transformations
 		var originalFill = this.getAttribute('fill');
 		this.setAttribute('fill', 'remove');
@@ -313,6 +355,7 @@ SVGElement.prototype.consumeAnimations = function(recursive) {
 	
 	if(this instanceof SVGPathElement) {
 		var pData = this.getPathData();
+		
 		this.setAttribute('d', pData.animVal);
 	}
 	

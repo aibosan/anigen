@@ -194,11 +194,9 @@ root.prototype.elementToCoords = function(target, x, y) {
 		center = this.getCenter(target);
 	}
 	var CTM = target.getCTM();
+	if(!CTM) { return; }
 	
-	var objectAt = CTM.toUserspace(center.x, center.y);
-	var mouseAt = CTM.toUserspace(x, y);
-	
-	target.translateBy((mouseAt.x-objectAt.x)*this.zoom, (mouseAt.y-objectAt.y)*this.zoom);
+	target.translateBy((x-center.x), (y-center.y));
 }
 
 // duplicates the element and places it right above the original
@@ -230,20 +228,19 @@ root.prototype.copy = function(target) {
 	if(target instanceof SVGAnimationElement) {
 		var CTM = target.parentNode.getCTMBase();
 		this.elementTemp.valuesToViewport(CTM);
-	} else if(target.shepherd) {
-		/*
-		if(target.shepherd instanceof animationGroup) {
-			this.elementTemp.shepherd = null;
-		} else {
-			this.elementTemp.shepherd = target.shepherd;
-		}
-		*/
+		this.elementTemp.commit();
+	} else {
+		this.elementTemp.setAttribute('transform', target.getCTMBase());
+	}
+	if(target.shepherd) {
+		// could lead to double linking to the same object
+		// TODO?
 		this.elementTemp.shepherd = target.shepherd;
 	}
 }
 
 // pastes previously copied element into the target
-root.prototype.paste = function(x, y, target, beforeElement) {
+root.prototype.paste = function(position, target, beforeElement) {
 	if(!this.elementTemp) { return; }
 	
 	// pasting keytimes
@@ -259,7 +256,8 @@ root.prototype.paste = function(x, y, target, beforeElement) {
 		to = target.shepherd || target;
 		fr = this.elementTemp.shepherd || this.elementTemp;
 		
-		this.select(to.pasteTiming(fr, true));
+		to.pasteTiming(fr, true)
+		this.select(to.commit());
 		
 		//this.select(target.pasteTiming(this.elementTemp));
 		return;
@@ -267,7 +265,7 @@ root.prototype.paste = function(x, y, target, beforeElement) {
 	
 	// target doesn't allow this child - pass to the parent
 	if(typeof target.allowsChild === 'function' && !target.allowsChild(this.elementTemp)) {
-		this.paste(x, y, target.parentNode, target);
+		this.paste(position, target.parentNode, target);
 		return;
 	}
 	
@@ -280,6 +278,7 @@ root.prototype.paste = function(x, y, target, beforeElement) {
 		newElement.setAttribute('begin', this.elementTemp.getAttribute('begin'));
 		var CTM = target.getCTMBase();
 		newElement.valuesToUserspace(CTM);
+		newElement.commit();
 	}
 	
 	if(target == this.svgElement) {	// SVG
@@ -298,10 +297,15 @@ root.prototype.paste = function(x, y, target, beforeElement) {
 		}
 	} else {
 		// otherwise appends it to the parent
-		this.paste(x, y, target.parentNode, target);
+		this.paste(position, target.parentNode, target);
 		return;
 	}
 	
+	var targetCTM = target.getCTMBase();
+	var transformBase = newElement.getTransformBase();
+	
+	transformBase = targetCTM.inverse().multiply(transformBase);
+	newElement.setAttribute('transform', transformBase);
 	
 	tree.seed();	// the tree is reconstructed
 	
@@ -309,7 +313,9 @@ root.prototype.paste = function(x, y, target, beforeElement) {
 	timeline.rebuild();
 	infoContext.refresh();
 	
-	this.elementToCoords(newElement, x, y);
+	if(position) {
+		this.elementToCoords(newElement, position.x, position.y);
+	}
 	this.history.add(new historyCreation(newElement.cloneNode(true), newElement.parentNode.id, newElement.nextElementSibling ? newElement.nextElementSibling.id : null, false));
 	
 	this.select(newElement);	// new element is selected
@@ -349,6 +355,22 @@ root.prototype.delete = function(target) {
 root.prototype.cut = function(target) {
 	this.copy(target);
 	this.delete(target);
+}
+
+// creates use element link to the given element
+root.prototype.createLink = function(target) {
+	if(!target || target == this.svgElement || !target.id) { return; }
+	
+	var use = document.createElementNS(svgNS, 'use');
+		use.setAttributeNS(xlinkNS, 'href', '#'+target.id);
+		use.setAttribute('x', '0');
+		use.setAttribute('y', '0');
+		use.generateId();
+	target.parentNode.insertBefore(use, target);
+	target.parentNode.insertBefore(target, use);
+
+	this.history.add(new historyCreation(use.cloneNode(true), use.parentNode.id, target.id, false));
+	this.select(use);
 }
 
 root.prototype.group = function(target) {
@@ -506,12 +528,13 @@ root.prototype.evaluateStatesManager = function() {
 			}
 		}
 	}
+	windowAnimation.refreshKeyframes();
+	tree.seed();
+	svg.select();
 }
 
-root.prototype.evaluateGroupInbetween = function(valueIndex, groupName) {
-	var index1 = parseInt(overlay.content.children[0].children[0].children[0].children[0].value);
-	var index2 = parseInt(overlay.content.children[0].children[0].children[2].children[0].value);
-	var ratio = parseFloat(overlay.content.children[0].children[2].children[1].children[1].value);
+root.prototype.evaluateGroupInbetween = function(valueIndex, groupName, name, index1, index2, ratio) {
+	if(index1 == null || index2 == null || ratio == null) { return; }
 	
 	var animation = windowAnimation.animation;
 	
@@ -527,19 +550,21 @@ root.prototype.evaluateGroupInbetween = function(valueIndex, groupName) {
 	}
 	var states = svg.animationStates[groupName];
 	
-	var name = overlay.content.children[0].children[0].children[1].children[0].value;
-	
 	if(!states[index1] || !states[index2]) { return; }
 	if(name == null || name.length == 0) { name = states[index1].name+'-'+states[index2].name+'-'+ratio; }
 	
 	var newState = states[index1].inbetween(states[index2], ratio, name, true);
 	
 	if(valueIndex != null) {
+		// create state and make it an inbetween
 		if(!windowAnimation.animation || !(windowAnimation.animation instanceof animationGroup)) { return; }
 		windowAnimation.animation.createInbetween(valueIndex, valueIndex+1, newState.number, true);
 		windowAnimation.selected = [ valueIndex+1 ];
+		windowAnimation.animation.commit();
 	}
 	windowAnimation.refreshKeyframes();
+	tree.seed();
+	svg.select();
 }
 
 root.prototype.evaluateAddValue = function(hasValue, index) {
@@ -583,14 +608,12 @@ root.prototype.evaluateAddValue = function(hasValue, index) {
 		}
 	}
 	
-	
-	
 	if(hasValue && index != null) {
-		animation.setValue(index, newValue, true);
+		animation.setValue(index, newValue);
 	}
 	
 	var newSpline, newSplineType;
-	if(animation.splines) {
+	if(animation.getCalcMode() == 'spline') {
 		newSplineType = parseInt(popup.content.children[splinePosition].value);
 		var newSpline;
 		if(newSplineType == -1) {
@@ -605,7 +628,7 @@ root.prototype.evaluateAddValue = function(hasValue, index) {
 		}
 		
 		if(hasValue && index != null) {
-			animation.setSpline(index, newSpline, true);
+			animation.setSpline(index, newSpline);
 		}
 		
 	}
@@ -613,8 +636,10 @@ root.prototype.evaluateAddValue = function(hasValue, index) {
 	var relativeTime = animation.getCurrentProgress();
 	
 	if(!hasValue || index == null) {
-		animation.addValue(newValue, relativeTime, newSpline, true);
+		animation.addValue(newValue, relativeTime, newSpline);	
 	}
+	
+	animation.commit();
 	windowAnimation.refreshKeyframes();
 	this.gotoTime();
 }
@@ -660,12 +685,12 @@ root.prototype.adjustAnimation = function(targetId, index, type, value) {
 					animation.setDistance(index, value);
 					break;
 				case 2:         // translate
-					animation.setX(index, value);
+					animation.setPosition(index, value);
 					break;
 			}
 			break;
 		case 3:         // value2 (y)
-			animation.setY(index, value);
+			animation.setPosition(index, null, value);
 			break;
 		case 4:         // value3 (angle)
 			animation.setAngle(index, value);
@@ -1036,7 +1061,8 @@ root.prototype.rebuildAnimationStates = function(target) {
 	}
 	if(target instanceof SVGGElement) {
 		if(target.getAttribute('anigen:type') == 'animationState') {
-			var shepherd = new animationState(target)
+			new animationState(target);
+			// var shepherd = new animationState(target);
 			/*
 			if(!this.animationStates) { this.animationStates = {}; }
 			var groupName = shepherd.group;
@@ -1197,10 +1223,14 @@ root.prototype.save = function(quick) {
 	
 	if(quick) {
 		try {
-			localStorage.setItem('quicksaveFilename', this.fileName);
 			localStorage.setItem('quicksave', string);
+			localStorage.setItem('quicksaveFilename', this.fileName);
 		} catch(ex) {
-			popup.confirmation(null, "Not enought memory in browser storage - save file locally?", "svg.save();");
+			if(typeof(Storage) !== "undefined" && localStorage.getItem("quicksaveFilename")) {
+				popup.confirmation(null, "Not enought memory in browser storage. Previous save exists ("+localStorage.getItem("quicksaveFilename")+") - remove and try again?", "svg.removeLocal();svg.save(true);");
+			} else {
+				popup.confirmation(null, "Not enought memory in browser storage - save file locally?", "svg.save();");
+			}
 		}
 	} else {
 	
@@ -1456,7 +1486,7 @@ root.prototype.getAttributeValues = function(attribute) {
 		case "flood-opacity": return [ "<fraction>" ];
 		case "lighting-color": return [ "currentColor", "<color>" ];
 	// gradients	
-		case "stop-color": return [ "currentColor", "<color>" ];
+		case "stop-color": return [ "<color>" ];
 		case "stop-opacity": return [ "<fraction>" ];
 	// interactivity
 		case "pointer-events": return [ "visiblePainted", "visibleFill", "visibleStroke", "visible", "painted", "fill", "stroke", "all", "none" ];

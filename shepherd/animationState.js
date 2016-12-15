@@ -57,8 +57,10 @@ function animationState(elem, name, group) {
 	} else {
 		// element from defs
 		this.element = elem;
+		
 		this.groupElement = this.element.parentNode;
 		this.group = this.groupElement.getAttribute('anigen:name');
+		
 		if(!this.group) {
 			// generate new group name
 			var groups = [];
@@ -70,12 +72,25 @@ function animationState(elem, name, group) {
 			} while(groups.indexOf(this.group) != -1)
 			this.groupElement.setAttribute('anigen:name', this.group);
 		}
-		this.number = (this.element.getAttribute('anigen:number') || this.groupElement.children.length-1);
+		this.number = parseInt(this.element.getAttribute('anigen:number') || this.groupElement.children.length-1);
 		this.name = (this.element.getAttribute('anigen:name') || name);
+		
 		if(!svg.animationStates) { svg.animationStates = {}; }
 		if(!svg.animationStates[this.group]) { svg.animationStates[this.group] = []; }
-		svg.animationStates[this.group].push(this);
 		
+		var candidate = svg.animationStates[this.group][this.number];
+		if(candidate) { 
+			// could be the same thing
+			if(candidate.name != this.name || candidate.element.getFingerprint() != this.element.getFingerprint()) {
+				// isn't a duplicate - just matches number (add)
+				this.number = svg.animationStates[this.group].length;
+				svg.animationStates[this.group].push(this);
+				svg.animationStates[this.group].sort(function(a,b) { return a.number-b.number; })
+			}
+		} else {
+			svg.animationStates[this.group].push(this);
+			svg.animationStates[this.group].sort(function(a,b) { return a.number-b.number; })
+		}
 	}
 	
 	this.preview = new imageSVG(this.element, { width: 100, height: 50 });
