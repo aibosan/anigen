@@ -737,7 +737,7 @@ SVGAnimationElement.prototype.getCurrentValue = function(time) {
 		var progress = this.getCurrentProgress(time);
 		if(progress == null) {		// animation not running and/or duration = 0s
 			var temp = document.createElementNS("http://www.w3.org/2000/svg", "path");
-				temp.setAttribute('d', (this.parentNode.getAttribute('anigen:original-d') || this.parentNode.getAttribute('d')));
+				temp.setAttribute('d', this.parentNode.getAttribute('d'));
 			return temp.getPathData().baseVal;
 		}
 		this.getKeyframes();

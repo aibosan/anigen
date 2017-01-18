@@ -16,7 +16,7 @@ SVGPathElement.prototype.getPathData = function() {
 	// baseVal
 	this.pathData.baseVal = new pathSegList();
 	
-	var path = this.getAttribute('anigen:original-d') || this.getAttribute('d') || '';
+	var path = this.getAttribute('d') || '';
 	path = path.replace(/,/g, ' ').replace(/^\s+|\s+$/g, '').replace(/\s+/g, ' ');
 	path = path.split(' ');
 	
