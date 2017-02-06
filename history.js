@@ -57,7 +57,7 @@ history.prototype.undo = function() {
 		Math.abs(this.histArray[this.index+1].timestamp - this.histArray[this.index].timestamp) < this.collapseConstant);
 	
 	if(anigenActual) { anigenActual.eventUIRefresh(); }
-	windowAnimation.refresh();
+	anigenManager.classes.windowAnimation.refresh();
 	svg.select();
 	return true;
 }
@@ -74,7 +74,7 @@ history.prototype.redo = function() {
 		Math.abs(this.histArray[this.index+1].timestamp - this.histArray[this.index].timestamp) < this.collapseConstant);
 	
 	if(anigenActual) { anigenActual.eventUIRefresh(); }
-	windowAnimation.refresh();
+	anigenManager.classes.windowAnimation.refresh();
 	svg.select();
 	
 	return true;

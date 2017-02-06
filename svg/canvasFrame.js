@@ -7,6 +7,8 @@
 function canvasFrame() {
     this.container = document.createElementNS(svgNS, "g");
     this.container.setAttributeNS(anigenNS, 'anigen:lock', 'interface');
+	
+	this.container.setAttribute('shape-rendering', 'crispEdges');
 }
 
 
@@ -57,7 +59,7 @@ canvasFrame.prototype.refresh = function() {
 
 	shadowA.setAttribute("x", originX + frameWidth);
 	shadowA.setAttribute("y", originY + 3);
-	shadowA.setAttribute("width", 3);
+	shadowA.setAttribute("width", 3/svg.zoom+"px");
 	shadowA.setAttribute("height", frameHeight - 3);
 	shadowA.setAttribute("fill", viewFrameColor);
 	shadowA.setAttribute("stroke", "none");
@@ -67,7 +69,7 @@ canvasFrame.prototype.refresh = function() {
 	shadowB.setAttribute("x", originX + 3);
 	shadowB.setAttribute("y", originY + frameHeight);
 	shadowB.setAttribute("width", frameWidth - 3);
-	shadowB.setAttribute("height", 3);
+	shadowB.setAttribute("height", 3/svg.zoom+"px");
 	shadowB.setAttribute("fill", viewFrameColor);
 	shadowB.setAttribute("stroke", "none");
 	shadowB.setAttribute("id", "anigenShadowB");
@@ -75,8 +77,8 @@ canvasFrame.prototype.refresh = function() {
 
 	shadowC.setAttribute("x", originX + frameWidth);
 	shadowC.setAttribute("y", originY + frameHeight);
-	shadowC.setAttribute("width", 3);
-	shadowC.setAttribute("height", 3);
+	shadowC.setAttribute("width", 3/svg.zoom+"px");
+	shadowC.setAttribute("height", 3/svg.zoom+"px");
 	shadowC.setAttribute("fill", viewFrameColor);
 	shadowC.setAttribute("stroke", "none");
 	shadowC.setAttribute("id", "anigenShadowC");
@@ -87,7 +89,7 @@ canvasFrame.prototype.refresh = function() {
 	frameRect.setAttribute("width", frameWidth);
 	frameRect.setAttribute("height", frameHeight);
 	frameRect.setAttribute("fill", "none");
-	frameRect.setAttribute("stroke-width", this.zoom);
+	frameRect.setAttribute("stroke-width", 1/svg.zoom+"px");
 	frameRect.setAttribute("stroke", viewFrameColor);
 	frameRect.setAttribute("id", "anigenFrame");
 	frameRect.setAttribute("anigen:lock", "interface");

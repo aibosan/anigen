@@ -415,3 +415,163 @@ SVGElement.prototype.consumeAnimations = function(recursive) {
 }
 
 
+SVGElement.prototype.setAttributeHistory = function(values, noCSS) {
+	if(!svg || !svg.history) { return; }
+	
+	var oldAttributes = {};
+	var newAttributes = {};
+	
+	for(var i in values) {
+		if(this.style.hasOwnProperty(i) && !noCSS) {
+			if(!oldAttributes.style) {	
+				oldAttributes.style = this.getAttribute('style');
+			}
+			this.style[i] = values[i];
+			newAttributes.style = this.getAttribute('style');
+		} else {
+			oldAttributes[i] = this.getAttribute(i);
+			newAttributes[i] = values[i];
+			this.setAttribute(i, values[i]);
+		}
+	}
+	
+	svg.history.add(new historyAttribute(this.getAttribute('id'), oldAttributes, newAttributes, true));
+}
+
+/* Calculates blur - from filter's standard deviations - as inkscape's percentage;
+Blur radius equal to 1/8th of the total perimeter of the element's bounding rectangle is 100%.
+*/
+
+SVGElement.prototype.getBlur = function(value) {
+	if(!this.style.filter || this.style.filter.length == 0) { return 0; }
+	
+	var filterId = this.style.filter.replace(/^url\([^#]*#|[\"]?\)$/g, '');
+	var filter = document.getElementById(filterId);
+	if(!filter) { return 0; }
+	
+	var totalDeviationX = 0;
+	var totalDeviationY = 0;
+	for(var i = 0; i < filter.children.length; i++) {
+		if(!(filter.children[i] instanceof SVGFEGaussianBlurElement)) { continue; }
+		var std = (filter.children[i].getAttribute('stdDeviation') || "0 0").split(' ');
+		if(std.length == 1) {
+			totalDeviationX += parseFloat(std[0]);
+			totalDeviationY += parseFloat(std[0]);
+		} else {
+			totalDeviationX += parseFloat(std[0]);
+			totalDeviationY += parseFloat(std[1]);
+		}
+	}
+	
+	if(typeof this.getCenter !== 'function') { return 0; }
+	var center = this.getCenter(false);
+	var sizeX = center.right-center.left;
+	var sizeY = center.top-center.bottom;
+	var hundred = (Math.abs(sizeX)+Math.abs(sizeY))/4 || 1;
+	
+	var ctm = this.getCTMBase();
+	var zero = ctm.toViewport(0,0);
+	var dev = ctm.toViewport(totalDeviationX, totalDeviationY);
+	var sizedDeviation = ((dev.x-zero.x)+(dev.y-zero.y))/2;
+	
+	return sizedDeviation/hundred;
+}
+
+/* Calculates standard deviation required for given blur (as inkscape's percentage) and applies it as the element's filter */
+SVGElement.prototype.setBlur = function(value) {
+	
+	if(typeof this.getCenter !== 'function') { return; }
+	var center = this.getCenter(false);
+	var sizeX = center.right-center.left;
+	var sizeY = center.top-center.bottom;
+	var hundred = (Math.abs(sizeX)+Math.abs(sizeY))/4 || 1;
+	
+	var ctm = this.getCTMBase();
+	var zero = ctm.toViewport(0,0);
+	
+	var sizedDeviation = value*hundred
+	var sizX = (sizedDeviation)+zero.x;
+	var sizY = (sizedDeviation)+zero.y;
+	var totalDeviationV = ctm.toUserspace(sizX, sizY);
+	
+	var totalDeviationX = 0;
+	var totalDeviationY = 0;
+	
+	if(Math.abs(totalDeviationV.x-totalDeviationV.y) < 0.0001) {
+		totalDeviationX = totalDeviationY = totalDeviationV.x;
+	} else {
+		totalDeviationX = totalDeviationV.x;
+		totalDeviationY = totalDeviationV.y;
+	}
+	
+	if(totalDeviationX == totalDeviationY == 0) {
+		this.style.filter = null;
+		return;
+	}
+	
+	var filterHeight = Math.abs((1+value)*sizeX);
+	var filterWidth = Math.abs((1+value)*sizeY);
+	var filterX = -0.5*filterHeight;
+	var filterY = -0.5*filterWidth;
+	
+	var filter;
+	if(!this.style.filter || this.style.filter.length == 0 || !document.getElementById(this.style.filter.replace(/^url\([^#]*#|[\"]?\)$/g, ''))) {
+		var fContainer = document.createElementNS(svgNS, 'filter');
+			fContainer.generateId();
+			
+			this.setAttributeHistory({'filter': 'url("#'+fContainer.getAttribute('id')+'")'});
+			if(!svg || !svg.defs) { return; }
+			svg.defs.appendChild(fContainer);
+			
+		var filter = document.createElementNS(svgNS, 'feGaussianBlur');
+			filter.generateId();
+			fContainer.appendChild(filter);
+			
+			fContainer.setAttribute('x', filterX);
+			fContainer.setAttribute('y', filterY);
+			fContainer.setAttribute('height', filterHeight);
+			fContainer.setAttribute('width', filterWidth);
+			
+			filter.setAttributeHistory({'stdDeviation': totalDeviationX == totalDeviationY ? totalDeviationX : totalDeviationX + ' ' + totalDeviationY});
+			
+		if(svg && svg.history) {
+			svg.history.add(new historyCreation(fContainer.cloneNode(true), svg.defs.id, fContainer.previousElementSibling ? fContainer.previousElementSibling.id : null, false, true));
+		}
+			
+	} else {
+		var filterId = this.style.filter.replace(/^url\([^#]*#|[\"]?\)$/g, '');
+		filter = document.getElementById(filterId);
+		
+		var sizeOld = this.getBlur();
+		var filterOldHeight = Math.abs((1+sizeOld)*sizeX);
+		var filterOldWidth = Math.abs((1+sizeOld)*sizeY);
+		var filterOldX = -0.5*filterOldHeight;
+		var filterOldY = -0.5*filterOldWidth;
+		
+		filter.setAttribute('x', filterOldX);
+		filter.setAttribute('y', filterOldY);
+		filter.setAttribute('height', filterOldHeight);
+		filter.setAttribute('width', filterOldWidth);
+		
+		filter.setAttributeHistory({'x': filterX, 'y': filterY, 'height': filterHeight, 'width': filterWidth}, true);
+		
+		var count = 0;
+		for(var i = 0; i < filter.children.length; i++) {
+			if(!(filter.children[i] instanceof SVGFEGaussianBlurElement)) { continue; }
+			if(count > 0) {
+				if(svg && svg.history) {
+					svg.history.add(new historyCreation(filter.children[i].cloneNode(true), filter.id, filter.children[i].previousElementSibling ? filter.children[i].previousElementSibling.id : null, true, true));
+				}
+				filter.removeChild(filter.children[i]);
+			} else {
+				var newDeviation = String(totalDeviationX == totalDeviationY ? totalDeviationX : totalDeviationX + ' ' + totalDeviationY);
+				filter.children[i].setAttributeHistory({'stdDeviation': newDeviation});
+			}
+			count++;
+		}
+	}
+}
+
+
+
+

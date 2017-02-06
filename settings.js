@@ -7,7 +7,7 @@
 function settings() {
 	this.data = {
 		'tree':	false,
-		'timeline': false,
+		'colors': false,
 		'keyframes': false,
 		'layers': false,
 		
@@ -15,6 +15,7 @@ function settings() {
 		'progressCurve': false,
 		'nodes': true,
 		'canvasFrame': true,
+		'rulers': true,
 		
 		'windowsWidth': 256,
 		'treeWidth': 256,
@@ -28,7 +29,7 @@ settings.prototype.loadData = function() {
 	data = data.split(';');
 	
 	this.data.tree = data[0] && data[0] != '0' ? true : false;
-	this.data.timeline = data[1] && data[1] != '0' ? true : false;
+	this.data.colors = data[1] && data[1] != '0' ? true : false;
 	this.data.keyframes = data[2] && data[2] != '0' ? true : false;
 	this.data.layers = data[3] && data[3] != '0' ? true : false;
 	
@@ -40,6 +41,7 @@ settings.prototype.loadData = function() {
 	this.data.progressCurve = data[8] && data[8] != '0' ? true : false;
 	this.data.nodes = data[9] && data[9] != '1' ? false : true;
 	this.data.canvasFrame = data[10] && data[10] != '1' ? false : true;
+	this.data.canvasFrame = data[11] && data[11] != '1' ? false : true;
 	
 	if(this.data.windowsWidth > window.innerWidth/2) { this.data.windowsWidth = window.innerWidth/2; }
 	if(this.data.treeWidth > window.innerWidth/2) { this.data.treeWidth = window.innerWidth/2; }
@@ -49,7 +51,7 @@ settings.prototype.loadData = function() {
 settings.prototype.saveData = function() {
 	var serialized = [
 		(this.data.tree ? '1' : '0'),
-		(this.data.timeline ? '1' : '0'),
+		(this.data.colors ? '1' : '0'),
 		(this.data.keyframes ? '1' : '0'),
 		(this.data.layers ? '1' : '0'),
 		
@@ -60,7 +62,8 @@ settings.prototype.saveData = function() {
 		(this.data.highlight ? '1' : '0'),
 		(this.data.progressCurve ? '1' : '0'),
 		(this.data.nodes ? '1' : '0'),
-		(this.data.canvasFrame ? '1' : '0')
+		(this.data.canvasFrame ? '1' : '0'),
+		(this.data.rulers ? '1' : '0')
 	];
 		
 	setData('anigenSettings', serialized.join(';'));
@@ -82,6 +85,7 @@ settings.prototype.evaluateOverlay = function(table) {
 	this.set("progressCurve", table.children[1].children[1].children[0].checked);
 	this.set("nodes", table.children[2].children[1].children[0].checked);
 	this.set("canvasFrame", table.children[3].children[1].children[0].checked);
+	this.set("rulers", table.children[4].children[1].children[0].checked);
 	
 	if(svg && svg.ui) {
 		svg.ui.edit(svg.selected);
@@ -91,45 +95,54 @@ settings.prototype.evaluateOverlay = function(table) {
 
 settings.prototype.apply = function() {
 	if(this.data.tree) { 
-		w2ui['layout'].show('left', true);
-		w2ui['anigenContext'].check('buttonTree');
+		anigenManager.named.left.show();
+		anigenManager.classes.context.buttons.tree.setState(1);
 	} else {
-		w2ui['layout'].hide('left', true);
-		w2ui['anigenContext'].uncheck('buttonTree');
+		anigenManager.named.left.hide();
+		anigenManager.classes.context.buttons.tree.setState(0);
 	}
 	
-	if(this.data.timeline) { 
-		w2ui['layout'].show('bottom', true);
-		w2ui['anigenContext'].check('buttonTimeline');
-	} else {
-		w2ui['layout'].hide('bottom', true);
-		w2ui['anigenContext'].uncheck('buttonTimeline');
-	}
+	var keyframesDisabled = !anigenManager.classes.context.buttons.keyframes.enabled;
+	anigenManager.classes.context.buttons.keyframes.enable();
 	
-	var keyframesDisabled = w2ui['anigenContext'].get('buttonAnimation').disabled;
-	w2ui['anigenContext'].enable('buttonAnimation');
+	
+	if(this.data.colors) { 
+		anigenManager.classes.windowColors.show();
+		anigenManager.classes.context.buttons.colors.setState(1);
+	} else {
+		anigenManager.classes.windowColors.hide();
+		anigenManager.classes.context.buttons.colors.setState(0);
+	}
 	
 	if(this.data.keyframes) { 
-		windowAnimation.show();
-		w2ui['anigenContext'].check('buttonAnimation');
+		anigenManager.classes.windowAnimation.show();
+		anigenManager.classes.context.buttons.keyframes.setState(1);
 	} else {
-		windowAnimation.hide();
-		w2ui['anigenContext'].uncheck('buttonAnimation');
+		anigenManager.classes.windowAnimation.hide();
+		anigenManager.classes.context.buttons.keyframes.setState(0);
 	}
 	
 	if(keyframesDisabled) {
-		w2ui['anigenContext'].disable('buttonAnimation');
+		anigenManager.classes.context.buttons.keyframes.disable();
+		anigenManager.classes.context.buttons.keyframes.setState(0);
 	}
 	
 	if(this.data.layers) { 
-		windowLayers.show();
-		w2ui['anigenContext'].check('buttonLayers');
+		anigenManager.classes.windowLayers.show();
+		anigenManager.classes.context.buttons.layers.setState(1);
 	} else {
-		windowLayers.hide();
-		w2ui['anigenContext'].uncheck('buttonLayers');
+		anigenManager.classes.windowLayers.hide();
+		anigenManager.classes.context.buttons.layers.setState(0);
 	}
 	
-	w2ui['layout'].sizeTo('right', this.data.windowsWidth);
-	w2ui['layout'].sizeTo('left', this.data.treeWidth);
-	w2ui['layout'].sizeTo('bottom', this.data.timelineHeight);
+	if(this.data.rulers) {
+		anigenManager.classes.rulerH.show();
+		anigenManager.classes.rulerV.show();
+	} else {
+		anigenManager.classes.rulerH.hide();
+		anigenManager.classes.rulerV.hide();
+	}
+	
+	anigenManager.named.left.setWidth(this.data.treeWidth);
+	anigenManager.named.right.setWidth(this.data.windowsWidth);
 }

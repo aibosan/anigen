@@ -16,20 +16,32 @@ div.overlay {
 	*/
 }
 
-div.overlay > div:last-child {
+
+div.overlay > div {
+    margin: 2em 0;
+    max-width: 600px;
+    max-height: 100%;
+    position: relative;
+	top: 50%;
+	left: 50%;
+    transform: translate(-50%, -50%);
+    transition: top 1s;
+}
+
+div.overlay > div > div:last-child {
     margin-top: 1.5em;
 	margin-bottom: 2em;
 }
 
-div.overlay > div:first-child {
+div.overlay > div > div:first-child {
     margin-top: 2em;
 	margin-bottom: 1.5em;
 }
 
-div.overlay > div:nth-child(1) {
+div.overlay > div > div:nth-child(1) {
     max-width: 600px;
     max-height: 100%;
-	
+	/*
     position: relative;
 	top: 50%;
 	
@@ -37,6 +49,7 @@ div.overlay > div:nth-child(1) {
     transform: translate(-50%, -50%);
 
     transition: top 1s;
+	*/
 }
 
 div.overlay div:nth-child(1) h1 {

@@ -10,6 +10,8 @@ function windowAnimation() {
 	this.animation = null;
 	this.selected = [];
 	this.lastSelect = null;
+	
+	this.seed();
 }
 
 windowAnimation.prototype = Object.create(windowGeneric.prototype);
@@ -17,34 +19,35 @@ windowAnimation.prototype.constructor = windowAnimation;
 
 windowAnimation.prototype.seed = function() {
 	this.setHeading('Keyframes and timing (Ctrl+Shift+K)');
-	this.setImage('hourglass', 'white');
-	this.imgRight.setAttribute('onclick', "windowAnimation.hide();w2ui['anigenContext'].uncheck('buttonAnimation');");
+	this.setImage('hourglass_empty');
+	
+	this.imgRight.actions = [ "anigenManager.classes.windowAnimation.hide();anigenManager.classes.context.buttons.keyframes.setState(0);" ];
 	
 	this.tab1 = this.addTab('Keyframes');
 	this.tab2 = this.addTab('Begin list');
 	this.tab3 = this.addTab('Animated attributes');
 	
-	this.tab1.addEventListener('contextmenu', windowAnimation.eventContextMenu, false);
-	this.tab1.addEventListener('change', windowAnimation.eventChange, false);
-	this.tab1.addEventListener('click', windowAnimation.eventClick, false);
-	//this.tab1.addEventListener('dblclick', windowAnimation.eventDblClick, false);
+	this.tab1.addEventListener('contextmenu', this.eventContextMenu, false);
+	this.tab1.addEventListener('change', this.eventChange, false);
+	this.tab1.addEventListener('click', this.eventClick, false);
+	//this.tab1.addEventListener('dblclick', this.eventDblClick, false);
 	
-	this.tab1.addEventListener('dragstart', windowAnimation.eventDragStart, false);
-	this.tab1.addEventListener('dragover', windowAnimation.eventDragOver, false);
-	this.tab1.addEventListener('dragleave', windowAnimation.eventDragLeave, false);
-	this.tab1.addEventListener('drop', windowAnimation.eventDrop, false);
+	this.tab1.addEventListener('dragstart', this.eventDragStart, false);
+	this.tab1.addEventListener('dragover', this.eventDragOver, false);
+	this.tab1.addEventListener('dragleave', this.eventDragLeave, false);
+	this.tab1.addEventListener('drop', this.eventDrop, false);
 	
 	this.ui = {};
 	
-	this.ui.dur = build.input('number', null, {'min': '0', 'onchange': 'if(!windowAnimation.animation){return;};windowAnimation.animation.setDur(this.value, windowAnimation.ui.keepTimes.checked, windowAnimation.ui.adjustBegins.checked);windowAnimation.animation.commit();windowAnimation.refreshBegins();windowAnimation.refreshKeyframes();'});
+	this.ui.dur = build.input('number', null, {'min': '0', 'onchange': 'if(!anigenManager.classes.windowAnimation.animation){return;};anigenManager.classes.windowAnimation.animation.setDur(this.value, anigenManager.classes.windowAnimation.ui.keepTimes.checked, anigenManager.classes.windowAnimation.ui.adjustBegins.checked);anigenManager.classes.windowAnimation.animation.commit();anigenManager.classes.windowAnimation.refreshBegins();anigenManager.classes.windowAnimation.refreshKeyframes();'});
 	this.ui.keepTimes = build.input('checkbox', null, { 'label': 'Keep times', 'title': 'Maintains times instead of percentage values. Overflowing values default to maximum time.'  });
 	this.ui.keepTimes = this.ui.keepTimes.children[0];
 	this.ui.adjustBegins = build.input('checkbox', null, { 'label': 'Adjust begins', 'title': 'Adjust begin times as duration changes.'  }),
 	this.ui.adjustBegins = this.ui.adjustBegins.children[0];
 //	this.ui.resetDur = build.button("←");
 	
-	this.ui.repeatCount = build.input('number', null, { 'min:': '0', 'onchange': 'if(!windowAnimation.animation){return;};windowAnimation.animation.setRepeatCount(this.value, true);windowAnimation.animation.commit();windowAnimation.refreshBegins();windowAnimation.refreshKeyframes();'});
-	this.ui.indefinite = build.input('checkbox', null, { 'label': 'Indefinite', 'title': 'Animation will repeat forever, or until halted by outside source.', 'onchange': 'if(!windowAnimation.animation){return;};if(this.checked){windowAnimation.animation.setRepeatCount("indefinite", true);this.parentNode.parentNode.previousElementSibling.children[0].setAttribute("disabled", "disabled");}else{windowAnimation.animation.setRepeatCount(this.parentNode.parentNode.previousElementSibling.children[0].value, true);this.parentNode.parentNode.previousElementSibling.children[0].removeAttribute("disabled");};windowAnimation.animation.commit();windowAnimation.refreshBegins();windowAnimation.refreshKeyframes();'});
+	this.ui.repeatCount = build.input('number', null, { 'min:': '0', 'onchange': 'if(!anigenManager.classes.windowAnimation.animation){return;};anigenManager.classes.windowAnimation.animation.setRepeatCount(this.value, true);anigenManager.classes.windowAnimation.animation.commit();anigenManager.classes.windowAnimation.refreshBegins();anigenManager.classes.windowAnimation.refreshKeyframes();'});
+	this.ui.indefinite = build.input('checkbox', null, { 'label': 'Indefinite', 'title': 'Animation will repeat forever, or until halted by outside source.', 'onchange': 'if(!anigenManager.classes.windowAnimation.animation){return;};if(this.checked){anigenManager.classes.windowAnimation.animation.setRepeatCount("indefinite", true);this.parentNode.parentNode.previousElementSibling.children[0].setAttribute("disabled", "disabled");}else{anigenManager.classes.windowAnimation.animation.setRepeatCount(this.parentNode.parentNode.previousElementSibling.children[0].value, true);this.parentNode.parentNode.previousElementSibling.children[0].removeAttribute("disabled");};anigenManager.classes.windowAnimation.animation.commit();anigenManager.classes.windowAnimation.refreshBegins();anigenManager.classes.windowAnimation.refreshKeyframes();'});
 	this.ui.indefinite = this.ui.indefinite.children[0];
 //	this.ui.resetRepeat = build.button("←");
 	
@@ -58,21 +61,21 @@ windowAnimation.prototype.seed = function() {
 	this.ui.fill = build.select([
 		{ 'text': 'original', 'value': 'remove', 'title': 'After animation finishes, the element returns to its original state' },
 		{ 'text': 'from animation', 'value': 'freeze', 'title': 'After animation finishes, the element keeps the last state the animation imposed upon it' }
-	], { 'onchange': 'if(!windowAnimation.animation){return;};windowAnimation.animation.setFill(this.value);windowAnimation.animation.commit();' });
+	], { 'onchange': 'if(!anigenManager.classes.windowAnimation.animation){return;};anigenManager.classes.windowAnimation.animation.setFill(this.value);anigenManager.classes.windowAnimation.animation.commit();' });
 	this.ui.additive = build.select([
 		{ 'text': 'no', 'value': 'replace', 'title': 'Animation completely replaces values present in the element' },
 		{ 'text': 'yes', 'value': 'sum', 'title': 'Animation adds to the values already present in the element' }
-	], { 'onchange': 'if(!windowAnimation.animation){return;};windowAnimation.animation.setAdditive(this.value);windowAnimation.animation.commit();' });
+	], { 'onchange': 'if(!anigenManager.classes.windowAnimation.animation){return;};anigenManager.classes.windowAnimation.animation.setAdditive(this.value);anigenManager.classes.windowAnimation.animation.commit();' });
 	this.ui.accumulate = build.select([
 		{ 'text': 'no', 'value': 'none', 'title': 'Animation effects do not accumulate' },
 		{ 'text': 'yes', 'value': 'sum', 'title': 'Animation effects cumulate with each repeat of the animation' }
-	], { 'onchange': 'if(!windowAnimation.animation){return;};windowAnimation.animation.setAccumulate(this.value);windowAnimation.animation.commit();' });
+	], { 'onchange': 'if(!anigenManager.classes.windowAnimation.animation){return;};anigenManager.classes.windowAnimation.animation.setAccumulate(this.value);anigenManager.classes.windowAnimation.animation.commit();' });
 	this.ui.calcMode = build.select([
 		{ 'value': 'linear', 'title': 'Change between key frames is always linear' },
 		{ 'value': 'spline', 'title': 'Allows linear or non-linear change between key frames' },
 		{ 'value': 'paced', 'title': 'Evenly paces between given values. Movement through path only' },
 		{ 'value': 'discrete', 'title': 'Animation will jump from one value to the next without interpolation' }
-	], { 'onchange': 'if(!windowAnimation.animation){return;};windowAnimation.animation.setCalcMode(this.value);windowAnimation.animation.commit();windowAnimation.refreshKeyframes();' });
+	], { 'onchange': 'if(!anigenManager.classes.windowAnimation.animation){return;};anigenManager.classes.windowAnimation.animation.setCalcMode(this.value);anigenManager.classes.windowAnimation.animation.commit();anigenManager.classes.windowAnimation.refreshKeyframes();' });
 	
 	array = [
 		[ 'Interpolation mode', this.ui.calcMode ],
@@ -298,6 +301,8 @@ windowAnimation.prototype.refreshKeyframes = function(dontEdit) {
 					cont.appendChild(cloneSelect);
 				}
 				
+				var valueSet = false;
+				
 				switch(attrValues[customIndex]) {
 					case "<length>":
 					case "<number>":
@@ -308,6 +313,11 @@ windowAnimation.prototype.refreshKeyframes = function(dontEdit) {
 					case "<color>":
 						in1.setAttribute("type", "color");
 						in1.setAttribute('title', 'Color');
+						
+						try {
+							in1.setAttribute("value", new color(this.animation.keyframes.getItem(i).value));
+							valueSet = true;
+						} catch(err) { }
 						break;
 					case "<fraction>":
 						in1.setAttribute("type", "number");
@@ -315,6 +325,7 @@ windowAnimation.prototype.refreshKeyframes = function(dontEdit) {
 						in1.setAttribute("max", "100");
 						in1.setAttribute("value", this.animation.keyframes.getItem(i).value * 100);
 						in1.setAttribute('title', 'Percentage');
+						valueSet = true;
 						break;
 					default:
 					case "<string>":
@@ -326,7 +337,7 @@ windowAnimation.prototype.refreshKeyframes = function(dontEdit) {
 				if(this.animation.attribute == 'd') {
 					in1.value = this.animation.keyframes.getItem(i).value.trim().replace(/\s+/g,' ');
 				} else {
-					if(attrValues[customIndex] != '<fraction>') {
+					if(!valueSet) {
 						in1.value = this.animation.keyframes.getItem(i).value;
 					}
 				}
@@ -339,7 +350,7 @@ windowAnimation.prototype.refreshKeyframes = function(dontEdit) {
 				
 				subArray.push(cont);
 				break;
-			case 6:		// animation group
+			case 6:		// animated group
 				var preview;
 				if(lastState == null || this.animation.keyframes.getItem(i).intensity == 1) {
 					lastState = svg.animationStates[this.animation.groupName][this.animation.keyframes.getItem(i).value];
@@ -457,11 +468,11 @@ windowAnimation.prototype.refreshBegins = function() {
 		var iTime = document.createElement("input");
 			iTime.setAttribute('type', 'number');
 			iTime.setAttribute('value', beginList[i].value);
-			iTime.setAttribute('onchange', 'if(!windowAnimation.animation){return;};windowAnimation.animation.setBegin('+i+', this.value, true);windowAnimation.animation.commit();windowAnimation.refresh();');
+			iTime.setAttribute('onchange', 'if(!anigenManager.classes.windowAnimation.animation){return;};anigenManager.classes.windowAnimation.animation.setBegin('+i+', this.value, true);anigenManager.classes.windowAnimation.animation.commit();anigenManager.classes.windowAnimation.refresh();');
 		
 		var iRemove = document.createElement("button");
 			iRemove.appendChild(document.createTextNode("Remove"));
-			iRemove.setAttribute('onclick', 'if(!windowAnimation.animation){return;};windowAnimation.animation.removeBegin('+i+', true);windowAnimation.animation.commit();windowAnimation.refresh();');
+			iRemove.setAttribute('onclick', 'if(!anigenManager.classes.windowAnimation.animation){return;};anigenManager.classes.windowAnimation.animation.removeBegin('+i+', true);anigenManager.classes.windowAnimation.animation.commit();anigenManager.classes.windowAnimation.refresh();');
 		
 		if(i < beginList.length-1) {
 			iTime.setAttribute('max', beginList[i+1].value);
@@ -485,7 +496,7 @@ windowAnimation.prototype.refreshBegins = function() {
 	
 	var addBegin = document.createElement("button");
 		addBegin.appendChild(document.createTextNode("Add"));
-		addBegin.setAttribute('onclick', 'if(!windowAnimation.animation){return;};windowAnimation.animation.addBegin(this.previousElementSibling.value, true);windowAnimation.animation.commit();windowAnimation.refresh();');
+		addBegin.setAttribute('onclick', 'if(!anigenManager.classes.windowAnimation.animation){return;};anigenManager.classes.windowAnimation.animation.addBegin(this.previousElementSibling.value, true);anigenManager.classes.windowAnimation.animation.commit();anigenManager.classes.windowAnimation.refresh();');
 		
 	var cont = document.createElement('div');
 		cont.appendChild(iNew);
@@ -531,7 +542,7 @@ windowAnimation.prototype.refreshAttributes = function() {
 		for(var i = 0; i < animatable.length; i++) {
 			this.tab3.appendChild(
 				build.input('checkbox', this.animation.animations[animatable[i]] != null, 
-					{ 'label': animatable[i], 'onclick': 'if(this.checked){windowAnimation.animation.animate("'+animatable[i]+'");}else{windowAnimation.animation.unanimate("'+animatable[i]+'");};windowAnimation.animation.commit();' }
+					{ 'label': animatable[i], 'onclick': 'if(this.checked){anigenManager.classes.windowAnimation.animation.animate("'+animatable[i]+'");}else{anigenManager.classes.windowAnimation.animation.unanimate("'+animatable[i]+'");};anigenManager.classes.windowAnimation.animation.commit();' }
 				)
 			);
 		}
@@ -718,8 +729,8 @@ windowAnimation.prototype.contextMenuEvaluate = function(option, index) {
 			break;
 		case "balance":		// balance keyFrames
 			var canInbetween = false;
-			for(var i = 0; i < windowAnimation.selected.length-1; i++) {
-				if(windowAnimation.selected[i] == windowAnimation.selected[i+1]-1) {
+			for(var i = 0; i < anigenManager.classes.windowAnimation.selected.length-1; i++) {
+				if(anigenManager.classes.windowAnimation.selected[i] == anigenManager.classes.windowAnimation.selected[i+1]-1) {
 					canInbetween = true;
 					break;
 				}
@@ -766,7 +777,7 @@ windowAnimation.prototype.contextMenuEvaluate = function(option, index) {
 			break;
 	}
 	anim.commit();
-	windowAnimation.refreshKeyframes();
+	anigenManager.classes.windowAnimation.refreshKeyframes();
 	svg.ui.edit(svg.selected);
 }
 
@@ -827,7 +838,7 @@ windowAnimation.prototype.eventContextMenu = function(event) {
 }
 windowAnimation.prototype.eventChange = function(event) {
 	var val = event.target.value;
-	var anim = windowAnimation.animation;
+	var anim = anigenManager.classes.windowAnimation.animation;
 	
 	var col;
 	var row;
@@ -851,20 +862,20 @@ windowAnimation.prototype.eventChange = function(event) {
 			case 'translate':
 				splineRow = 4;
 				if(col == 2) {
-					if(windowAnimation.selected.length == 0 || windowAnimation.selected.indexOf(row) == -1) {
+					if(anigenManager.classes.windowAnimation.selected.length == 0 || anigenManager.classes.windowAnimation.selected.indexOf(row) == -1) {
 						anim.setPosition(row, val);
 					} else {
-						for(var i = 0; i < windowAnimation.selected.length; i++) {
-							anim.setPosition(windowAnimation.selected[i], val);
+						for(var i = 0; i < anigenManager.classes.windowAnimation.selected.length; i++) {
+							anim.setPosition(anigenManager.classes.windowAnimation.selected[i], val);
 						}
 					}
 				}
 				if(col == 3) {
-					if(windowAnimation.selected.length == 0 || windowAnimation.selected.indexOf(row) == -1) {
+					if(anigenManager.classes.windowAnimation.selected.length == 0 || anigenManager.classes.windowAnimation.selected.indexOf(row) == -1) {
 						anim.setPosition(row, null, val);
 					} else {
-						for(var i = 0; i < windowAnimation.selected.length; i++) {
-							anim.setPosition(windowAnimation.selected[i], null, val);
+						for(var i = 0; i < anigenManager.classes.windowAnimation.selected.length; i++) {
+							anim.setPosition(anigenManager.classes.windowAnimation.selected[i], null, val);
 						}
 					}
 				}
@@ -872,29 +883,29 @@ windowAnimation.prototype.eventChange = function(event) {
 			case 'rotate':		// rotate
 				splineRow = 5;
 				if(col == 2) {
-					if(windowAnimation.selected.length == 0 || windowAnimation.selected.indexOf(row) == -1) {
+					if(anigenManager.classes.windowAnimation.selected.length == 0 || anigenManager.classes.windowAnimation.selected.indexOf(row) == -1) {
 						anim.setAngle(row, val);
 					} else {
-						for(var i = 0; i < windowAnimation.selected.length; i++) {
-							anim.setAngle(windowAnimation.selected[i], val);
+						for(var i = 0; i < anigenManager.classes.windowAnimation.selected.length; i++) {
+							anim.setAngle(anigenManager.classes.windowAnimation.selected[i], val);
 						}
 					}
 				}
 				if(col == 3) {
-					if(windowAnimation.selected.length == 0 || windowAnimation.selected.indexOf(row) == -1) {
+					if(anigenManager.classes.windowAnimation.selected.length == 0 || anigenManager.classes.windowAnimation.selected.indexOf(row) == -1) {
 						anim.setPosition(row, val);
 					} else {
-						for(var i = 0; i < windowAnimation.selected.length; i++) {
-							anim.setPosition(windowAnimation.selected[i], val);
+						for(var i = 0; i < anigenManager.classes.windowAnimation.selected.length; i++) {
+							anim.setPosition(anigenManager.classes.windowAnimation.selected[i], val);
 						}
 					}
 				}
 				if(col == 4) {
-					if(windowAnimation.selected.length == 0 || windowAnimation.selected.indexOf(row) == -1) {
+					if(anigenManager.classes.windowAnimation.selected.length == 0 || anigenManager.classes.windowAnimation.selected.indexOf(row) == -1) {
 						anim.setPosition(row, null, val);
 					} else {
-						for(var i = 0; i < windowAnimation.selected.length; i++) {
-							anim.setPosition(windowAnimation.selected[i], null, val);
+						for(var i = 0; i < anigenManager.classes.windowAnimation.selected.length; i++) {
+							anim.setPosition(anigenManager.classes.windowAnimation.selected[i], null, val);
 						}
 					}
 				}
@@ -903,11 +914,11 @@ windowAnimation.prototype.eventChange = function(event) {
 			case 'skewY':		// skewY
 				splineRow = 3;
 				if(col == 2) {
-					if(windowAnimation.selected.length == 0 || windowAnimation.selected.indexOf(row) == -1) {
+					if(anigenManager.classes.windowAnimation.selected.length == 0 || anigenManager.classes.windowAnimation.selected.indexOf(row) == -1) {
 						anim.setAngle(row, val);
 					} else {
-						for(var i = 0; i < windowAnimation.selected.length; i++) {
-							anim.setAngle(windowAnimation.selected[i], val);
+						for(var i = 0; i < anigenManager.classes.windowAnimation.selected.length; i++) {
+							anim.setAngle(anigenManager.classes.windowAnimation.selected[i], val);
 						}
 					}
 				}
@@ -920,11 +931,11 @@ windowAnimation.prototype.eventChange = function(event) {
 			if(value < 0) { value = 0; }
 			if(value > 1) { value = 1; }
 			
-			if(windowAnimation.selected.length == 0 || windowAnimation.selected.indexOf(row) == -1) {
+			if(anigenManager.classes.windowAnimation.selected.length == 0 || anigenManager.classes.windowAnimation.selected.indexOf(row) == -1) {
 				anim.setValue(row, value);
 			} else {
-				for(var i = 0; i < windowAnimation.selected.length; i++) {
-					anim.setValue(windowAnimation.selected[i], value);
+				for(var i = 0; i < anigenManager.classes.windowAnimation.selected.length; i++) {
+					anim.setValue(anigenManager.classes.windowAnimation.selected[i], value);
 				}
 			}
 		}
@@ -938,20 +949,20 @@ windowAnimation.prototype.eventChange = function(event) {
 		splineRow = 5;
 		if(col == 2) {
 			var value = parseInt(val);
-			if(windowAnimation.selected.length == 0 || windowAnimation.selected.indexOf(row) == -1) {
+			if(anigenManager.classes.windowAnimation.selected.length == 0 || anigenManager.classes.windowAnimation.selected.indexOf(row) == -1) {
 				anim.setValue(row, value);
 			} else {
-				for(var i = 0; i < windowAnimation.selected.length; i++) {
-					anim.setValue(windowAnimation.selected[i], value);
+				for(var i = 0; i < anigenManager.classes.windowAnimation.selected.length; i++) {
+					anim.setValue(anigenManager.classes.windowAnimation.selected[i], value);
 				}
 			}
 		}
 		if(col == 3) {
-			if(windowAnimation.selected.length == 0 || windowAnimation.selected.indexOf(row) == -1) {
+			if(anigenManager.classes.windowAnimation.selected.length == 0 || anigenManager.classes.windowAnimation.selected.indexOf(row) == -1) {
 				anim.setIntensity(row, val);
 			} else {
-				for(var i = 0; i < windowAnimation.selected.length; i++) {
-					anim.setIntensity(windowAnimation.selected[i], val);
+				for(var i = 0; i < anigenManager.classes.windowAnimation.selected.length; i++) {
+					anim.setIntensity(anigenManager.classes.windowAnimation.selected[i], val);
 				}
 			}
 		}
@@ -968,11 +979,11 @@ windowAnimation.prototype.eventChange = function(event) {
 					val = parseFloat(event.target.value) / 100;
 				}
 				
-			if(windowAnimation.selected.length == 0 || windowAnimation.selected.indexOf(row) == -1) {
+			if(anigenManager.classes.windowAnimation.selected.length == 0 || anigenManager.classes.windowAnimation.selected.indexOf(row) == -1) {
 				anim.setValue(row, val, true);
 			} else {
-				for(var i = 0; i < windowAnimation.selected.length; i++) {
-					anim.setValue(windowAnimation.selected[i], val, true);
+				for(var i = 0; i < anigenManager.classes.windowAnimation.selected.length; i++) {
+					anim.setValue(anigenManager.classes.windowAnimation.selected[i], val, true);
 				}
 			}
 		}
@@ -989,22 +1000,22 @@ windowAnimation.prototype.eventChange = function(event) {
 					event.target.nextElementSibling.children[3].value
 				];
 				data = data.join(' ');
-				if(windowAnimation.selected.length == 0 || windowAnimation.selected.indexOf(row) == -1) {
+				if(anigenManager.classes.windowAnimation.selected.length == 0 || anigenManager.classes.windowAnimation.selected.indexOf(row) == -1) {
 					anim.setSpline(row, data);
 				} else {
-					for(var i = 0; i < windowAnimation.selected.length; i++) {
-						anim.setSpline(windowAnimation.selected[i], data);
+					for(var i = 0; i < anigenManager.classes.windowAnimation.selected.length; i++) {
+						anim.setSpline(anigenManager.classes.windowAnimation.selected[i], data);
 					}
 				}
 			} else {
-				if(windowAnimation.selected.length == 0 || windowAnimation.selected.indexOf(row) == -1) {
+				if(anigenManager.classes.windowAnimation.selected.length == 0 || anigenManager.classes.windowAnimation.selected.indexOf(row) == -1) {
 					anim.setSpline(row, splineType);
 				} else {
-					for(var i = 0; i < windowAnimation.selected.length; i++) {
-						anim.setSpline(windowAnimation.selected[i], splineType);
+					for(var i = 0; i < anigenManager.classes.windowAnimation.selected.length; i++) {
+						anim.setSpline(anigenManager.classes.windowAnimation.selected[i], splineType);
 					}
 				}
-				windowAnimation.refreshKeyframes();
+				anigenManager.classes.windowAnimation.refreshKeyframes();
 			}
 		} else {
 			var data = [
@@ -1014,16 +1025,16 @@ windowAnimation.prototype.eventChange = function(event) {
 					event.target.parentNode.children[3].value
 				];
 			data = data.join(' ');
-			if(windowAnimation.selected.length == 0 || windowAnimation.selected.indexOf(row) == -1) {
+			if(anigenManager.classes.windowAnimation.selected.length == 0 || anigenManager.classes.windowAnimation.selected.indexOf(row) == -1) {
 				anim.setSpline(row, data);
 			} else {
-				for(var i = 0; i < windowAnimation.selected.length; i++) {
-					anim.setSpline(windowAnimation.selected[i], data);
+				for(var i = 0; i < anigenManager.classes.windowAnimation.selected.length; i++) {
+					anim.setSpline(anigenManager.classes.windowAnimation.selected[i], data);
 				}
 			}
 		}
 	} else {
-		windowAnimation.refreshKeyframes();
+		anigenManager.classes.windowAnimation.refreshKeyframes();
 	}
 	
 	anim.commit();
@@ -1044,10 +1055,10 @@ windowAnimation.prototype.eventDblClick = function(event) {
 		targ = targ.parentNode;
 	}
 	index = targ.rowIndex-1;
-	windowAnimation.select(index, event);
+	anigenManager.classes.windowAnimation.select(index, event);
 }
 windowAnimation.prototype.eventClick = function(event) {
-	var anim = windowAnimation.animation;
+	var anim = anigenManager.classes.windowAnimation.animation;
 	var col;
 	var index;
 	var targ = event.target;
@@ -1061,7 +1072,7 @@ windowAnimation.prototype.eventClick = function(event) {
 	if(col == null || index == null || !anim || col > 1) { return; }
 	
 	if(col < 0) {	// selection
-		windowAnimation.select(index, event);
+		anigenManager.classes.windowAnimation.select(index, event);
 		return;
 	}
 	
@@ -1072,7 +1083,7 @@ windowAnimation.prototype.eventClick = function(event) {
 	var min, max, step, value;
 	var attrOut = { 'onchange': '', 'onmousemove': '' };
 	
-	attrOut.onchange += 'var shep = windowAnimation.animation;if(!shep){return;}';
+	attrOut.onchange += 'var shep = anigenManager.classes.windowAnimation.animation;if(!shep){return;}';
 	
 	if(!popup.isHidden()) { popup.hide(); return; }
 	
@@ -1081,13 +1092,13 @@ windowAnimation.prototype.eventClick = function(event) {
 		max = index+1 < anim.keyframes.length ? (anim.keyframes.getItem(index+1).time * 100) : 100;
 		if(index == 0) { max = 0; }
 		if(index == anim.keyframes.length-1) { min = 100; }
-		attrOut.onchange += 'windowAnimation.setTime('+index+', parseFloat(this.value)/100);';
+		attrOut.onchange += 'anigenManager.classes.windowAnimation.setTime('+index+', parseFloat(this.value)/100);';
 	} else {	// actual time
 		min = index == 0 ? 0 : (anim.keyframes.getItem(index-1).time * anim.dur.value);
 		max = index+1 < anim.keyframes.length ? (anim.keyframes.getItem(index+1).time * anim.dur.value) : anim.dur.value;
 		if(index == 0) { max = 0; }
 		if(index == anim.keyframes.length-1) { min = anim.dur.value; }
-		attrOut.onchange += 'windowAnimation.setTime('+index+', parseFloat(this.value)/'+anim.dur.value+');';
+		attrOut.onchange += 'anigenManager.classes.windowAnimation.setTime('+index+', parseFloat(this.value)/'+anim.dur.value+');';
 	}
 	
 	attrOut.onmousemove += 'if(event.buttons!=1){return;}';
@@ -1097,7 +1108,7 @@ windowAnimation.prototype.eventClick = function(event) {
 	value = col == 0 ? anim.keyframes.getItem(index).time * 100 : anim.keyframes.getItem(index).time * anim.dur.value;
 	
 	var actionYes = null;
-	var actionNo = 'windowAnimation.setTime('+index+', '+anim.keyframes.getItem(index).time+');';
+	var actionNo = 'anigenManager.classes.windowAnimation.setTime('+index+', '+anim.keyframes.getItem(index).time+');';
 	
 	attrOut.min = min;
 	attrOut.max = max;
@@ -1107,7 +1118,7 @@ windowAnimation.prototype.eventClick = function(event) {
 }
 
 windowAnimation.prototype.eventDragStart = function(event) {
-	if(windowAnimation.selected.length > 0) {
+	if(anigenManager.classes.windowAnimation.selected.length > 0) {
 		event.preventDefault ? event.preventDefault() : event.returnValue = false;
 		return false;
 	}
@@ -1117,7 +1128,7 @@ windowAnimation.prototype.eventDragStart = function(event) {
 	}
 	var index = targ.rowIndex-1;
 	if(index == null || isNaN(index)) { return; }
-	windowAnimation.dragged = index;
+	anigenManager.classes.windowAnimation.dragged = index;
 }
 windowAnimation.prototype.eventDragOver = function(event) {
 	targ = event.target;
@@ -1126,10 +1137,10 @@ windowAnimation.prototype.eventDragOver = function(event) {
 	}
 	var index = targ.rowIndex-1;
 	if(index == null || isNaN(index)) { return; }
-	if(index > windowAnimation.dragged) {
+	if(index > anigenManager.classes.windowAnimation.dragged) {
 		targ.style.borderBottomWidth = '5px';
 	}
-	if(index < windowAnimation.dragged) {
+	if(index < anigenManager.classes.windowAnimation.dragged) {
 		targ.style.borderTopWidth = '5px';
 	}
 	event.preventDefault();
@@ -1150,10 +1161,10 @@ windowAnimation.prototype.eventDrop = function(event) {
 	}
 	var index = targ.rowIndex-1;
 	if(index == null || isNaN(index)) { return; }
-	windowAnimation.animation.moveValue(windowAnimation.dragged, index, true);
-	windowAnimation.dragged = null;
+	anigenManager.classes.windowAnimation.animation.moveValue(anigenManager.classes.windowAnimation.dragged, index, true);
+	anigenManager.classes.windowAnimation.dragged = null;
 	targ.removeAttribute('style');
-	windowAnimation.refreshKeyframes();
+	anigenManager.classes.windowAnimation.refreshKeyframes();
 }
 windowAnimation.prototype.eventKeyDown = function(event) {
 	if(event.target != document.body) { return; }

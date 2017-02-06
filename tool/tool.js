@@ -38,7 +38,7 @@ tool.prototype.mouseMove = function(event) {
 tool.prototype.mouseContextMenu = function(event) {
 	if(!svg || !(svg instanceof root)) { return; }
 	
-	if(!event.target.isChildOf(windowAnimation.container)) {
+	if(!event.target.isChildOf(anigenManager.classes.windowAnimation.container)) {
 		popup.macroContextMenu({ 'target': event.target, 'x': event.clientX, 'y': event.clientY });
 	}
 	event.preventDefault ? event.preventDefault() : event.returnValue = false;

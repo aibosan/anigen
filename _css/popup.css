@@ -14,7 +14,7 @@
 	/*overflow: hidden;*/
 }
 
-.popup *:not(table):not(tr) {
+.popup *:not(table):not(tr):not(i) {
 	vertical-align: middle;
 	display: table-cell;
 }
@@ -82,5 +82,5 @@
 }
 
 .popup-menu td {
-	padding: .5ex;
+	/*padding: .5ex;*/
 }

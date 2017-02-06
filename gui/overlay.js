@@ -125,11 +125,11 @@ overlay.prototype.macroAbout = function() {
 	
 	this.add(build.p("Third-party libraries:"));
 	
-	this.add(build.a("w2ui", "http://w2ui.com/"));
-	this.add(build.br());
 	this.add(build.a("Open Sans", "https://fonts.google.com/specimen/Open+Sans"));
 	this.add(build.br());
 	this.add(build.a("SVGRender", "https://github.com/adasek/svg-render"));
+	this.add(build.br());
+	this.add(build.a("Google Material Icons", "https://material.io/icons/"));
 	
 	this.add(build.p("Created by Ondřej 'Aibo' Benda."));
 	
@@ -161,7 +161,8 @@ overlay.prototype.macroSettings = function() {
 		[ "Show element highlights", build.input('checkbox', anigenActual.settings.get('highlight'), { 'title': 'Red curve highlighting currently selected element.' }) ],
 		[ "Show progress curves", build.input('checkbox', anigenActual.settings.get('progressCurve'), { 'title': 'Green lines connecting positions of corresponding animation nodes.' }) ],
 		[ "Show nodes", build.input('checkbox', anigenActual.settings.get('nodes'), { 'title': 'Green lines connecting positions of corresponding animation nodes.' }) ],
-		[ "Show page border", build.input('checkbox', anigenActual.settings.get('canvasFrame')) ]
+		[ "Show page border", build.input('checkbox', anigenActual.settings.get('canvasFrame')) ],
+		[ "Show rulers", build.input('checkbox', anigenActual.settings.get('rulers')) ]
 	]));
 	
 	this.addButtonOk('anigenActual.settings.evaluateOverlay();', true);
@@ -183,13 +184,18 @@ overlay.prototype.macroOpen = function() {
 	this.add(build.br());
 	
 	if(typeof(Storage) !== "undefined" && localStorage.getItem("quicksaveFilename")) {
-		this.add(build.button(localStorage.getItem("quicksaveFilename"), { 'onclick': 'svg.loadLocal();overlay.hide();' }));
-		this.add(build.button("Remove", { 'onclick': 'svg.removeLocal();overlay.macroOpen();' }));
+		this.add(new uiLink('folder_open', 'svg.loadLocal();overlay.hide();', localStorage.getItem("quicksaveFilename"), { 'title': 'Load saved file' }));
+		this.add(new uiLink('delete', 'svg.removeLocal();overlay.macroOpen();', 'Delete', { 'title': 'Delete local file' }));
+		this.add(build.br());
 	}
+	this.add(new uiLink('import_contacts', 'window.open("manual.html", "_blank");', 'Manual'));
+	this.add(build.br());
+	
 	
 	if(svg.svgElement != null) {
 		this.addButtonCancel(null, true);
 	}
+	
 
 	this.show();
 }
@@ -201,7 +207,7 @@ overlay.prototype.macroExportBar = function() {
 	var progress = new progressBar({ 'id': 'anigenProgressBar' });
 	this.add(progress.container);
 	
-	this.addButtonCancel('svg.svgrender.pause();document.getElementById("svgArea").removeChildren();', true);
+	this.addButtonCancel('svg.svgrender.pause();document.title = svg.fileName + " - aniGen";document.getElementById("svgArea").removeChildren();', true);
 	
 	this.show();
 	return progress;
@@ -258,11 +264,13 @@ overlay.prototype.macroStateInbetween = function(value1, value2, firstValueIndex
 		if(!svg.animationStates[groupName]) { return; }
 		states = svg.animationStates[groupName];
 	} else {
-		if(!(windowAnimation.animation instanceof animationGroup) || !windowAnimation.animation.getAttribute('anigen:group') || !svg.animationStates[windowAnimation.animation.getAttribute('anigen:group')]) {
+		if(!(anigenManager.classes.windowAnimation.animation instanceof animationGroup) ||
+			!anigenManager.classes.windowAnimation.animation.getAttribute('anigen:group') ||
+			!svg.animationStates[anigenManager.classes.windowAnimation.animation.getAttribute('anigen:group')]) {
 			return;
 		}
-		states = svg.animationStates[windowAnimation.animation.getAttribute('anigen:group')];
-		groupName = windowAnimation.animation.getAttribute('anigen:group');
+		states = svg.animationStates[anigenManager.classes.windowAnimation.animation.getAttribute('anigen:group')];
+		groupName = anigenManager.classes.windowAnimation.animation.getAttribute('anigen:group');
 	}
 	
 	if(value1 == null) { value1 = 0; }
@@ -361,7 +369,7 @@ overlay.prototype.macroExport = function() {
 	
 	this.add(build.table([
 		[ "Begin at", build.input('number', '0', { 'id': 'anigenInputBegin' }), build.button("←", { "onclick": "this.parentNode.previousSibling.children[0].value = 0;" }) ],
-		[ "Duration (seconds)", build.input('number', String(infoEditor.clock.maxTime || 10), { 'id': 'anigenInputDur', 'min': '0'}),
+		[ "Duration (seconds)", build.input('number', String(anigenManager.classes.editor.clock.maxTime || 10), { 'id': 'anigenInputDur', 'min': '0'}),
 			build.button("←", { "onclick": "this.parentNode.previousSibling.children[0].value = 10;" }) ],
 		[ "Frames per second", build.input('number', '30', { 'id': 'anigenInputFramerate', 'min': '0'}),
 			build.button("←", { "onclick": "this.parentNode.previousSibling.children[0].value = 30;" }) ],
@@ -406,6 +414,14 @@ overlay.prototype.macroEdit = function(target) {
 		
 		tRow.push(build.input('checkbox', null, attrOut));
 		
+		if(target.attributes[i].value[0] == '#') {
+			var linkId = target.attributes[i].value.substring(1);
+			tRow.push(new uiButton('link', 'overlay.hide();svg.select("'+linkId+'");', 'Select linked object', { 'class': document.getElementById(linkId) ? 'inline' : 'inline disabled' }));
+		} else if(target.attributes[i].value.startsWith('url(')) {
+			var linkId = target.attributes[i].value.replace(/^url\([^#]*#|[\"]?\)$/g, '');
+			tRow.push(new uiButton('link', 'overlay.hide();svg.select("'+linkId+'");', 'Select linked object', { 'class': document.getElementById(linkId) ? 'inline' : 'inline disabled' }));
+		}
+		
 		tArray.push(tRow);
 	}
 	
@@ -430,9 +446,19 @@ overlay.prototype.macroEdit = function(target) {
 		
 		tRow.push(build.input('text', target.style[target.style[i]]));
 		
+		//tRow.push(build.input('text', target.style[target.style[i]]));
+		
 		tRow.push(build.button("←", { 'onclick': "this.parentNode.previousSibling.children[0].value = '"+target.style[target.style[i]]+"';" }));
 		
 		tRow.push(build.input('checkbox'));
+		
+		if(target.style[target.style[i]][0] == '#') {
+			var linkId = target.style[target.style[i]].substring(1);
+			tRow.push(new uiButton('link', 'overlay.hide();svg.select("'+linkId+'");', 'Select linked object', { 'class': document.getElementById(linkId) ? 'inline' : 'inline disabled' }));
+		} else if(target.style[target.style[i]].startsWith('url(')) {
+			var linkId = target.style[target.style[i]].replace(/^url\([^#]*#|[\"]?\)$/g, '');
+			tRow.push(new uiButton('link', 'overlay.hide();svg.select("'+linkId+'");', 'Select linked object', { 'class': document.getElementById(linkId) ? 'inline' : 'inline disabled' }));
+		}
 		
 		tArray.push(tRow);
 	}

@@ -203,11 +203,11 @@ build.h = function(text, level, attributes) {
 	return h;
 }
 
-build.icon = function(picture) {
-	var span = document.createElement("span");
-	span.addClass("w2ui-icon");
-	span.addClass("icon-"+picture);
-	return span;
+
+build.icon = function(picture, inClass) {
+	outClass = 'icon';
+	if(inClass) { outClass += ' ' + inClass; }
+	return new uiButton(picture, null, null, { 'class': outClass });
 }
 
 build.slider = function(value, attributes, numericInput, soft) {

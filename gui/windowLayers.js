@@ -6,27 +6,32 @@
  */
 function windowLayers() {
 	windowGeneric.call(this, 'layers');
+	
+	this.seed();
 }
 
 windowLayers.prototype = Object.create(windowGeneric.prototype);
 windowLayers.prototype.constructor = windowLayers;
 
 windowLayers.prototype.seed = function() {
-	this.container.addEventListener('contextmenu', windowLayers.eventContextMenu, false);
+	this.container.addEventListener('contextmenu', this.eventContextMenu, false);
 	
 	this.setHeading('Layers (Ctrl+Shift+L)');
-	this.setImage('layers', 'white');
-	this.imgRight.setAttribute('onclick', "windowLayers.hide();w2ui['anigenContext'].uncheck('buttonLayers');");
+	
+	this.setImage('layers');
+	//this.setImage('filter');
+	
+	this.imgRight.actions = [ "anigenManager.classes.windowLayers.hide();anigenManager.classes.context.buttons.layers.setState(0);" ];
 	
 	this.tab1 = this.addTab('Layers');
 	
 	var buttons = [
-		new button('icon-plus-white', 'windowLayers.eventToolbar("plus");event.stopPropagation();', 'Add layer'),
-		new button('icon-minus-white', 'windowLayers.eventToolbar("minus");', 'Remove layer'),
-		new button('icon-arrow-home-white', 'windowLayers.eventToolbar("top");', 'Raise the current layer to the top'),
-		new button('icon-arrow-up-white', 'windowLayers.eventToolbar("up");', 'Raise the current layer'),
-		new button('icon-arrow-down-white', 'windowLayers.eventToolbar("down");', 'Lower the current layer'),
-		new button('icon-arrow-end-white', 'windowLayers.eventToolbar("bottom");', 'Lower the current layer to the bottom')
+		new uiButton('add', 'anigenManager.classes.windowLayers.eventToolbar("plus");event.stopPropagation();', 'Add layer'),
+		new uiButton('remove', 'anigenManager.classes.windowLayers.eventToolbar("minus");', 'Remove layer'),
+		new uiButton('vertical_align_top', 'anigenManager.classes.windowLayers.eventToolbar("top");', 'Raise the current layer to the top'),
+		new uiButton('arrow_upward', 'anigenManager.classes.windowLayers.eventToolbar("up");', 'Raise the current layer'),
+		new uiButton('arrow_downward', 'anigenManager.classes.windowLayers.eventToolbar("down");', 'Lower the current layer'),
+		new uiButton('vertical_align_bottom', 'anigenManager.classes.windowLayers.eventToolbar("bottom");', 'Lower the current layer to the bottom')
 	];
 	
 	buttons[2].addClass('floatRight');
@@ -64,12 +69,12 @@ windowLayers.prototype.contextMenuEvaluate = function(option, id) {
 			break;
 		case 'raise':
 			document.getElementById(id).moveUp(true);
-			tree.seed();
+			anigenManager.classes.tree.seed();
 			svg.select();
 			break;
 		case 'lower':
 			document.getElementById(id).moveDown(true);
-			tree.seed();
+			anigenManager.classes.tree.seed();
 			svg.select();
 			break;
 		case 'duplicate':
@@ -93,22 +98,22 @@ windowLayers.prototype.eventToolbar = function(option) {
 			break;
 		case 'top':
 			currentLayer.moveTop(true);
-			tree.seed();
+			anigenManager.classes.tree.seed();
 			svg.select();
 			break;
 		case 'bottom':
 			currentLayer.moveBottom(true);
-			tree.seed();
+			anigenManager.classes.tree.seed();
 			svg.select();
 			break;
 		case 'up':
 			currentLayer.moveUp(true);
-			tree.seed();
+			anigenManager.classes.tree.seed();
 			svg.select();
 			break;
 		case 'down':
 			currentLayer.moveDown(true);
-			tree.seed();
+			anigenManager.classes.tree.seed();
 			svg.select();
 			break;
 	}
@@ -141,17 +146,21 @@ windowLayers.prototype.refresh = function() {
 		if(layersRaw[i] == currentLayer) { selectedIndex = i; }
 		
 		var state = layersRaw[i].style.display == 'none' ? 1 : 0;
-		var visToggle = new buttonToggle(
-			["svg.toggleVisibility('"+layersRaw[i].getAttribute('id')+"');", "svg.toggleVisibility('"+layersRaw[i].getAttribute('id')+"');"],
-			['eye_open.png', 'eye_closed.png'],
-			state,
-			['Hide layer', 'Show layer']);
+		
+		var visToggle = new uiButton(
+			[ 'visibility', 'visibility_off' ],
+			[ "svg.toggleVisibility('"+layersRaw[i].getAttribute('id')+"');", "svg.toggleVisibility('"+layersRaw[i].getAttribute('id')+"');" ],
+			[ 'Hide layer', 'Show layer' ],
+			{ 'state': state, 'class': 'md-18' }
+		);
+		visToggle.shepherd.stateIcons[1].style.color = 'gray';
+			
 		
 		var layerName = document.createElement('span');
 		layerName.appendChild(document.createTextNode(layersRaw[i].getAttribute('inkscape:label')));
 		if(depth) { layerName.setAttribute('style', 'padding-left: ' + depth*1.5 + 'em;'); }
 		
-		subArray.push(visToggle.container);
+		subArray.push(visToggle);
 		subArray.push(layerName)
 	}
 	

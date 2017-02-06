@@ -20,17 +20,8 @@
 	text-align: left;
 }
 
-.window h1 span {
-	display: inline-block;
-}
-
-.window h1 span:first-child {
-	float: left;
-}
-
-.window h1 span:last-child {
-	float: right;
-	cursor: pointer;
+.window h1 > i {
+	/*font-size: 20px;*/
 }
 
 ul.navbar {
@@ -88,6 +79,10 @@ ul.navbar li.active a {
 	display: inline-block;
 }
 
+.window div.tab > * {
+	clear: both;
+}
+
 .window table th {
 	white-space: nowrap;
 }
@@ -100,6 +95,10 @@ ul.navbar li.active a {
 .window table {
 	width: 100%;
 	border-collapse: collapse;
+}
+
+table.layers tr td {
+	vertical-align: top;
 }
 
 table.layers tr td:last-child {
@@ -124,6 +123,18 @@ table.begins tr td:first-child, table.begins tr td:nth-child(2) {
 	width: 50%;
 }
 
+table.opacity input[type=range] {
+	width: 100%;
+}
+
+table.opacity input {
+	margin-left: 1ex;
+}
+
+table.opacity tr td:nth-child(2) {
+	width: 100%;
+}
+
 table.keyframes tr {
 	border: 0px solid gray;
 }
@@ -136,11 +147,9 @@ table.keyframes tr.selected {
 	background-color: gray;
 }
 
-
 table.keyframes tr.selected:not(:first-child):hover {
 	background-color: dimgray;
 }
-
 
 table.keyframes {
 	white-space:nowrap;
@@ -165,6 +174,15 @@ table.keyframes td:first-child:hover {
 	border-color: black;
 }
 
+
+table.gradients tr.selected {
+	background-color: #eee;
+}
+
+table.gradients tr:not(:first-child):hover {
+	cursor: pointer;
+	background-color: dimgray;
+}
 
 
 /*

@@ -13,40 +13,7 @@ function treeNode(element) {
 	
     this.element = element;
 	
-	var icon = "default", group = false, name = element.getAttribute('id');
-	switch(element.nodeName.toLowerCase()) {
-		case "animate":
-		case "animatemotion":
-		case "animatetransform":
-		case "animatecolor":
-			icon = "animation";
-			break;
-		case "svg":
-		case "g":
-			icon = "folder";
-			if(element.getAttribute("inkscape:groupmode") == "layer") {
-				icon = "layers";
-				name = element.getAttribute("inkscape:label")+'#'+name;
-			}
-			if(element.getAttribute("anigen:name")) {
-				icon = "animation";
-				name = element.getAttribute("anigen:name")+'#'+name;
-			}
-			if(element.getAttribute("anigen:type") == "animationGroup") {
-				icon = "animation";
-			}
-			break;
-		default:
-			icon = "other";
-			if(element.getAttribute("anigen:type") == "animatedViewbox") {
-				icon = "camera";
-			}
-			break;
-	}
-	this.li = document.createElement("li");
-	var nodeName = document.createElement("span");
-        nodeName.appendChild(document.createTextNode("<"+element.nodeName.toLowerCase()+">"));
-        nodeName.setAttribute("class", "nodeName");
+	var icon = anigenActual.getNodeIcon(element);
 	
 	var validChildren = false;
 	for(var i = 0; i < this.element.children.length; i++) {
@@ -57,13 +24,35 @@ function treeNode(element) {
 			break;
 		}
 	}
+		
+	var group = false, name = element.getAttribute('id');
+	
+	if(element.getAttribute("inkscape:label")) {
+		name = element.getAttribute("inkscape:label")+'#'+name;
+	}
+	if(element.getAttribute("anigen:name")) {
+		name = element.getAttribute("anigen:name")+'#'+name;
+	}
+	
+	
+	this.li = document.createElement("li");
+	var nodeName = document.createElement("span");
+        nodeName.appendChild(document.createTextNode("<"+element.nodeName.toLowerCase()+">"));
+        nodeName.setAttribute("class", "nodeName");
+	
+	var info = anigenActual.getNodeDescription(element);
+	if(info) {	nodeName.setAttribute('title', info);	}
+	
+	var picture = new uiButton(icon, 'svg.select("'+element.getAttribute('id')+'");', 'Click to select', { "class": "md-18" });
 	
 	if(validChildren) {
 		// branch
-		var label = document.createElement("label");
-		var input = document.createElement("input");
-
-		label.setAttribute("for", "anigenTree_"+element.getAttribute('id'));
+		var label = document.createElement("span");
+		
+		var input = new uiButton([ 'chevron_right', 'expand_more' ], [
+			'this.container.parentNode.addClass("checked");',
+			'this.container.parentNode.removeClass("checked");'
+		], [ 'Expand', 'Condense' ], { 'class': 'md-18' }).shepherd;
 		
 		if(name.indexOf('#') >= 0) {
 			var part1span = document.createElement('span');
@@ -79,24 +68,17 @@ function treeNode(element) {
 			label.appendChild(document.createTextNode(name));
 		}
 		
-		
-		if(element.children.length > 0) {
-			label.setAttribute("class", icon);
-		} else {
-			label.setAttribute("class", icon+"-black");
-		}
-		label.appendChild(nodeName);
-
 		label.setAttributeNS(anigenNS, "originalid", element.getAttribute('id'));
-		label.ondblclick = tree.handle;
+		label.ondblclick = anigenManager.classes.tree.handleSelect;
+		label.onclick = anigenManager.classes.tree.handleToggle;
+		label.shepherd = this;
 		label.setAttribute("title", "Double-click to select");
 
-		input.setAttribute("type", "checkbox");
-		input.setAttribute("id", "anigenTree_"+element.getAttribute('id'));
-
+		this.li.appendChild(input.container);
+		this.li.appendChild(picture);
 		this.li.appendChild(label);
-		this.li.appendChild(input);
-
+		this.li.appendChild(nodeName);
+		
 		this.checkbox = input;
 		
 		this.representative = label;
@@ -104,21 +86,42 @@ function treeNode(element) {
 		this.li.appendChild(this.container);
 	} else {
 		// leaf
+		
+		var blank = new uiButton(null, null, null, { 'class': 'icon md-18' });
+		
+		
+		
 		var span = document.createElement("span");
-			span.setAttribute("class", icon);
-			span.setAttribute("id", "anigenTree_"+element.getAttribute('id'));
-			span.setAttributeNS(anigenNS, "originalid", element.getAttribute('id'));
+			
+		if(name.indexOf('#') >= 0) {
+			var part1span = document.createElement('span');
+			var part2span = document.createElement('span');
+			part2span.setAttribute('class', 'nodeName');
+			
+			part1span.appendChild(document.createTextNode(name.substr(0, name.indexOf('#'))));
+			part2span.appendChild(document.createTextNode(name.substr(name.indexOf('#'))));
+			
+			span.appendChild(part1span);
+			span.appendChild(part2span);
+		} else {
 			span.appendChild(document.createTextNode(name));
-			span.onclick = tree.handle;
+		}
+			
+			span.setAttributeNS(anigenNS, 'originalid', element.getAttribute('id'));
+			span.onclick = anigenManager.classes.tree.handleSelect;
 			span.setAttribute("title", "Click to select");
 
-		this.li.appendChild(span);
 		this.li.setAttribute("class", "leaf");
+		
+		this.li.appendChild(blank);
+		this.li.appendChild(picture);
+		this.li.appendChild(span);
 		this.li.appendChild(nodeName);
 		
 		this.representative = this.li;
 		this.container = null;
 	}
+	
 }
 
 treeNode.prototype.setSelected = function(value) {
@@ -139,7 +142,7 @@ treeNode.prototype.append = function(newNode) {
 }
 
 treeNode.prototype.collapse = function(deep) {
-	if(this.checkbox != null && this.checkbox.checked) { this.checkbox.click(); }
+	if(this.checkbox != null && this.checkbox.state == 1) { this.checkbox.click(); }
 	if(deep) {
 		for(var i = 0; i < this.children.length; i++) {
 			this.children[i].collapse(deep);
@@ -148,7 +151,15 @@ treeNode.prototype.collapse = function(deep) {
 }
 
 treeNode.prototype.spread = function() {
-	if(this.checkbox != null && !this.checkbox.checked) {
+	if(this.checkbox != null && this.checkbox.state != 1) {
 		this.checkbox.click();
+	}
+}
+
+treeNode.prototype.toggle = function() {
+	if(this.checkbox != null && this.checkbox.state == 1) {
+		this.collapse();
+	} else {
+		this.spread();
 	}
 }

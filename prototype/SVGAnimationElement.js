@@ -336,12 +336,12 @@ SVGAnimationElement.prototype.commit = function(noHistory) {
 		out = clone;
 		
 		if(svg.selected == this) { svg.selected = clone; }
-		if(windowAnimation.animation == this) { windowAnimation.animation = clone; }
-		tree.seed();
+		if(anigenManager.classes.windowAnimation.animation == this) { anigenManager.classes.windowAnimation.animation = clone; }
+		anigenManager.classes.tree.seed();
 		
 		if(svg.selected == this) { svg.selected = clone; }
 		
-		tree.select(svg.selected);
+		anigenManager.classes.tree.select(svg.selected);
 		svg.select();
 		
 		count++;
@@ -791,8 +791,9 @@ SVGAnimationElement.prototype.getCurrentValue = function(time) {
 		pathBefore.setAttribute('d', this.keyframes.getItem(before).value);
 		pathAfter.setAttribute('d', this.keyframes.getItem(after).value);
 		
-		if(this.keyframes.getItem(before).spline) {
-			ratio = this.keyframes.getItem(before).spline.getValue(ratio);
+		if(this.keyframes.getItem(after).spline) {
+			// used to be "before", now it's not (splines have been moved one up - first keyframe now has NULL spline)
+			ratio = this.keyframes.getItem(after).spline.getValue(ratio);
 		}
 		
 		return pathBefore.inbetween(pathAfter, ratio);

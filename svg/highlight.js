@@ -11,7 +11,7 @@ function highlight() {
 }
 
 highlight.prototype.setElement = function(element) {
-	if(!element || element instanceof SVGGElement || element instanceof SVGUseElement || element.shepherd) {
+	if(!element || element instanceof SVGGElement || element instanceof SVGUseElement || element instanceof SVGImageElement || element.shepherd) {
 		this.element = null;
 		return;
 	}

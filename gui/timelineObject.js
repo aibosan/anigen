@@ -123,7 +123,7 @@ function timelineObject(target, floor) {
 		this.refresh();
 		this.animation.setBegin(0, this.left);
 		this.animation.setDur(newDur);
-		windowAnimation.refresh();
+		anigenManager.classes.windowAnimation.refresh();
 	};
 	
 	

@@ -115,11 +115,11 @@ SVGAnimateTransformElement.prototype.generateAnchors = function() {
 					var newAnchor = new anchor(adjusted, this, 'rectangle', {
 							'move': "this.element.setPosition("+i+", relative.x, relative.y, true);",
 							'mouseup': mouseUpAction,
-							'click': 'windowAnimation.select('+i+', { "ctrlKey": keys.ctrlKey || keys.shiftKey });'
+							'click': 'anigenManager.classes.windowAnimation.select('+i+', { "ctrlKey": keys.ctrlKey || keys.shiftKey });'
 							}, constraint);
 					newAnchor.setOffset(center.x, center.y);
 					
-					if(windowAnimation.selected.length > 0 && windowAnimation.selected.indexOf(i) != -1) {
+					if(anigenManager.classes.windowAnimation.selected.length > 0 && anigenManager.classes.windowAnimation.selected.indexOf(i) != -1) {
 						newAnchor.select(true);
 					}
 					
@@ -369,19 +369,21 @@ SVGAnimateTransformElement.prototype.generateAnchors = function() {
 			
 			var zeroAnchor = new anchor({ 'x': zero.x, 'y': zero.y}, this, 'circle',
 				{ 'move': "this.element.setZero(absolute.x, absolute.y, true);",
-						  'mouseup': mouseUpAction },
-			new constraintLinear(zero, { 'x': zero.x, 'y': zero.y+1}));
+						  'mouseup': mouseUpAction });
+			//new constraintLinear(zero, { 'x': zero.x, 'y': zero.y+1}));
 			
 			anchors[3].push(zeroAnchor);
 			
 			
 			var vectorZero = { 'x': center.x - zero.x, 'y': center.y - zero.y };
 			
+			/*
 			var line1 = new lineLong({'x': zero.x, 'y': zero.x }, { 'x': zero.x+1, 'y': zero.y }, '#aaa');
 			var line2 = new lineLong({'x': center.x, 'y': center.y }, {'x': center.x + 1, 'y': center.y }, '#aaa');
 			
 			connectors.push(line1);
 			connectors.push(line2);
+			*/
 			
 			var lastAnchor = null;
 			var firstAnchor = null;
@@ -456,19 +458,21 @@ SVGAnimateTransformElement.prototype.generateAnchors = function() {
 			
 			var zeroAnchor = new anchor({ 'x': zero.x, 'y': zero.y}, this, 'circle',
 				{ 'move': "this.element.setZero(absolute.x, absolute.y, true);",
-						  'mouseup': mouseUpAction },
-			new constraintLinear(zero, { 'x': zero.x+1, 'y': zero.y}));
+						  'mouseup': mouseUpAction });
+			//new constraintLinear(zero, { 'x': zero.x+1, 'y': zero.y}));
 			
 			anchors[3].push(zeroAnchor);
 			
 			
 			var vectorZero = { 'x': center.x - zero.x, 'y': center.y - zero.y };
 			
+			/*
 			var line1 = new lineLong({'x': zero.x, 'y': zero.y }, { 'x': zero.x, 'y': zero.y + 1 }, '#aaa');
 			var line2 = new lineLong({'x': center.x, 'y': center.y }, {'x': center.x, 'y': center.y + 1 }, '#aaa');
 			
 			connectors.push(line1);
 			connectors.push(line2);
+			*/
 			
 			var lastAnchor = null;
 			var firstAnchor = null;

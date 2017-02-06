@@ -6,7 +6,7 @@
  */
 function uiSVG() {
 	this.selectionBox = new selectionBox();
-	this.highligh = null;
+	this.highlight = null;
     this.frame = new canvasFrame();
 		
 	this.anchorContainer = null;

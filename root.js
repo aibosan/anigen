@@ -23,6 +23,8 @@ function root() {
 	
 	this.zip = new JSZip();
 	this.svgrender = new SVGRender();
+	
+	window.svg = this;
 }
 
 // creates the interface group in the svg
@@ -56,6 +58,7 @@ root.prototype.getLayers = function(element) {
 root.prototype.getCurrentLayer = function() {
 	if(this.selected == null) { return null; }
 	var obj = this.selected;
+	if(!obj) { return null;}
 	while(obj.nodeName.toLowerCase() != 'svg') {
 		if(obj.getAttribute('inkscape:groupmode') == 'layer') { return obj; }
 		obj = obj.parentNode;
@@ -92,7 +95,7 @@ root.prototype.addLayer = function(name, position) {
 	
 	this.history.add(new historyCreation(newLayer.cloneNode(true), newLayer.parentNode.id, newLayer.nextElementSibling ? newLayer.nextElementSibling.id : null, false));
 	
-	tree.seed();
+	anigenManager.classes.tree.seed();
 	this.select();
 }
 
@@ -107,7 +110,7 @@ root.prototype.renameLayer = function(targetId, newName) {
 	
 	target.setAttribute('inkscape:label', newName);
 	
-	tree.seed();
+	anigenManager.classes.tree.seed();
 	this.select();
 }
 
@@ -175,7 +178,7 @@ root.prototype.pauseToggle = function() {
 	} else {
 		this.svgElement.pauseAnimations();
 	}
-	infoEditor.refreshPause();
+	anigenManager.classes.editor.refreshPause();
 }
 
 root.prototype.elementToCoords = function(target, x, y) {
@@ -213,10 +216,10 @@ root.prototype.duplicate = function(target) {
 	
 	this.history.add(new historyCreation(clone.cloneNode(true), clone.parentNode.id, clone.nextElementSibling ? clone.nextElementSibling.id : null, false));
 	
-	tree.seed();	// the tree is reconstructed
+	anigenManager.classes.tree.seed();	// the tree is reconstructed
 	
 	// this.rebuildShepherds(this.svgElement, true);
-	timeline.rebuild();
+	//timeline.rebuild();
 	
 	this.select(clone);
 }
@@ -307,11 +310,11 @@ root.prototype.paste = function(position, target, beforeElement) {
 	transformBase = targetCTM.inverse().multiply(transformBase);
 	newElement.setAttribute('transform', transformBase);
 	
-	tree.seed();	// the tree is reconstructed
+	anigenManager.classes.tree.seed();	// the tree is reconstructed
 	
 	// this.rebuildShepherds(this.svgElement, true);
-	timeline.rebuild();
-	infoContext.refresh();
+	//timeline.rebuild();
+	anigenManager.classes.context.refresh();
 	
 	if(position) {
 		this.elementToCoords(newElement, position.x, position.y);
@@ -335,15 +338,15 @@ root.prototype.delete = function(target) {
 	target.parentNode.removeChild(target);
 	
 	// this.rebuildShepherds(this.svgElement, true);
-	timeline.rebuild();
+	//timeline.rebuild();
 	
-	infoContext.refresh();
+	anigenManager.classes.context.refresh();
 	
 	if(target.shepherd && target.shepherd instanceof animatedViewbox) {
 		this.camera = null;
 	}
 	
-	tree.seed();	// the tree is reconstructed
+	anigenManager.classes.tree.seed();	// the tree is reconstructed
 	if(selectParent != null) {
 		this.select(selectParent);
 	} else {
@@ -370,6 +373,7 @@ root.prototype.createLink = function(target) {
 	target.parentNode.insertBefore(target, use);
 
 	this.history.add(new historyCreation(use.cloneNode(true), use.parentNode.id, target.id, false));
+	anigenManager.classes.tree.seed();
 	this.select(use);
 }
 
@@ -393,9 +397,9 @@ root.prototype.group = function(target) {
 	targetParent.insertBefore(newGroup, target);
 	newGroup.appendChild(target);
 	
-	tree.seed();	// the tree is reconstructed
-	timeline.rebuild();
-	infoContext.refresh();
+	anigenManager.classes.tree.seed();	// the tree is reconstructed
+	//timeline.rebuild();
+	anigenManager.classes.context.refresh();
 	
 	this.select(newGroup);
 }
@@ -408,9 +412,9 @@ root.prototype.ungroup = function(target) {
 	
 	target.ungroup(true);
 	
-	tree.seed();	// the tree is reconstructed
-	timeline.rebuild();
-	infoContext.refresh();
+	anigenManager.classes.tree.seed();	// the tree is reconstructed
+	//timeline.rebuild();
+	anigenManager.classes.context.refresh();
 	
 	this.select(par);
 }
@@ -528,25 +532,25 @@ root.prototype.evaluateStatesManager = function() {
 			}
 		}
 	}
-	windowAnimation.refreshKeyframes();
-	tree.seed();
+	anigenManager.classes.windowAnimation.refreshKeyframes();
+	anigenManager.classes.tree.seed();
 	svg.select();
 }
 
 root.prototype.evaluateGroupInbetween = function(valueIndex, groupName, name, index1, index2, ratio) {
 	if(index1 == null || index2 == null || ratio == null) { return; }
 	
-	var animation = windowAnimation.animation;
+	var animation = anigenManager.classes.windowAnimation.animation;
 	
 	if(groupName) {
 		if(!svg.animationStates[groupName]) { return; }
 		states = svg.animationStates[groupName];
 	} else {
-		if(!(windowAnimation.animation instanceof animationGroup) || !windowAnimation.animation.getAttribute('anigen:group') || !svg.animationStates[windowAnimation.animation.getAttribute('anigen:group')]) {
+		if(!(anigenManager.classes.windowAnimation.animation instanceof animationGroup) || !anigenManager.classes.windowAnimation.animation.getAttribute('anigen:group') || !svg.animationStates[anigenManager.classes.windowAnimation.animation.getAttribute('anigen:group')]) {
 			return;
 		}
-		states = svg.animationStates[windowAnimation.animation.getAttribute('anigen:group')];
-		groupName = windowAnimation.animation.getAttribute('anigen:group');
+		states = svg.animationStates[anigenManager.classes.windowAnimation.animation.getAttribute('anigen:group')];
+		groupName = anigenManager.classes.windowAnimation.animation.getAttribute('anigen:group');
 	}
 	var states = svg.animationStates[groupName];
 	
@@ -557,13 +561,13 @@ root.prototype.evaluateGroupInbetween = function(valueIndex, groupName, name, in
 	
 	if(valueIndex != null) {
 		// create state and make it an inbetween
-		if(!windowAnimation.animation || !(windowAnimation.animation instanceof animationGroup)) { return; }
-		windowAnimation.animation.createInbetween(valueIndex, valueIndex+1, newState.number, true);
-		windowAnimation.selected = [ valueIndex+1 ];
-		windowAnimation.animation.commit();
+		if(!anigenManager.classes.windowAnimation.animation || !(anigenManager.classes.windowAnimation.animation instanceof animationGroup)) { return; }
+		anigenManager.classes.windowAnimation.animation.createInbetween(valueIndex, valueIndex+1, newState.number, true);
+		anigenManager.classes.windowAnimation.selected = [ valueIndex+1 ];
+		anigenManager.classes.windowAnimation.animation.commit();
 	}
-	windowAnimation.refreshKeyframes();
-	tree.seed();
+	anigenManager.classes.windowAnimation.refreshKeyframes();
+	anigenManager.classes.tree.seed();
 	svg.select();
 }
 
@@ -604,7 +608,7 @@ root.prototype.evaluateAddValue = function(hasValue, index) {
 					break;
 			}
 		} else {
-			return;
+			newValue = popup.content.children[0].value;
 		}
 	}
 	
@@ -640,7 +644,7 @@ root.prototype.evaluateAddValue = function(hasValue, index) {
 	}
 	
 	animation.commit();
-	windowAnimation.refreshKeyframes();
+	anigenManager.classes.windowAnimation.refreshKeyframes();
 	this.gotoTime();
 }
 
@@ -696,7 +700,7 @@ root.prototype.adjustAnimation = function(targetId, index, type, value) {
 			animation.setAngle(index, value);
 			break;
 	}
-	windowAnimation.refresh();
+	anigenManager.classes.windowAnimation.refresh();
 }
 
 root.prototype.createAnimation = function(owner, type, numeric, flags, other) {
@@ -738,11 +742,9 @@ root.prototype.createAnimation = function(owner, type, numeric, flags, other) {
 	var animationElement;
 	
 	switch(type) {
-		case 0:
+		case 0:		// animate
 			if(!other.attribute) { return; }
-			var val = owner.getAttribute(other.attribute);
-			
-			if(!val) { val = this.getDefaultAttributeValue(other.attribute); }
+			var val = owner.style[other.attribute] || owner.getAttribute(other.attribute) || this.getDefaultAttributeValue(other.attribute);
 			
 			animationElement = document.createElementNS(svgNS, "animate");
 			animationElement.setAttribute('attributeType', 'auto');
@@ -750,7 +752,7 @@ root.prototype.createAnimation = function(owner, type, numeric, flags, other) {
 			if(other.attribute == 'd' && !owner.getAttribute('anigen:original-d')) { owner.setAttribute('anigen:original-d', val); }
 			animationElement.setAttribute('values', val+";"+val);
 			break;
-		case 1:
+		case 1:		// motion
 			animationElement = document.createElementNS(svgNS, "animateMotion");
 			if(!numeric.rotate) { numeric.rotate = 0; }
 			if(!other.path) { other.path = 'M 0 0 L 0 0'; }
@@ -763,6 +765,22 @@ root.prototype.createAnimation = function(owner, type, numeric, flags, other) {
 			animationElement.setAttribute('attributeName', 'transform');
 			animationElement.setAttribute('attributeType', 'auto');
 			
+			var cx = parseFloat(owner.getAttribute('inkscape:transform-center-x') || 0);
+			var cy = parseFloat(owner.getAttribute('inkscape:transform-center-y') || 0);
+			
+			if(typeof owner.getBBox === 'function') {
+				var box = owner.getBBox();
+				
+				cx = box.x;
+				cy = box.y;
+				
+				// TODO: make it actually use inkscape's transform center (however that works :<)
+			} else {
+				cx = 0;
+				cy = 0;
+			}
+			
+			
 			switch(type) {
 				case 2:
 					animationElement.setAttribute('type', 'translate');
@@ -770,7 +788,7 @@ root.prototype.createAnimation = function(owner, type, numeric, flags, other) {
 					break;
 				case 3:
 					animationElement.setAttribute('type', 'rotate');
-					animationElement.setAttribute('values', "0 0 0;0 0 0");
+					animationElement.setAttribute('values', "0 " + cx + " " + cy + ";0 " + cx + " " + cy);
 					break;
 				case 4:
 					animationElement.setAttribute('type', 'scale');
@@ -807,8 +825,8 @@ root.prototype.createAnimation = function(owner, type, numeric, flags, other) {
 	
 	// timeline.add(new timelineObject(shepherd));
 	
-	tree.seed();
-	infoContext.refresh();
+	anigenManager.classes.tree.seed();
+	anigenManager.classes.context.refresh();
 	this.gotoTime();
 	this.select(flags.select ? animationElement : this.selected);
 }
@@ -816,7 +834,7 @@ root.prototype.createAnimation = function(owner, type, numeric, flags, other) {
 root.prototype.createAnimationViewbox = function() {
 	this.camera = new animatedViewbox(this);
 	this.ui.putOnTop();
-	tree.seed();
+	anigenManager.classes.tree.seed();
 	this.select(this.camera.element);
 }
 
@@ -831,8 +849,8 @@ root.prototype.refreshKeyFrameNavigation = function() {
 	this.previousTime = null;
 	this.nextTime = null;
 	if(!animations) {
-		w2ui['anigenContext'].disable('buttonPrevious');
-		w2ui['anigenContext'].disable('buttonNext');
+		anigenManager.classes.context.buttons.keyframePrev.disable();
+		anigenManager.classes.context.buttons.keyframeNext.disable();
 		return;
 	}
 
@@ -842,8 +860,16 @@ root.prototype.refreshKeyFrameNavigation = function() {
 		if(this.previousTime == null || this.previousTime < prev) { this.previousTime = prev; }
 		if(this.nextTime == null || this.nextTime > next) { this.nextTime = next; }
 	}
-	if(this.previousTime != null) { w2ui['anigenContext'].enable('buttonPrevious'); } else { w2ui['anigenContext'].disable('buttonPrevious'); }
-	if(this.nextTime != null) { w2ui['anigenContext'].enable('buttonNext'); } else { w2ui['anigenContext'].disable('buttonNext'); }
+	if(this.previousTime != null) {
+		anigenManager.classes.context.buttons.keyframePrev.enable();
+	} else {
+		anigenManager.classes.context.buttons.keyframePrev.disable();
+	}
+	if(this.nextTime != null) {
+		anigenManager.classes.context.buttons.keyframeNext.enable();
+	} else {
+		anigenManager.classes.context.buttons.keyframeNext.disable();
+	}
 }
 
 // returns the selected animation, or the selected element's first animation
@@ -877,12 +903,17 @@ root.prototype.adjustSize = function(sizeChanged) {
 	this.svgElement.setAttribute("viewBox", 
 		this.viewBox.x + " " + this.viewBox.y + " " + this.viewBox.width + " " + this.viewBox.height
 	);
+	
+	anigenManager.classes.rulerV.refresh();
+	anigenManager.classes.rulerH.refresh();
 }
 
 // refreshes ui elements dependant on zoom level 
 root.prototype.refreshUI = function(sizeChanged) {
 	this.ui.refresh();
-	infoEditor.refreshZoom();
+	anigenManager.classes.editor.refreshZoom();
+	anigenManager.classes.rulerV.refresh();
+	anigenManager.classes.rulerH.refresh();
 	this.adjustSize(sizeChanged);
 }
 
@@ -907,36 +938,37 @@ root.prototype.select = function(target) {
 	svg.selected.generateId();
 	
 	if(target == svg.svgElement) {
-		w2ui['anigenContext'].disable('buttonAnimation');
+		anigenManager.classes.context.buttons.animate.disable();
 	} else {
-		w2ui['anigenContext'].enable('buttonAnimation');
+		anigenManager.classes.context.buttons.animate.enable();
 	}
 	
 	if(target.isAnimation() || target.getAttribute('anigen:type') == 'animationGroup' || target.getAttribute('anigen:type') == 'animatedViewbox') {
-		w2ui['anigenContext'].enable('buttonAnimation');
+		anigenManager.classes.context.buttons.animate.enable();
 		
-		windowAnimation.refresh(target != this.selected);
+		anigenManager.classes.windowAnimation.refresh(target != this.selected);
 		
-		if(w2ui['anigenContext'].get('buttonAnimation').checked) {
-			windowAnimation.show();
+		if(anigenManager.classes.context.buttons.animate.state == 1) {
+			anigenManager.classes.windowAnimation.show();
 		}
 		
 	} else {
-		w2ui['anigenContext'].disable('buttonAnimation');
+		anigenManager.classes.context.buttons.animate.disable();
 		
-		windowAnimation.hide();
+		anigenManager.classes.windowAnimation.hide();
 		
-		w2ui['anigenContext'].disable('buttonPrevious');
-		w2ui['anigenContext'].disable('buttonNext');
+		anigenManager.classes.context.buttons.keyframePrev.disable();
+		anigenManager.classes.context.buttons.keyframeNext.disable();
 		
 	}
 
-	infoSelection.refresh();
-	infoContext.refresh();
-	windowLayers.refresh();
-	menu.refresh();
+	anigenManager.classes.selection.refresh();
+	anigenManager.classes.context.refresh();
+	anigenManager.classes.windowLayers.refresh();
+	anigenManager.classes.windowColors.refresh();
+	anigenManager.classes.menu.refresh();
 	
-	tree.select(target);
+	anigenManager.classes.tree.select(target);
 	this.ui.edit(target);
 }
 
@@ -1029,7 +1061,7 @@ root.prototype.changeId = function(target, toId, selectAfter) {
 		timeline.refresh();
 	}
 	
-	tree.seed();
+	anigenManager.classes.tree.seed();
 	if(selectAfter) { this.select(target); }
 }
 
@@ -1039,8 +1071,8 @@ root.prototype.gotoTime = function(seconds) {
 		seconds = this.svgElement.getCurrentTime();
 	}
 	this.svgElement.setCurrentTime(seconds);
-	infoEditor.clock.update();
-	infoContext.refresh();
+	anigenManager.classes.editor.clock.update();
+	anigenManager.classes.context.refresh();
 }
 
 // jumps by specific time offset	
@@ -1093,7 +1125,7 @@ root.prototype.transferIn = function() {
 		this.svgElement.insertBefore(this.namedView, this.svgElement.children[0]);
 	}
 	var loop = this.namedView.getAttribute('anigen:loop');
-	if(loop) { infoEditor.clock.setMaxTime(parseFloat(loop)); }
+	if(loop) { anigenManager.classes.editor.clock.setMaxTime(parseFloat(loop)); }
 
 	if (this.svgElement.getElementsByTagName("defs").length > 0) {
 		this.defs = this.svgElement.getElementsByTagName("defs", true)[0];
@@ -1123,6 +1155,7 @@ root.prototype.transferIn = function() {
 	
 	if(this.namedView.getAttribute('inkscape:cx') != null) { this.posX = parseFloat(this.namedView.getAttribute('inkscape:cx')); }
 	if(this.namedView.getAttribute('inkscape:cy') != null) { this.posY = parseFloat(this.namedView.getAttribute('inkscape:cy')); }
+	if(this.namedView.getAttribute('inkscape:zoom') != null) { this.zoom = parseFloat(this.namedView.getAttribute('inkscape:zoom')); }
 
 	this.svgElement.setAttribute("preserveAspectRatio", "xMidYMid");
 
@@ -1151,6 +1184,7 @@ root.prototype.transferOut = function(stripIds, scale) {
 	if(scale == null || scale <= 0) { scale = 1; }
 	this.namedView.setAttribute('inkscape:cx', this.posX);
 	this.namedView.setAttribute('inkscape:cy', this.posY);
+	this.namedView.setAttribute('inkscape:zoom', this.zoom);
 	
 	var clone = this.svgElement.cloneNode(true);
 	
@@ -1165,8 +1199,8 @@ root.prototype.transferOut = function(stripIds, scale) {
 	if(this.camera) {
 		clone.appendChild(this.camera.transferOut());
 		var cameraChildren = clone.getElementsByAttribute('anigen:type', 'animatedViewbox');
-		if(cameraChildren[0]) {
-			cameraChildren[0].parentNode.removeChild(cameraChildren[0]);
+		for(var i = 0; i < cameraChildren.length; i++) {
+			cameraChildren[i].parentNode.removeChild(cameraChildren[i]);
 		}
 	}
 	
@@ -1331,9 +1365,12 @@ root.prototype.fileIn = function(fileElement, filename, isNew) {
 	
 	if(isNew) {
 		this.svgElement = this.selected = fileElement;
-		this.container = document.getElementById('anigenCanvas');
+		this.container = anigenManager.named.svg.container || document.getElementById('anigenCanvas');
 		this.container.removeChildren();
 		this.container.appendChild(this.svgElement);
+		
+		this.container.appendChild(anigenManager.classes.rulerH.container);
+		this.container.appendChild(anigenManager.classes.rulerV.container);
 		
 		this.svgElement.generateId(true);
 		
@@ -1347,15 +1384,16 @@ root.prototype.fileIn = function(fileElement, filename, isNew) {
 		this.transferIn();
 		this.svgElement.pauseAnimations();
 		this.svgElement.setCurrentTime(0);
-		infoEditor.refreshPause();
+		anigenManager.classes.editor.refreshPause();
 		
 		// this.rebuildShepherds(this.svgElement, true);
 		this.rebuildAnimationStates(this.defs);
-		timeline.rebuild(true);
+		//timeline.rebuild(true);
 		
 		this.history.clear();
 		
 		anigenActual.eventUIRefresh(true);
+		this.refreshUI(true);
 		
 		document.activeElement.blur();
 		overlay.hide();

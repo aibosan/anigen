@@ -27,6 +27,8 @@ function animatedViewbox(target) {
 		
 		this.element = document.createElementNS(svgNS, 'path');
 		
+		this.element.setAttribute('shape-rendering', 'crispEdges');
+		
 		this.element.style.stroke = 'gray';
 		this.element.style.fill = 'none';
 		
@@ -75,12 +77,9 @@ function animatedViewbox(target) {
 		this.getDur();
 		this.getRepeatCount();
 		this.getCalcMode();
-		this.getValues();
-		this.getTimes();
-		this.getSplines();
-		this.getValues();
+		this.getKeyframes();
 		
-		this.commitAll();
+		this.commit(true);
 		
 		this.element.shepherd = this;
 		
@@ -108,6 +107,7 @@ animatedViewbox.prototype.refresh = function() {
 		pData.push(this.y+this.height);
 		pData.push('Z');
 	this.element.setAttribute('d', pData.join(' '));
+	this.element.setAttribute("stroke-width", 1/svg.zoom+"px");
 }
 
 animatedViewbox.prototype.adjustZoom = function() {
@@ -175,14 +175,12 @@ animatedViewbox.prototype.commit = function(noHistory) {
 		histFrom['anigen:keytimes'] = this.getAttribute('anigen:keytimes');
 		histTo['anigen:keytimes'] = newTimes;
 		this.setAttribute('anigen:keytimes', newTimes);
-		this.animation.setAttribute('keyTimes', newTimes);
 		count++;
 	}
 	if(newSplines != this.getAttribute('anigen:keysplines') && newSplines.length != 0 && this.getAttribute('anigen:keysplines')) {
 		histFrom['anigen:keysplines'] = this.getAttribute('anigen:keysplines');
 		histTo['anigen:keysplines'] = newSplines;
 		this.setAttribute('anigen:keysplines', newSplines);
-		this.animation.setAttribute('keySplines', newSplines);
 		count++;
 	}
 	
@@ -192,37 +190,13 @@ animatedViewbox.prototype.commit = function(noHistory) {
 		histTo['anigen:values'] = newValues;
 		this.setAttribute('anigen:values', newValues);
 		
-		var newValues = [];
-		for(var i = 0; i < this.keyframes.length; i++) {
-			var currentFrame = this.keyframes.getItem(i);
-			var pData = [];
-				pData.push('M');
-				pData.push(currentFrame.x);
-				pData.push(currentFrame.y);
-				pData.push('L');
-				pData.push(currentFrame.x+currentFrame.width);
-				pData.push(currentFrame.y);
-				pData.push('L');
-				pData.push(currentFrame.x+currentFrame.width);
-				pData.push(currentFrame.y+currentFrame.height);
-				pData.push('L');
-				pData.push(currentFrame.x);
-				pData.push(currentFrame.y+currentFrame.height);
-				pData.push('Z');
-			newValues.push(pData.join(' '));
-		}
-		newValues = newValues.join(';');
-		
-		this.animation.setAttribute('values', newValues);
 		count++;
 	}
-	
 	
 	if(newDur != this.getAttribute('anigen:dur') && newDur.length != 0 && this.getAttribute('anigen:dur')) {
 		histFrom['anigen:dur'] = this.getAttribute('anigen:dur');
 		histTo['anigen:dur'] = newDur;
 		this.setAttribute('anigen:dur', newDur);
-		this.animation.setAttribute('dur', newDur);
 		count++;
 	}
 	
@@ -230,35 +204,30 @@ animatedViewbox.prototype.commit = function(noHistory) {
 		histFrom['anigen:repeatcount'] = this.getAttribute('anigen:repeatcount');
 		histTo['anigen:repeatcount'] = newRepeatCount;
 		this.setAttribute('anigen:repeatcount', newRepeatCount);
-		this.animation.setAttribute('repeatCount', newRepeatCount);
 		count++;
 	}
 	if(newCalcMode != this.getAttribute('anigen:calcmode') && newCalcMode.length != 0 && this.getAttribute('anigen:calcmode')) {
 		histFrom['anigen:calcmode'] = this.getAttribute('anigen:calcmode');
 		histTo['anigen:calcmode'] = newCalcMode;
 		this.setAttribute('anigen:calcmode', newCalcMode);
-		this.animation.setAttribute('calcMode', newCalcMode);
 		count++;
 	}
 	if(newFill != this.getAttribute('anigen:fill') && newFill.length != 0 && this.getAttribute('anigen:fill')) {
 		histFrom['anigen:fill'] = this.getAttribute('anigen:fill');
 		histTo['anigen:fill'] = newFill;
 		this.setAttribute('anigen:fill', newFill);
-		this.animation.setAttribute('fill', newFill);
 		count++;
 	}
 	if(newAdditive != this.getAttribute('anigen:additive') && newAdditive.length != 0 && this.getAttribute('anigen:additive')) {
 		histFrom['anigen:additive'] = this.getAttribute('anigen:additive');
 		histTo['anigen:additive'] = newAdditive;
 		this.setAttribute('anigen:additive', newAdditive);
-		this.animation.setAttribute('additive', newAdditive);
 		count++;
 	}
 	if(newAccumulate != this.getAttribute('anigen:accumulate') && newAccumulate.length != 0 && this.getAttribute('anigen:accumulate')) {
 		histFrom['anigen:accumulate'] = this.getAttribute('anigen:accumulate');
 		histTo['anigen:accumulate'] = newAccumulate;
 		this.setAttribute('anigen:accumulate', newAccumulate);
-		this.animation.setAttribute('accumulate', newAccumulate);
 		count++;
 	}
 	
@@ -267,13 +236,45 @@ animatedViewbox.prototype.commit = function(noHistory) {
 		histFrom['anigen:begin'] = this.getAttribute('anigen:begin');
 		histTo['anigen:begin'] = newBegin;
 		this.setAttribute('anigen:begin', newBegin);
-		this.animation.setAttribute('begin', newBegin);
-		var clone = this.animation.cloneNode(true);
-		this.animation.parentNode.insertBefore(clone, this.animation);
-		this.animation.removeChild(this.animation);
-		this.animation = clone;
 		count++;
 	}
+	
+	// rebuilds everything for animation because reasons
+	var newValues = [];
+	for(var i = 0; i < this.keyframes.length; i++) {
+		var currentFrame = this.keyframes.getItem(i);
+		var pData = [];
+			pData.push('M');
+			pData.push(currentFrame.value.x);
+			pData.push(currentFrame.value.y);
+			pData.push('L');
+			pData.push(currentFrame.value.x+currentFrame.value.width);
+			pData.push(currentFrame.value.y);
+			pData.push('L');
+			pData.push(currentFrame.value.x+currentFrame.value.width);
+			pData.push(currentFrame.value.y+currentFrame.value.height);
+			pData.push('L');
+			pData.push(currentFrame.value.x);
+			pData.push(currentFrame.value.y+currentFrame.value.height);
+			pData.push('Z');
+		newValues.push(pData.join(' '));
+	}
+	newValues = newValues.join(';');
+	
+	this.animation.setAttribute('keyTimes', newTimes);
+	this.animation.setAttribute('keySplines', newSplines);
+	this.animation.setAttribute('values', newValues);
+	this.animation.setAttribute('dur', newDur);
+	this.animation.setAttribute('repeatCount', newRepeatCount);
+	this.animation.setAttribute('calcMode', newCalcMode);
+	this.animation.setAttribute('fill', newFill);
+	this.animation.setAttribute('additive', newAdditive);
+	this.animation.setAttribute('accumulate', newAccumulate);
+	this.animation.setAttribute('begin', newBegin);
+	var clone = this.animation.cloneNode(true);
+	this.animation.parentNode.insertBefore(clone, this.animation);
+	this.animation.parentNode.removeChild(this.animation);
+	this.animation = clone;
 	
 	if(!noHistory && svg && svg.history && count > 0) {
 		svg.history.add(new historyAttribute(this.element.id, histFrom, histTo, true));
@@ -288,34 +289,20 @@ animatedViewbox.prototype.transferOut = function() {
 	this.getDur();
 	this.getRepeatCount();
 	this.getCalcMode();
-	this.getValues();
-	this.getTimes();
-	this.getSplines();
-	this.getValues();
+	this.getKeyframes();
 	
-	var anim = document.createElementNS(svgNS, 'animate');
-		anim.setAttribute('attributeType', 'auto');
+	var anim = this.animation.cloneNode();
 		anim.setAttribute('attributeName', 'viewBox');
-		anim.setAttribute('begin', this.element.getAttribute('anigen:begin'));
-		anim.setAttribute('dur', this.element.getAttribute('anigen:dur'));
-		anim.setAttribute('repeatCount', this.element.getAttribute('anigen:repeatcount'));
-		anim.setAttribute('calcMode', this.element.getAttribute('anigen:calcmode'));
-		anim.setAttribute('keyTimes', this.element.getAttribute('anigen:keytimes'));
 		anim.setAttribute('values', this.element.getAttribute('anigen:values'));
-		anim.setAttribute('fill', this.element.getAttribute('anigen:fill') || 'remove');
-		anim.setAttribute('additive', this.element.getAttribute('anigen:additive') || 'replace');
-		anim.setAttribute('accumulate', this.element.getAttribute('anigen:accumulate') || 'none');
-		
 		anim.setAttribute('id', this.element.id);
-		if(this.splines) {
-			anim.setAttribute('keySplines', this.element.getAttribute('anigen:keysplines'));
-		}
-	
+		
 	return anim;
 }
 
 animatedViewbox.prototype.generateAnchors = function() {
-	if(windowAnimation.selected.length == 0) { return null; }
+	if(anigenManager.classes.windowAnimation.selected.length == 0) { return null; }
+	
+	this.getKeyframes();
 	
 	svg.ui.selectionBox.hide();
 	
@@ -328,23 +315,23 @@ animatedViewbox.prototype.generateAnchors = function() {
 	var firstAnchors;
 	var lastRect;
 	
-	for(var i = 0; i < windowAnimation.selected.length; i++) {
+	for(var i = 0; i < anigenManager.classes.windowAnimation.selected.length; i++) {
 		lastRect = document.createElementNS(svgNS, 'rect');
-		lastRect.setAttribute('x', this.values[windowAnimation.selected[i]].x);
-		lastRect.setAttribute('y', this.values[windowAnimation.selected[i]].y);
-		lastRect.setAttribute('width', this.values[windowAnimation.selected[i]].width);
-		lastRect.setAttribute('height', this.values[windowAnimation.selected[i]].height);
+		lastRect.setAttribute('x', this.keyframes.getItem(anigenManager.classes.windowAnimation.selected[i]).value.x);
+		lastRect.setAttribute('y', this.keyframes.getItem(anigenManager.classes.windowAnimation.selected[i]).value.y);
+		lastRect.setAttribute('width', this.keyframes.getItem(anigenManager.classes.windowAnimation.selected[i]).value.width);
+		lastRect.setAttribute('height', this.keyframes.getItem(anigenManager.classes.windowAnimation.selected[i]).value.height);
 		lastRect.setAttribute("anigen:lock", "interface");
 		lastRect.setAttribute('style', 'fill:none;stroke:#aa0000;stroke-width:'+2/(svg.zoom)+'px');
 		currentAnchors = lastRect.generateAnchors();
 		
 		if(firstAnchors == null) { firstAnchors = currentAnchors; }
 		
-		if(windowAnimation.selected.length != 1 && i == windowAnimation.selected.length-1 &&
-			this.values[windowAnimation.selected[i]].x == this.values[windowAnimation.selected[0]].x &&
-			this.values[windowAnimation.selected[i]].y == this.values[windowAnimation.selected[0]].y &&
-			this.values[windowAnimation.selected[i]].width == this.values[windowAnimation.selected[0]].width &&
-			this.values[windowAnimation.selected[i]].height == this.values[windowAnimation.selected[0]].height) {
+		if(anigenManager.classes.windowAnimation.selected.length != 1 && i == anigenManager.classes.windowAnimation.selected.length-1 &&
+			this.keyframes.getItem(anigenManager.classes.windowAnimation.selected[i]).value.x == this.keyframes.getItem(anigenManager.classes.windowAnimation.selected[0]).value.x &&
+			this.keyframes.getItem(anigenManager.classes.windowAnimation.selected[i]).value.y == this.keyframes.getItem(anigenManager.classes.windowAnimation.selected[0]).value.y &&
+			this.keyframes.getItem(anigenManager.classes.windowAnimation.selected[i]).value.width == this.keyframes.getItem(anigenManager.classes.windowAnimation.selected[0]).value.width &&
+			this.keyframes.getItem(anigenManager.classes.windowAnimation.selected[i]).value.height == this.keyframes.getItem(anigenManager.classes.windowAnimation.selected[0]).value.height) {
 				currentAnchors = firstAnchors;
 		} else {
 			allAnchors = allAnchors.concat(currentAnchors.anchors);
@@ -354,7 +341,7 @@ animatedViewbox.prototype.generateAnchors = function() {
 		currentAnchors.anchors[0][0].addChild(currentAnchors.anchors[0][1]);
 		for(var j = 0; j < currentAnchors.anchors[0].length; j++) {
 			currentAnchors.anchors[0][j].animation = this;
-			currentAnchors.anchors[0][j].actions.move += 'this.animation.setValue('+windowAnimation.selected[i]+', null, this.element, true);';
+			currentAnchors.anchors[0][j].actions.move += 'this.animation.setValue('+anigenManager.classes.windowAnimation.selected[i]+', null, this.element, true);';
 			currentAnchors.anchors[0][j].actions.mouseup = '';
 		}
 		currentAnchors.anchors[0][1].selectable = false;
@@ -373,18 +360,20 @@ animatedViewbox.prototype.generateAnchors = function() {
 	return { 'connectors': allConnectors, 'anchors': allAnchors, 'paths': allPaths };
 }
 
-animatedViewbox.prototype.setValue = function(index, portion, value, makeHistory) {
-	this.getValues();
+animatedViewbox.prototype.setValue = function(index, portion, value) {
+	this.getKeyframes();
 	
-	if(index < 0 || index >= this.values.length) { throw new DOMException(1); }
+	if(index < 0 || index >= this.keyframes.length) { throw new DOMException(1); }
 	
-	if(!portion && value instanceof SVGRectElement) {
-		this.values[index].x = value.x.baseVal.value;
-		this.values[index].y = value.y.baseVal.value;
-		this.values[index].width = value.width.baseVal.value;
-		this.values[index].height = value.height.baseVal.value;
-		if(makeHistory) { this.makeHistory(false, true, false); }
-		this.commitValues();
+	var val = this.keyframes.getItem(index);
+	
+	if(portion == null) {
+		if(!(value instanceof SVGRectElement)) { throw new DOMException(17); }
+		val.value.x = value.x.baseVal.value;
+		val.value.y = value.y.baseVal.value;
+		val.value.width = value.width.baseVal.value;
+		val.value.height = value.height.baseVal.value;
+		this.commit();
 		return;
 	}
 	
@@ -392,25 +381,24 @@ animatedViewbox.prototype.setValue = function(index, portion, value, makeHistory
 	
 	switch(portion) {
 		case 0:
-			this.values[index].x = value;
+			val.value.x = value;
 			break;
 		case 1:
-			this.values[index].y = value;
+			val.value.y = value;
 			break;
 		case 2:
 			var ratio = svg.svgBox[3]/svg.svgBox[2];
-			this.values[index].width = value;
-			this.values[index].height = value*ratio;
+			val.value.width = value;
+			val.value.height = value*ratio;
 			break;
 		case 3:
 			var ratio = svg.svgBox[2]/svg.svgBox[3];
-			this.values[index].width = value*ratio;
-			this.values[index].height = value;
+			val.value.width = value*ratio;
+			val.value.height = value;
 			break;
 	}
 	
-	if(makeHistory) { this.makeHistory(false, true, false); }
-	this.commitValues();
+	this.commit();
 }
 
 

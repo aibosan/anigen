@@ -32,7 +32,7 @@ toolGroup.prototype.mouseClick = function(event) {
 		return;
 	}
 	
-	if(event.target.isInsensitive()) { return; }
+	if(typeof event.target.isInsensitive !== 'function' || event.target.isInsensitive()) { return; }
 	
 	var selectionTarget = event.target;
 	while(selectionTarget.hasAnimation()) {
@@ -56,7 +56,7 @@ toolGroup.prototype.mouseClick = function(event) {
 
 toolGroup.prototype.mouseDblClick = function(event) {
 	if(!svg || !(svg instanceof root)) { return; }
-	if(event.target.isInsensitive()) { return; }
+	if(typeof event.target.isInsensitive !== 'function' || event.target.isInsensitive()) { return; }
 	
 	if(svg.selected.isChildOf(event.target)) { return; }
 		

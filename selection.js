@@ -58,11 +58,11 @@ selection.prototype.add = function(target) {
 		this.elements.splice(afterId, 0, target);
 	}
 	
-	if(tree) {
+	if(anigenManager.classes.tree) {
 		if(this.elements.length == 1) {
-			tree.select(target);
+			anigenManager.classes.tree.select(target);
 		} else {
-			tree.select();
+			anigenManager.classes.tree.select();
 		}
 	}
 	
@@ -190,9 +190,9 @@ selection.prototype.group = function() {
 	
 	this.elements = [group];
 	
-	if(tree) {
-		tree.seed();
-		tree.select(group);
+	if(anigenManager.classes.tree) {
+		anigenManager.classes.tree.seed();
+		anigenManager.classes.tree.select(group);
 	}
 	
 	return group;
@@ -212,11 +212,11 @@ selection.prototype.ungroup = function() {
 		this.add(toAdd[i]);
 	}
 	
-	if(tree) {
+	if(anigenManager.classes.tree) {
 		if(this.elements.length == 1) {
-			tree.select(target);
+			anigenManager.classes.tree.select(target);
 		} else {
-			tree.select();
+			anigenManager.classes.tree.select();
 		}
 	}
 }

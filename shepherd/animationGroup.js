@@ -146,7 +146,7 @@ animationGroup.prototype.animate = function(attribute) {
 	}
 	
 	this.commit(true);
-	tree.seed();
+	anigenManager.classes.tree.seed();
 	svg.select();
 }
 
@@ -157,7 +157,7 @@ animationGroup.prototype.unanimate = function(attribute) {
 	}
 	delete this.animations[attribute];
 	
-	tree.seed();
+	anigenManager.classes.tree.seed();
 	svg.select();
 }
 
@@ -382,15 +382,15 @@ animationGroup.prototype.commit = function(noHistory, noWipe) {
 				par.removeChild(this.animations[i][j]);
 				
 				if(svg.selected == this.animations[i][j]) { svg.selected = clone; }
-				if(windowAnimation.animation == this.animations[i][j]) { windowAnimation.animation = clone; }
+				if(anigenManager.classes.windowAnimation.animation == this.animations[i][j]) { anigenManager.classes.windowAnimation.animation = clone; }
 				
 				if(svg.selected == this.animations[i][j]) { svg.selected = clone; }
 				this.animations[i][j] = clone;
 			}
 		}
 		
-		tree.seed();
-		tree.select(svg.selected);
+		anigenManager.classes.tree.seed();
+		anigenManager.classes.tree.select(svg.selected);
 		svg.select();
 		
 		count++;

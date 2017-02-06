@@ -17,7 +17,7 @@ Element.prototype.getElementsByTagName = function(tag, deep, lenient) {
     var children = this.children;
     for(var i = 0; i < children.length; i++) {
         if(!lenient && children[i].tagName.toLowerCase() == tag.toLowerCase() || lenient && children[i].tagName.toLowerCase().match(tag) != null) {
-            response[response.length] = children[i];
+            response.push(children[i]);
         }
         if(deep) {
             response = response.concat(children[i].getElementsByTagName(tag, deep, lenient));
@@ -116,11 +116,19 @@ Element.prototype.isChildOf = function(element) {
 }
 
 Element.prototype.addClass = function(name) {
-	this.classList.add(name);
+	if(!name) { return; }
+	name = name.split(' ');
+	for(var i = 0; i < name.length; i++) {
+		this.classList.add(name[i]);
+	}
 }
 
 Element.prototype.removeClass = function(name) {
-	this.classList.remove(name);
+	if(!name) { return; }
+	name = name.split(' ');
+	for(var i = 0; i < name.length; i++) {
+		this.classList.remove(name);
+	}
 }
 
 Element.prototype.hasClass = function(name) {

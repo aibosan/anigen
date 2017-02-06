@@ -12,20 +12,20 @@ function windowGeneric(settingName) {
 	this.container.shepherd = this;
 	
     this.heading = document.createElement('h1');
-
-    this.imgLeft = document.createElement("span");
-	this.imgLeft.setAttribute("class", "w2ui-tb-image w2ui-icon");
-	this.headingText = document.createElement("span");
 	
-	this.imgRight = document.createElement("span");
-	this.imgRight.setAttribute("class", "w2ui-tb-image w2ui-icon icon-ex-white button");
-	this.imgRight.shepherd = this;
-	this.imgRight.setAttribute('onclick', 'this.shepherd.hide();');
-	this.imgRight.setAttribute('title', 'Close window');
+	this.container.addEventListener('mouseover', anigenActual.eventMouseOver, false);
 	
-    this.heading.appendChild(this.imgLeft);
+	this.imgLeft = new uiButton('clear', null, null, { 'class': 'icon' }).shepherd;
+	
+	this.headingText = document.createElement('span');
+	
+	this.imgRight = new uiButton('close', 'this.shepherd.hide();', 'Close window');
+	this.imgRight.style.float = 'right';
+	this.imgRight = this.imgRight.shepherd;
+	
+    this.heading.appendChild(this.imgLeft.container);
 	this.heading.appendChild(this.headingText);
-	this.heading.appendChild(this.imgRight);
+	this.heading.appendChild(this.imgRight.container);
 	
     this.container.appendChild(this.heading);
 
@@ -85,16 +85,41 @@ windowGeneric.prototype.showTab = function(index) {
 }
 
 windowGeneric.prototype.hideTab = function(index) {
+	var showOther = false;
 	if(this.navbar.children[index]) {
 		this.navbar.children[index].style.display = 'none';
-		if(this.shown == index) { this.showTab(0); }
+		if(this.shown == index) { showOther = true; }
 	}
+	var count = 0;
+	for(var i = 0; i < this.navbar.children.length; i++) {
+		if(this.navbar.children[i].style.display != 'none') {
+			count++;
+			if(showOther) { this.showTab(i); showOther = false; }
+		}
+	}
+	if(count <= 1) {
+		this.navbar.style.display = 'none';
+	}
+	
 }
 
 windowGeneric.prototype.unhideTab = function(index) {
 	if(this.navbar.children[index]) {
 		this.navbar.children[index].style.display = null;
 	}
+	var count = 0;
+	for(var i = 0; i < this.navbar.children.length; i++) {
+		if(this.navbar.children[i].style.display != 'none') { count++; }
+	}
+	if(count > 1) {
+		this.navbar.style.display = null;
+	}
+}
+
+windowGeneric.prototype.renameTab = function(index, name) {
+	if(index >= this.navbar.children.length) { return; }
+	this.navbar.children[index].children[0].removeChildren();
+	this.navbar.children[index].children[0].appendChild(document.createTextNode(name));
 }
 
 
@@ -105,7 +130,9 @@ windowGeneric.prototype.setHeading = function(name) {
 }
 
 windowGeneric.prototype.setImage = function(name, color) {
-	this.imgLeft.addClass('icon-'+name+'-'+color);
+	this.imgLeft.stateIcons[0].removeChildren();
+	this.imgLeft.stateIcons[0].appendChild(document.createTextNode(name));
+	if(color) { this.imgLeft.setColor(color); }
 }
 
 windowGeneric.prototype.show = function() {

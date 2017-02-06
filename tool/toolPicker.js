@@ -29,16 +29,16 @@ toolPicker.prototype.mouseClick = function(event) {
 		return;
 	} else if(svg.selected instanceof SVGAnimateElement) {
 		// attribute animation gets new values for selected animation keyframes (if applicable)
-		if(windowAnimation.selected.length == 0) { return; }
+		if(anigenManager.classes.windowAnimation.selected.length == 0) { return; }
 		var val = event.target.style[svg.selected.getAttribute('attributeName')] || event.target.getAttribute(svg.selected.getAttribute('attributeName'));
 		if(!val) {
 			// if no values is found, reverts to the parent's default value instead
 			val = svg.selected.parentNode.style[svg.selected.getAttribute('attributeName')] || svg.selected.parentNode.getAttribute(svg.selected.getAttribute('attributeName'));
 		}
-		for(var i = 0; i < windowAnimation.selected.length; i++) {
-			svg.selected.setValue(windowAnimation.selected[i], val, true);
+		for(var i = 0; i < anigenManager.classes.windowAnimation.selected.length; i++) {
+			svg.selected.setValue(anigenManager.classes.windowAnimation.selected[i], val, true);
 		}
-		windowAnimation.refreshKeyframes();
+		anigenManager.classes.windowAnimation.refreshKeyframes();
 		svg.ui.edit(svg.selected);
 		return;
 	}

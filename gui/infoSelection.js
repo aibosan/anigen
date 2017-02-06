@@ -6,7 +6,6 @@
  */
 function infoSelection() {
     this.container = document.createElement("div");
-    this.container.id = "anigeninfoSelection";
 
     this.elementNodeName = document.createElement("span");
     this.elementId = document.createElement("span");
@@ -15,16 +14,31 @@ function infoSelection() {
     this.container.appendChild(this.elementNodeName);
     this.container.appendChild(this.elementId);
     this.container.appendChild(this.info);
+	
+	this.refresh();
 }
 
 infoSelection.prototype.refresh = function() {
 	var element = svg.selected;
-
+	
 	if(!(element instanceof SVGElement)) { return; }
 	if(element == null) { return; }
 
+	this.container.removeChildren();
+	
+	this.container.appendChild(this.elementNodeName);
+    this.container.appendChild(this.elementId);
+    this.container.appendChild(this.info);
+	
 	this.elementNodeName.removeChildren();
 	this.elementNodeName.appendChild(document.createTextNode("<" + element.nodeName + ">"))
+	
+	var info = anigenActual.getNodeDescription(element);
+	if(info) {
+		this.elementNodeName.setAttribute('title', info);
+	} else {
+		this.elementNodeName.removeAttribute('title');
+	}
 	
 	if(element.getAttribute('id') == null) {
 		element.generateId();
@@ -33,12 +47,12 @@ infoSelection.prototype.refresh = function() {
 	this.elementId.removeChildren();
 	this.elementId.appendChild(document.createTextNode(element.getAttribute('id')))
 	
-	this.elementId.setAttribute("onclick", "popup.input(infoSelection.elementId, 'text', '"+svg.selected.getAttribute('id')+"', 'svg.changeId(svg.selected, value, true);', null)");
+	this.elementId.setAttribute("onclick", "popup.input(infoSelection.elementId, 'text', '"+element.getAttribute('id')+"', 'svg.changeId(svg.selected, value, true);', null)");
 	
 	this.info.removeChildren();
 	
 	if(element.getAttribute('anigen:type') == 'animationGroup') {
-		this.info.appendChild(document.createTextNode('animation group ('+element.getAttribute('anigen:group') +')'));
+		this.info.appendChild(document.createTextNode('animated group ('+element.getAttribute('anigen:group') +')'));
 	}
 	
 	switch(element.nodeName.toLowerCase()) {
@@ -48,13 +62,20 @@ infoSelection.prototype.refresh = function() {
 		case "animate":
 			this.info.appendChild(document.createTextNode(element.getAttribute('attributeName')));
 			break;
-		case "use":
-			var ownerId = element.getAttribute('xlink:href');
-			if(!ownerId) { break; }
-			ownerId = ownerId.substring(1);
-			this.info.appendChild(new button('icon-chain-black', 'svg.select("'+ownerId+'")', 'Select linked element'));
-			break;
 	}
+	
+	var ownerId = element.getAttribute('xlink:href');
+	if(ownerId) { 
+		ownerId = ownerId.substring(1);
+		
+		var bLink = new uiButton(
+			'link',
+			'svg.select("'+ownerId+'")',
+			'Select linked element'
+		);
+		this.container.appendChild(bLink);
+	}
+	
 	if(element.getAttribute('inkscape:groupmode') == 'layer') {
 		this.info.appendChild(document.createTextNode(element.getAttribute('inkscape:label')));
 	}

@@ -186,9 +186,9 @@ SVGAnimateMotionElement.prototype.commit = function(noHistory) {
 		out = clone;
 		
 		if(svg.selected == this) { svg.selected = clone; }
-		if(windowAnimation.animation == this) { windowAnimation.animation = clone; }
-		tree.seed();
-		tree.select(svg.selected);
+		if(anigenManager.classes.windowAnimation.animation == this) { anigenManager.classes.windowAnimation.animation = clone; }
+		anigenManager.classes.tree.seed();
+		anigenManager.classes.tree.select(svg.selected);
 		svg.select();
 		
 		count++;

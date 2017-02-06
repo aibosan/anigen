@@ -36,8 +36,8 @@ function timeline() {
 	};
 	
 	this.adjustBlueline = function() {
-		if(!svg.svgElement || !infoEditor.clock.maxTime) { return; }
-		this.blueline.style.left = infoEditor.clock.maxTime * this.unitWidth * this.zoom + 'px';
+		if(!svg.svgElement || !anigenManager.classes.editor.clock.maxTime) { return; }
+		this.blueline.style.left = anigenManager.classes.editor.clock.maxTime * this.unitWidth * this.zoom + 'px';
 //		this.blueline.style.height = this.container.scrollHeight + 'px';
 		this.blueline.style.height = '100%';
 	};

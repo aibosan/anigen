@@ -28,6 +28,14 @@
 	src: url('../_fonts/OpenSans/OpenSans-BoldItalic.ttf');
 }
 
+@font-face {
+  font-family: 'Material Icons';
+  font-style: normal;
+  font-weight: 400;
+  src: url('../_fonts/MaterialIcons/MaterialIcons-Regular.ttf') format('truetype');
+}
+
+
 *:not(input) {
     -webkit-user-select: none;
     -moz-user-select: -moz-none;
@@ -46,8 +54,18 @@ input.changed {
 	animation-duration: 1s;
 }
 
+input.green {
+	background-color: #0f0;
+	-webkit-transition: background-color 1s;
+	transition: background-color 1s;
+}
 
-[title] {
+input.red {
+	background-color: #f00;
+}
+
+
+[title]:not(input) {
     cursor: pointer;
 }
 
@@ -78,91 +96,6 @@ a:hover {
 
 
 
-
-#layout_layout_panel_top {
-    font-size: 24px;
-    background-color: white;
-}
-
-#layout_layout_panel_top span {
-    margin: 0 1px;
-
-}
-
-#anigenPauseButton {
-	float: left;
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    width: 3em;
-    z-index: 204;
-}
-
-#anigenMenu {
-    position: absolute;
-    top: 3px;
-    right: 1ex;
-	z-index: 201;
-	font-size: 16px;
-}
-
-#anigeninfoSelection {
-    position: absolute;
-    top: 36px;
-    left: 1ex;
-    font-size: .9em;
-}
-
-#anigeninfoContext {
-    position: absolute;
-    top: 76px;
-    margin-left: 2px;
-    background-color: #eee;
-    height: 35px;
-	width: 100%;
-    font-size: .9em;
-    border-top: 1px solid gray;
-}
-
-#anigeninfoSelection span {
-	vertical-align: middle;
-	margin-right: .4ex;
-}
-
-#anigeninfoSelection span:first-child, .nodeName {
-    color: gray;
-    font-size: 0.85em;
-}
-
-#anigeninfoSelection span:nth-child(3) {
-    color: lightgray;
-	font-style: italic;
-	font-size: 0.85em;
-}
-
-#anigeninfoEditor {
-	line-height: 100%;
-	/*height: 100%;*/
-	
-    float: left;
-    position: absolute;
-    top: 4px;
-	left: 5px;
-	z-index: 207;
-}
-
-#anigeninfoEditor * {
-	line-height: 100%;
-	
-	display: inline-block;
-    z-index: 205;
-    float: left;
-}
-
-#anigeninfoEditor span {
-    opacity: 0.9;
-	padding-top: 1px;
-}
 
 div.progress {
 	/*display: inline-block;*/
@@ -230,34 +163,6 @@ span.slider input:last-child {
 	width: 3.5em;
 }
 
-
-
-
-
-#layout_layout_panel_top {
-    border-bottom: 1px solid gray;
-	overflow: hidden;
-}
-
-#layout_layout_panel_top div {
-	overflow: hidden;
-}
-
-#layout_layout_panel_left {
-    border-right: 1px solid gray;
-    background-color: #eee;
-}
-
-#layout_layout_panel_right {
-	border-left: 1px solid gray;
-	background-color: #eee;
-}
-
-#layout_layout_panel_bottom {
-    border-top: 1px solid gray;
-    background-color: #eee;
-}
-
 img, .floatLeft {
     float: left;
 }
@@ -319,8 +224,15 @@ p.inline {
 	vertical-align: middle;
 }
 
+h1 {
+	line-height: 100%;
+}
+
 h1 span {
     margin-left: 0.25ex;
+	display: inline-block;
+	padding-top: 2px;
+/*	vertical-align: text-top;	*/
 }
 
 h1 img {
@@ -347,6 +259,8 @@ label[for="files"] {
     padding: 1ex 1em;
     cursor: pointer;
 	display: inline-block;
+	
+	margin: 1em;
 }
 
 label[for="files"]:hover, label[for="files"].dragover {
@@ -359,11 +273,6 @@ label[for="files"]:hover, label[for="files"].dragover {
     display: none;
 }
 
-
-.w2ui-panel {
-    overflow: hidden;
-
-}
 
 .hidden {
     display: none !important;
@@ -448,6 +357,11 @@ table.inputs input {
 	background: white;
 }
 
+table.inputs select {
+	width: 100%;
+	background: white;
+}
+
 table.inputs input[type=checkbox] {
 	width: inherit;
 }
@@ -474,20 +388,6 @@ tr.hr td {
 }
 
 
-.w2ui-overlay input {
-    display: block;
-    float: left;
-    padding: .5ex 1ex;
-    margin: 2px;
-    height: auto;
-    width: auto;
-}
-
-.w2ui-overlay input[type=text] {
-    max-width: 5em;
-    text-align: center;
-}
-
 td input {
 	text-align: center;
 	width: 5em;
@@ -510,6 +410,19 @@ td input:hover {
 	background-color: white;
 }
 
+input[disabled=disabled] {
+	opacity: 0.75;
+	-webkit-user-select: none;
+    -moz-user-select: -moz-none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+input[disabled=disabled]:hover {
+	background-color: inherit !important;
+}
+
 
 td select {
 	width: 6em;
@@ -519,9 +432,6 @@ label.checkbox {
 	cursor: pointer;
 }
 
-label.selected, li.selected {
-	font-weight: bold;
-}
 
 #anigenCanvas {
 	position: absolute;
@@ -531,10 +441,6 @@ label.selected, li.selected {
 	height: 100%;
 	
 	background-color: white;
-}
-
-.w2ui-panel {
-	z-index: 203;
 }
 
 

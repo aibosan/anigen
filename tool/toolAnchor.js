@@ -59,7 +59,7 @@ toolAnchor.prototype.mouseMove = function(event) {
 	svg.ui.highlight.refresh();
 	svg.ui.selectionBox.refresh();
 	
-	windowAnimation.refreshKeyframes(true);
+	anigenManager.classes.windowAnimation.refreshKeyframes(true);
 	
 	this.lastEvent = event;
 }

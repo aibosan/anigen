@@ -25,7 +25,7 @@ function historyCreation(clone, parentId, previousSiblingId, isDeletion, collaps
 					owner.insertBefore(newElement, sibling);
 					if(newElement.isAnimation() || newElement.hasAnimation()) { 
 						// svg.rebuildShepherds(svg.svgElement, true);
-						timeline.rebuild();
+						//timeline.rebuild();
 					}
 					return true;
 				} else {
@@ -36,7 +36,7 @@ function historyCreation(clone, parentId, previousSiblingId, isDeletion, collaps
 					owner.appendChild(newElement);
 					if(newElement.isAnimation() || newElement.hasAnimation()) {
 						// svg.rebuildShepherds(svg.svgElement, true);
-						timeline.rebuild();
+						//timeline.rebuild();
 					}
 					return true;
 				} else {
@@ -49,7 +49,7 @@ function historyCreation(clone, parentId, previousSiblingId, isDeletion, collaps
 			if(svg.selected == el) { svg.select(el.parentNode); }
 			if(el.isAnimation() || el.hasAnimation()) {
 				// svg.rebuildShepherds(svg.svgElement, true);
-				timeline.rebuild();
+				//timeline.rebuild();
 			}
 			el.parentNode.removeChild(el);
 			return true;
@@ -66,7 +66,7 @@ function historyCreation(clone, parentId, previousSiblingId, isDeletion, collaps
 					owner.insertBefore(newElement, sibling);
 					if(newElement.isAnimation() || newElement.hasAnimation()) {
 						// svg.rebuildShepherds(svg.svgElement, true);
-						timeline.rebuild();
+						//timeline.rebuild();
 					}
 					return true;
 				} else {
@@ -77,7 +77,7 @@ function historyCreation(clone, parentId, previousSiblingId, isDeletion, collaps
 					owner.appendChild(newElement);
 					if(newElement.isAnimation() || newElement.hasAnimation()) {
 						// svg.rebuildShepherds(svg.svgElement, true);
-						timeline.rebuild();
+						//timeline.rebuild();
 					}
 					return true;
 				} else {
@@ -90,7 +90,7 @@ function historyCreation(clone, parentId, previousSiblingId, isDeletion, collaps
 			if(svg.selected == el) { svg.select(el.parentNode); }
 			if(el.isAnimation() || el.hasAnimation()) {
 				// svg.rebuildShepherds(svg.svgElement, true);
-				timeline.rebuild();
+				//timeline.rebuild();
 			}
 			el.parentNode.removeChild(el);
 			return true;

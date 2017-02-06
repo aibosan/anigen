@@ -16,14 +16,217 @@ img.button:hover {
     border: 1px solid black;
 }
 
-div.button {
-	display: inline-block;
-	padding: 2px;
-	width: 24px;
-	height: 24px;
-	
-	vertical-align: text-top;
+
+
+.material-icons {
+  font-family: 'Material Icons';
+  font-weight: normal;
+  font-style: normal;
+  font-size: inherit;  /* Preferred icon size */
+  display: inline-block;
+  line-height: 1;
+  text-transform: none;
+  letter-spacing: normal;
+  word-wrap: normal;
+  white-space: nowrap;
+  direction: ltr;
+  
+  vertical-align: top;
+  
+  /* Support for all WebKit browsers. */
+  -webkit-font-smoothing: antialiased;
+  /* Support for Safari and Chrome. */
+  text-rendering: optimizeLegibility;
+
+  /* Support for Firefox. */
+  -moz-osx-font-smoothing: grayscale;
+
+  /* Support for IE. */
+  font-feature-settings: 'liga';
 }
+
+.material-icons.md-18 { font-size: 18px !important; }
+.material-icons.md-24 { font-size: 24px !important; }
+.material-icons.md-36 { font-size: 36px !important; }
+.material-icons.md-48 { font-size: 48px !important; }
+
+.uiButton.md-18, .window h1 .uiButton {
+	font-size: 18px !important;
+	width: 18px !important;
+	height: 18px !important;
+}
+.uiButton.md-24, .popup-menu .uiButton {
+	font-size: 24px !important;
+	width: 24px !important;
+	height: 24px !important;
+}
+
+.uiButton.md-36 {
+	font-size: 36px !important;
+	width: 36px !important;
+	height: 36px !important;
+
+}
+.uiButton.md-48 {
+	font-size: 48px !important;
+	width: 48px !important;
+	height: 48px !important;
+}
+
+/*
+.uiButton.icon .material-icons {
+	vertical-align: baseline;
+}
+*/
+
+.uiButton.icon:hover {
+	cursor: default !important;
+	border-color: transparent !important;
+	background-color: transparent !important;
+}
+
+
+.uiButton {
+	cursor: pointer;
+	display: inline-block !important;
+	padding: 1px;
+	margin: 0px 1px;
+	font-size: inherit;
+	width: 1em;
+	height: 1em;
+	border: 1px solid transparent;
+	border-radius: 1px;
+	
+	-webkit-transition: border-color 0.25s ease-out;
+	transition: border-color 0.25s ease-out;
+	-webkit-transition: color 0.25s ease-out;
+	transition: color 0.25s ease-out;
+}
+
+.uiButton.inline {
+	white-space: nowrap;
+}
+
+.uiButton.inline > i {
+	vertical-align: top;
+}
+
+.uiButton:hover {
+	border-color: #888;
+/*	color: #080;	*/
+}
+
+.uiButton.selected:hover {
+/*	color: #0b0 !important;	*/
+}
+
+.uiButton.selected {
+	border-color: #aaa;
+	background-color: #fff;
+/*	color: #0b0;	*/
+}
+
+.uiButton.selected:hover, .uiButton.icon:hover {
+	border-color: #000;
+	color: #000;
+}
+
+.uiButton.disabled, .uiButton.disabled:hover {
+	opacity: 0.5;
+	cursor: default !important;
+	color: #000;
+}
+
+.uiButton.disabled * {
+	cursor: default !important;
+}
+
+.uiButton.flip-h .material-icons {
+	-moz-transform: scale(-1, 1);
+	-webkit-transform: scale(-1, 1);
+	-o-transform: scale(-1, 1);
+	-ms-transform: scale(-1, 1);
+	transform: scale(-1, 1);
+}
+
+.uiButton.flip-v .material-icons {
+	-moz-transform: scale(1, -1);
+	-webkit-transform: scale(1, -1);
+	-o-transform: scale(1, -1);
+	-ms-transform: scale(1, -1);
+	transform: scale(1, -1);
+}
+
+.uiButton.turn-90 .material-icons {
+	-moz-transform: rotate(90deg);
+	-webkit-transform: rotate(90deg);
+	-o-transform: rotate(90deg);
+	-ms-transform: rotate(90deg);
+	transform: rotate(90deg);
+}
+
+.uiButton.turn-180 .material-icons {
+	-moz-transform: rotate(180deg);
+	-webkit-transform: rotate(180deg);
+	-o-transform: rotate(180deg);
+	-ms-transform: rotate(180deg);
+	transform: rotate(180deg);
+}
+
+.uiButton.turn-270 .material-icons {
+	-moz-transform: rotate(270deg);
+	-webkit-transform: rotate(270deg);
+	-o-transform: rotate(270deg);
+	-ms-transform: rotate(270deg);
+	transform: rotate(270deg);
+}
+
+
+span.uiLink {
+	display: inline-block;
+	margin: 2px;
+	padding: 1px 0.75ex 1px 1px;
+	border-radius: 5px;
+	cursor: pointer;
+	/*border: 1px solid transparent;*/
+	
+}
+
+span.uiLink:hover {
+	border-color: gray;
+	background-color: gray;
+	color: white;
+}
+
+span.uiLink .uiButton {
+	font-size: inherit !important;
+	vertical-align: text-top;
+	-webkit-transition: color 0s ease-out;
+	transition: color 0s ease-out;
+}
+
+span.uiLink .uiButton:hover {
+	color: inherit;
+	cursor: pointer !important;
+}
+
+
+
+.uiBreak {
+	display: inline-block;
+	vertical-align: baseline;
+
+	margin: 0.25ex 5px;
+	height: 0.9em;
+	
+	width: 1px;
+	background: gray;
+	background: -webkit-linear-gradient(transparent, gray, transparent); /* For Safari 5.1 to 6.0 */
+    background: -o-linear-gradient(transparent, gray, transparent); /* For Opera 11.1 to 12.0 */
+    background: -moz-linear-gradient(transparent, gray, transparent); /* For Firefox 3.6 to 15 */
+    background: linear-gradient(transparent, gray, transparent); /* Standard syntax */
+}
+
 
 
 
@@ -32,7 +235,7 @@ button {
     border-radius: 5px;
     font-weight: bold;
     padding: 0.4ex 1ex;
-    background-color: #ccc;
+    background-color: white;
     border: 1px outset gray;
     min-width: 5em;
     margin: 0 .25ex;

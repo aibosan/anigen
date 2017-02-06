@@ -4,82 +4,50 @@ ul.tree {
     padding-left: 20px;
 }
 
+.tree li span {
+	vertical-align: top;
+}
+
+ul.tree {
+	padding-left: 0px;
+	white-space: nowrap;
+}
+
+ul.tree ul {
+	padding-left: 24px;
+}
+
 ul.tree li {
     position: relative;
-    margin-left: -15px;
     list-style: none;
 }
 
 ul.tree li.leaf {
-    margin: 4px auto 0px 1px !important;
 }
 
-ul.tree li.leaf span:first-child {
-    cursor: pointer;
-    padding-left: 22px;
+ul.tree li span {
+    margin-right: 0.5ex;
 }
 
-ul.tree li.leaf span.animation { background: url("../_png/ui/20/gear-black.png") 0 0 no-repeat; }
-
-ul.tree li.leaf span.other { background: url("../_png/ui/20/edit-black.png") -2px 0 no-repeat; }
-
-ul.tree li.leaf span.layers { background: url("../_png/ui/20/layers-black.png") -2px 0 no-repeat; }
-
-ul.tree li.leaf span.camera { background: url("../_png/ui/20/camera-black.png") -2px 0 no-repeat; }
-
-ul.tree li.leaf span.folder { background: url("../_png/ui/20/folder-black.png") -2px 0 no-repeat; }
-
-ul.tree li input
-{
-    position: absolute;
-    left: 0;
-    margin-left: 0;
-    opacity: 0;
-    z-index: 202;
-    cursor: pointer;
-    height: 1em;
-    width: 1em;
-    top: 0;
+ul.tree li > ul { 
+	display: none;
 }
 
-ul.tree li input + ul {
-    background: url("../_png/ui/toggle-small-expand.png") 40px 0 no-repeat;
-    margin: -18px 0 0 -40px;
-    height: 1em;
+ul.tree li.checked > ul {
+	display: block;
 }
 
-ul.tree li input + ul > li { display: none; margin-left: -14px !important; padding-left: 1px; }
 
-ul.tree li label {
-    background: url("../_png/ui/20/folder-white.png") 15px 1px no-repeat;
-    cursor: pointer;
-    display: block;
-    padding-left: 38px;
+ul.tree li.checked > span:first-of-type, li.leaf.selected > span:first-of-type {
+	/*font-style: italic;*/
+	font-weight: bold;
 }
 
-ul.tree li label.default { background: url("../_png/ui/20/folder-white.png") 15px 1px no-repeat; }
-
-ul.tree li label.default-black { background: url("../_png/ui/20/folder-black.png") 15px 1px no-repeat; }
-
-ul.tree li label.layers { background: url("../_png/ui/20/layers-white.png") 15px 1px no-repeat; }
-
-ul.tree li label.layers-black { background: url("../_png/ui/20/layers-black.png") 15px 1px no-repeat; }
-
-ul.tree li label.camera { background: url("../_png/ui/20/camera-white.png") 15px 1px no-repeat; }
-
-ul.tree li label.camera-black { background: url("../_png/ui/20/camera-black.png") 15px 1px no-repeat; }
-
-ul.tree li label.animation { background: url("../_png/ui/20/gear-white.png") 15px 1px no-repeat; }
-
-ul.tree li label.other { background: url("../_png/ui/20/edit-white.png") 13px 1px no-repeat; }
-
-ul.tree li input:checked + ul {
-    background: url("../_png/ui/toggle-small.png") 40px 5px no-repeat;
-    margin: -24px 0 0 -40px;
-    padding: 28px 0 0 64px;
-    height: auto;
+ul.tree span.selected, ul.tree li.selected > span {
+	font-style: italic;
+	/*font-weight: bold;*/
 }
 
-ul.tree li input:checked + ul > li { display: block; margin: 0 0 0.125em;  /* 2px */}
 
-ul.tree li input:checked + ul > li:last-child { margin: 0 0 0.063em; /* 1px */ }
+
+

@@ -56,6 +56,7 @@ tree.prototype.seed = function() {
 	this.root.removeChildren();
 	this.parseSVG(svg.svgElement);
 	this.root.appendChild(this.rootNode.li);
+	if(svg && svg.selected) { this.select(svg.selected); }
 }
 
 tree.prototype.findNode = function(treeNode, nodeId) {
@@ -77,10 +78,13 @@ tree.prototype.select = function(target, attemptTwo) {
 		this.selected = null;
 		return;
 	}
-	this.rootNode.collapse(true);
 	
 	var targetNode = this.findNode(this.rootNode, target.getAttribute('id'));
+	if(!targetNode) { this.select(); return; }
 	
+	var originalOffset = targetNode.li.getBoundingClientRect().top;
+	
+	this.rootNode.collapse(true);
 	if(!targetNode) { 
 		if(attemptTwo) {
 			console.log('Tree could not find element.', target);
@@ -105,19 +109,37 @@ tree.prototype.select = function(target, attemptTwo) {
 		targetNode = targetNode.parentNode;
 	};
 	
-	this.container.parentNode.scrollTop = 0;
 	
 	var panelHeight = this.container.parentNode.parentNode.scrollHeight;
-	var elementOffset = originalNode.li.getBoundingClientRect().bottom;
+	var elementOffset = originalNode.li.getBoundingClientRect().top;
 	
+	this.container.parentNode.scrollTop -= (originalOffset - elementOffset);
+	
+	/*
 	if(elementOffset > panelHeight) {
 		this.container.parentNode.scrollTop = (elementOffset - panelHeight);
 	}
+	*/
 	
 }
 	
 // tree clicking event handler
-tree.prototype.handle = function(evt) {
-	if(evt.target.getAttributeNS(anigenNS, 'originalid') != null) { svg.select(evt.target.getAttributeNS(anigenNS, 'originalid')); }
+tree.prototype.handleSelect = function(evt) {
+	var targ = evt.target;
+	while(!targ.getAttributeNS(anigenNS, 'originalid') && !(targ instanceof HTMLUListElement)) {
+		targ = targ.parentNode;
+	}
+	if((targ instanceof HTMLUListElement)) { return; }
+	svg.select(targ.getAttributeNS(anigenNS, 'originalid'));
+	evt.stopPropagation();
+}
+
+tree.prototype.handleToggle = function(evt) {
+	var targ = evt.target;
+	while(!targ.shepherd && !(targ instanceof HTMLUListElement)) {
+		targ = targ.parentNode;
+	}
+	if((targ instanceof HTMLUListElement)) { return; }
+	targ.shepherd.toggle();
 	evt.stopPropagation();
 }

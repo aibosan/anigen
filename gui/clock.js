@@ -15,7 +15,7 @@ function clock() {
     this.time = 0;
 
     this.container = document.createElement('span');
-	this.container.setAttribute('onclick', 'popup.macroClock(infoEditor.clock.container);event.stopPropagation();');
+	this.container.setAttribute('onclick', 'popup.macroClock(anigenManager.classes.editor.clock.container);event.stopPropagation();');
 }
 
 clock.prototype.toggle = function() {
@@ -71,7 +71,7 @@ clock.prototype.update = function() {
 		svg.gotoTime(0);
 	}
 	
-	timeline.adjustRedline();
+//	timeline.adjustRedline();
 	
 	this.time = Math.round(svg.svgElement.getCurrentTime()*1000)/1000;
 	

@@ -39,7 +39,7 @@ SVGPathElement.prototype.getPathData = function() {
 		
 		switch(lastLetter.toLowerCase()) {
 			case 'm':		// moveto
-				lastAbsolute = lastMCoordinate;
+				//lastAbsolute = lastMCoordinate;
 				if(i+1 >= path.length) { error = true; break; }
 				if(absolute || i == 1) {
 					segment = [

@@ -6,7 +6,7 @@
  */
 
 SVGAnimateElement.prototype.generateAnchors = function() {
-	if(this.getAttribute('attributeName') == 'd' && windowAnimation.selected.length != 0) {
+	if(this.getAttribute('attributeName') == 'd' && anigenManager.classes.windowAnimation.selected.length != 0) {
 		svg.ui.selectionBox.hide();
 		this.getKeyframes();
 		var CTM = this.parentNode.getCTMBase();
@@ -30,10 +30,10 @@ SVGAnimateElement.prototype.generateAnchors = function() {
 		var originalPath = document.createElementNS(svgNS, 'path');
 			originalPath.setAttribute('d', this.parentNode.getAttribute('d'));
 		
-		for(var i = 0; i < windowAnimation.selected.length; i++) {
-			if(i == 0 || this.keyframes.getItem(windowAnimation.selected[i]).value != this.keyframes.getItem(windowAnimation.selected[i-1]).value) {
+		for(var i = 0; i < anigenManager.classes.windowAnimation.selected.length; i++) {
+			if(i == 0 || this.keyframes.getItem(anigenManager.classes.windowAnimation.selected[i]).value != this.keyframes.getItem(anigenManager.classes.windowAnimation.selected[i-1]).value) {
 				lastPath = document.createElementNS(svgNS, 'path');
-				lastPath.setAttribute('d', this.keyframes.getItem(windowAnimation.selected[i]).value);
+				lastPath.setAttribute('d', this.keyframes.getItem(anigenManager.classes.windowAnimation.selected[i]).value);
 				lastPath.setAttribute('transform', transform);
 				lastPath.setAttribute("anigen:lock", "interface");
 				
@@ -50,7 +50,7 @@ SVGAnimateElement.prototype.generateAnchors = function() {
 				
 				if(firstAnchors == null) { firstAnchors = currentAnchors; }
 				
-				if(windowAnimation.selected.length != 1 && i == windowAnimation.selected.length-1 && this.keyframes.getItem(windowAnimation.selected[i]).value == this.keyframes.getItem(windowAnimation.selected[0]).value) {
+				if(anigenManager.classes.windowAnimation.selected.length != 1 && i == anigenManager.classes.windowAnimation.selected.length-1 && this.keyframes.getItem(anigenManager.classes.windowAnimation.selected[i]).value == this.keyframes.getItem(anigenManager.classes.windowAnimation.selected[0]).value) {
 					currentAnchors = firstAnchors;
 				} else {
 					allAnchors = allAnchors.concat(currentAnchors.anchors);
@@ -62,7 +62,7 @@ SVGAnimateElement.prototype.generateAnchors = function() {
 			}
 			for(var j = 0; j < currentAnchors.anchors[0].length; j++) {
 				currentAnchors.anchors[0][j].animation = this;
-				currentAnchors.anchors[0][j].actions.move += 'this.animation.setValue('+windowAnimation.selected[i]+', this.element.getAttribute("d"));';
+				currentAnchors.anchors[0][j].actions.move += 'this.animation.setValue('+anigenManager.classes.windowAnimation.selected[i]+', this.element.getAttribute("d"));';
 				currentAnchors.anchors[0][j].actions.move += 'this.animation.commit();';
 				currentAnchors.anchors[0][j].actions.mouseup = '';
 			}
