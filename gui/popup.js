@@ -326,7 +326,7 @@ popup.prototype.macroContextMenu = function(target) {
 		
 	tArray.push([ build.icon("content_paste"), "Paste" ]);
 		if(svg.elementTemp) {
-			if(svg.selected.getAttribute('inkscape:groupmode') == 'layer' || svg.selected == svg.svgElement) {
+			if(svg.selected.getAttribute('inkscape:groupmode') == 'layer' || svg.selected == svg.svgElement || svg.elementTemp.isAnimation()) {
 				rAttributes.push({ 'onclick': 'event.stopPropagation();popup.hide();svg.paste({ "x": '+evaluated.x+', "y": '+evaluated.y+' }, svg.selected);'});
 			} else {
 				rAttributes.push({ 'onclick': 'event.stopPropagation();popup.hide();svg.paste({ "x": '+evaluated.x+', "y": '+evaluated.y+' }, svg.selected.parentNode, svg.selected);'});
