@@ -62,7 +62,7 @@ clock.prototype.setMaxTime = function(value) {
 	}
 	this.maxTime = value;
 	svg.namedView.setAttribute('anigen:loop', this.maxTime);
-	timeline.adjustBlueline();
+	
 }
 
 clock.prototype.update = function() {
