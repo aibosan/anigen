@@ -1084,7 +1084,7 @@ windowAnimation.prototype.eventClick = function(event) {
 	var attrOut = { 'onchange': '', 'onmousemove': '' };
 	
 	attrOut.onchange += 'var shep = anigenManager.classes.windowAnimation.animation;if(!shep){return;}';
-	attrOut.onchange += 'if(isNaN(this.value;)){return;}';
+	attrOut.onchange += 'if(isNaN(this.value)||this.value==null||this.value.length==0){return;}';
 	
 	if(!popup.isHidden()) { popup.hide(); return; }
 	
