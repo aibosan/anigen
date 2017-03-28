@@ -53,9 +53,9 @@ var saveAs = saveAs || (function(view) {
 			/* // Take note W3C:
 			var
 			  uri = typeof file === "string" ? file : file.toURL()
-			, revoker = function(evt) {
+			, revoker = function(event) {
 				// idealy DownloadFinishedEvent.data would be the URL requested
-				if (evt.data === uri) {
+				if (event.data === uri) {
 					if (typeof file === "string") { // file is an object URL
 						get_URL().revokeObjectURL(file);
 					} else { // file is a File

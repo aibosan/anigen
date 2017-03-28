@@ -151,6 +151,7 @@ animationState.prototype.destroy = function() {
 
 animationState.prototype.inbetween = function(other, ratio, name, append) {
 	if(ratio == null) { ratio = 0; }
+	
 	if(!(other instanceof animationState) || this.group != other.group) { return; }
 	
 	if(!name) { name = this.name+"-"+other.name+"-"+ratio; }
@@ -165,7 +166,11 @@ animationState.prototype.inbetween = function(other, ratio, name, append) {
 			continue;
 		}
 		if(!candidatesTwo[i] || candidatesOne[i].nodeName != candidatesTwo[i].nodeName) {
-			return;
+			if(candidatesTwo[i]) {
+				throw new Error('State data mismatch! '+candidatesOne[i].id+' is of nodeName '+candidatesOne[i].nodeName+', '+candidatesTwo[i].id+' is of nodeName '+candidatesTwo[i].nodeName+'.');
+			} else {
+				throw new Error('State data mismatch! Candidate two missing.');
+			}
 		}
 		if(typeof candidatesOne[i].inbetween === 'function') {
 			candidatesOne[i].setAttribute('d', candidatesOne[i].inbetween(candidatesTwo[i], ratio));
@@ -173,5 +178,9 @@ animationState.prototype.inbetween = function(other, ratio, name, append) {
 	}
 	
 	return new animationState(clone, name, (append ? this.group : null));
+}
+
+animationState.prototype.isAnimation = function() {
+	return false;
 }
 

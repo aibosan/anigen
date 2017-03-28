@@ -12,6 +12,8 @@ function root() {
     this.posY = 0;
     this.zoom = 1;
 	
+	this.previewWindow = new windowPreview();
+	
 	this.viewBox = { x: 0, y: 0, width: 0, height: 0 };
 
 	this.history = new history();
@@ -59,7 +61,7 @@ root.prototype.getCurrentLayer = function() {
 	if(this.selected == null) { return null; }
 	var obj = this.selected;
 	if(!obj) { return null;}
-	while(obj.nodeName.toLowerCase() != 'svg') {
+	while(!(obj instanceof SVGSVGElement) && obj.parentNode) {
 		if(obj.getAttribute('inkscape:groupmode') == 'layer') { return obj; }
 		obj = obj.parentNode;
 	}
@@ -83,17 +85,22 @@ root.prototype.addLayer = function(name, position) {
 				} else {
 					currentLayer.parentNode.appendChild(newLayer);
 				}
+				log.report('New layer <strong>'+name+'</strong> was created above layer <strong>'+currentLayer.getAttribute('inkscape:label')+'</strong>.');
 				break;
 			case 'below':
 				currentLayer.parentNode.insertBefore(newLayer, currentLayer);
+				log.report('New layer <strong>'+name+'</strong> was created below layer <strong>'+currentLayer.getAttribute('inkscape:label')+'</strong>.');
 				break;
 			case 'sublayer':
 				currentLayer.appendChild(newLayer);
+				log.report('New layer <strong>'+name+'</strong> was created as a sublayer of <strong>'+currentLayer.getAttribute('inkscape:label')+'</strong>.');
 				break;
 		}
 	}
 	
 	this.history.add(new historyCreation(newLayer.cloneNode(true), newLayer.parentNode.id, newLayer.nextElementSibling ? newLayer.nextElementSibling.id : null, false));
+	
+	
 	
 	anigenManager.classes.tree.seed();
 	this.select();
@@ -108,27 +115,37 @@ root.prototype.renameLayer = function(targetId, newName) {
 		{ 'inkscape:label': newName },
 	true));
 	
+	log.report('Layer <strong>'+target.getAttribute('inkscape:label')+'</strong> was renamed to <strong>'+newName+'</strong>.');
+	
 	target.setAttribute('inkscape:label', newName);
 	
 	anigenManager.classes.tree.seed();
 	this.select();
 }
 
-root.prototype.evaluateEventPosition = function(evt) {
-	if(!evt) {
-		evt = { 'clientX': window.innerWidth/2, 'clientY': window.innerHeight/2};
+root.prototype.evaluateEventPosition = function(event) {
+	if(!event) {
+		event = { 'clientX': window.innerWidth/2, 'clientY': window.innerHeight/2};
 	}
 	
-	var x = this.viewBox.x + evt.clientX/this.zoom;
-	var y = this.viewBox.y + evt.clientY/this.zoom;
+	var x = this.viewBox.x + event.clientX/this.zoom;
+	var y = this.viewBox.y + event.clientY/this.zoom;
 	
 	return { 'x': x, 'y': y};
 }
 
 // zooms towards given event location (currently towards centre of view)
 root.prototype.zoomAround = function(x, y, zoomIn) {
+	if(x == null || y == null || isNaN(x) || isNaN(y)) {
+		var evaluated = this.evaluateEventPosition();
+		x = evaluated.x;
+		y = evaluated.y;
+	}
+	
 	var ratio = 1;
-	if(zoomIn) {
+	if(zoomIn == null) {
+		
+	} else if(zoomIn) {
 		this.zoom *= Math.sqrt(2);
 		ratio = Math.sqrt(2);
 	} else {
@@ -172,8 +189,19 @@ root.prototype.getZoomReadable = function() {
 }
 
 // pauses/unpauses animations
-root.prototype.pauseToggle = function() {
-	if(this.svgElement.animationsPaused()) {
+root.prototype.pauseToggle = function(unpause) {
+	if(this.svgElement.animationsPaused() && (unpause == true || unpause == null)) {
+		if(popup.closeOnSeek) {
+			if(popup.buttonOk) { 
+				if(popup.noRemoteClick) {
+					popup.hide();
+				} else {
+					popup.buttonOk.click();
+				}
+			} else {
+				popup.hide();
+			}
+		}
 		this.svgElement.unpauseAnimations();
 	} else {
 		this.svgElement.pauseAnimations();
@@ -199,7 +227,9 @@ root.prototype.elementToCoords = function(target, x, y) {
 	var CTM = target.getCTM();
 	if(!CTM) { return; }
 	
-	target.translateBy((x-center.x), (y-center.y));
+	if(center) {
+		target.translateBy((x-center.x), (y-center.y));
+	}
 }
 
 // duplicates the element and places it right above the original
@@ -214,11 +244,12 @@ root.prototype.duplicate = function(target) {
 		target.parentNode.appendChild(clone);
 	}
 	
+	log.report('Element <strong>'+target.getAttribute('id')+'</strong> was duplicated. Duplicate id is <strong>'+clone.getAttribute('id')+'</strong>.');
+	
 	this.history.add(new historyCreation(clone.cloneNode(true), clone.parentNode.id, clone.nextElementSibling ? clone.nextElementSibling.id : null, false));
 	
 	anigenManager.classes.tree.seed();	// the tree is reconstructed
 	
-	// this.rebuildShepherds(this.svgElement, true);
 	//timeline.rebuild();
 	
 	this.select(clone);
@@ -227,8 +258,10 @@ root.prototype.duplicate = function(target) {
 // copies element in order to paste it later
 root.prototype.copy = function(target) {
 	if(!target || target == this.svgElement) { return; }
+	var additional = '('+target.nodeName+')';
 	this.elementTemp = target.cloneNode(true);
 	if(target instanceof SVGAnimationElement) {
+		additional = '(animation)';
 		var CTM = target.parentNode.getCTMBase();
 		this.elementTemp.valuesToViewport(CTM);
 		this.elementTemp.commit();
@@ -237,9 +270,14 @@ root.prototype.copy = function(target) {
 	}
 	if(target.shepherd) {
 		// could lead to double linking to the same object
-		// TODO?
+		// TODO? (does it tho?)
 		this.elementTemp.shepherd = target.shepherd;
+		
+		if(this.elementTemp.shepherd instanceof animationGroup) { additional = '(animation group)'; }
+		if(this.elementTemp.shepherd instanceof animatedViewbox) { additional = '(camera)'; }
+		
 	}
+	log.report('Element <strong>'+target.getAttribute('id')+'</strong> '+additional+' was copied to clipboard.');
 }
 
 // pastes previously copied element into the target
@@ -262,6 +300,8 @@ root.prototype.paste = function(position, target, beforeElement) {
 		to.pasteTiming(fr, true)
 		this.select(to.commit());
 		
+		log.report('Timing of element <strong>'+fr.getAttribute('id')+'</strong> was pasted into element <strong>'+target.getAttribute('id')+'</strong>.');
+		
 		//this.select(target.pasteTiming(this.elementTemp));
 		return;
 	}
@@ -271,7 +311,6 @@ root.prototype.paste = function(position, target, beforeElement) {
 		this.paste(position, target.parentNode, target);
 		return;
 	}
-	
 	
 	// otherwise, the original element is cloned, stripped of all IDs, and inserted into the target and selected
 	var newElement = this.elementTemp.cloneNode(true);
@@ -288,15 +327,19 @@ root.prototype.paste = function(position, target, beforeElement) {
 		if(newElement.isAnimation()) { return; }
 		if(beforeElement != null) {
 			target.insertBefore(newElement, beforeElement);
+			log.report('<strong>'+newElement.getAttribute('id')+'</strong> was pasted into element <strong>'+target.getAttribute('id')+'; its next sibling is <strong>'+beforeElement.getAttribute('id')+'</strong>.');
 		} else {
 			target.insertBefore(newElement, this.uiGroup);
+			log.report('<strong>'+newElement.getAttribute('id')+'</strong> was pasted into element <strong>'+target.getAttribute('id')+'; its next sibling is <strong>'+this.uiGroup.getAttribute('id')+'</strong>.');
 		}
 	} else if(typeof target.allowsChild !== 'function' || target.allowsChild(newElement)) {
 		// appends if the target allows it
 		if(beforeElement != null) {
 			target.insertBefore(newElement, beforeElement);
+			log.report('<strong>'+newElement.getAttribute('id')+'</strong> was pasted into element <strong>'+target.getAttribute('id')+'; its next sibling is <strong>'+beforeElement.getAttribute('id')+'</strong>.');
 		} else {
 			target.appendChild(newElement);
+			log.report('<strong>'+newElement.getAttribute('id')+'</strong> was pasted into element <strong>'+target.getAttribute('id')+'.');
 		}
 	} else {
 		// otherwise appends it to the parent
@@ -312,8 +355,6 @@ root.prototype.paste = function(position, target, beforeElement) {
 	
 	anigenManager.classes.tree.seed();	// the tree is reconstructed
 	
-	// this.rebuildShepherds(this.svgElement, true);
-	//timeline.rebuild();
 	anigenManager.classes.context.refresh();
 	
 	if(position) {
@@ -331,14 +372,10 @@ root.prototype.delete = function(target) {
 	var selectParent = null;
 	if(target == this.selected || this.selected.isChildOf(target)) { selectParent = target.parentNode; }
 	
-	//console.log(target, target.parentNode, target.previousElementSibling);
-	
 	this.history.add(new historyCreation(target.cloneNode(true), target.parentNode.id, target.nextElementSibling ? target.nextElementSibling.id : null, true));
 	
+	log.report('<strong>'+target.getAttribute('id')+'</strong> was deleted from <strong>'+target.parentNode.getAttribute('id')+'</strong>.');
 	target.parentNode.removeChild(target);
-	
-	// this.rebuildShepherds(this.svgElement, true);
-	//timeline.rebuild();
 	
 	anigenManager.classes.context.refresh();
 	
@@ -371,7 +408,9 @@ root.prototype.createLink = function(target) {
 		use.generateId();
 	target.parentNode.insertBefore(use, target);
 	target.parentNode.insertBefore(target, use);
-
+	
+	log.report('<strong>'+use.getAttribute('id')+'</strong>, a new link of <strong>'+target.getAttribute('id')+'</strong> was created.');
+	
 	this.history.add(new historyCreation(use.cloneNode(true), use.parentNode.id, target.id, false));
 	anigenManager.classes.tree.seed();
 	this.select(use);
@@ -397,6 +436,8 @@ root.prototype.group = function(target) {
 	targetParent.insertBefore(newGroup, target);
 	newGroup.appendChild(target);
 	
+	log.report('<strong>'+target.getAttribute('id')+'</strong> was put into a new group, <strong>'+newGroup.getAttribute('id')+'</strong>.');
+	
 	anigenManager.classes.tree.seed();	// the tree is reconstructed
 	//timeline.rebuild();
 	anigenManager.classes.context.refresh();
@@ -410,13 +451,21 @@ root.prototype.ungroup = function(target) {
 	
 	var par = target.parentNode;
 	
+	log.report('Group <strong>'+target.getAttribute('id')+'</strong> was dispersed; it had <strong>'+target.children.length+'</strong> children.');
+	
 	target.ungroup(true);
 	
-	anigenManager.classes.tree.seed();	// the tree is reconstructed
-	//timeline.rebuild();
-	anigenManager.classes.context.refresh();
-	
+	//anigenManager.classes.tree.seed();
 	this.select(par);
+	
+	
+	if(anigenManager.classes.tree.selected) {
+		anigenManager.classes.tree.selected.bloom(true);
+	} else {
+		anigenManager.classes.tree.seed();
+		svg.select();
+	}
+	
 }
 
 root.prototype.evaluateEditOverlay = function(tableAttr, tableCSS) {
@@ -450,7 +499,7 @@ root.prototype.evaluateEditOverlay = function(tableAttr, tableCSS) {
 				}
 			}
 		} else {
-			if(aName.lenght > 0 && aValue.length > 0) {
+			if(aName.length > 0 && aValue.length > 0) {
 				attrFrom[aName] = null;
 				this.selected.setAttribute(aName, aValue);
 				attrTo[aName] = aValue;
@@ -475,7 +524,7 @@ root.prototype.evaluateEditOverlay = function(tableAttr, tableCSS) {
 				this.selected.style[aName] = aValue;
 			}
 		} else {
-			if(aName.lenght > 0 && aValue.length > 0) {
+			if(aName.length > 0 && aValue.length > 0) {
 				this.selected.style[aName] = aValue;
 			}
 		}
@@ -493,7 +542,7 @@ root.prototype.evaluateEditOverlay = function(tableAttr, tableCSS) {
 	if(this.selected.shepherd && typeof this.selected.shepherd.rebuild === 'function') {
 		this.selected.shepherd.rebuild();
 	}
-	
+	this.select();
 }
 
 root.prototype.evaluateStatesManager = function() {
@@ -571,81 +620,154 @@ root.prototype.evaluateGroupInbetween = function(valueIndex, groupName, name, in
 	svg.select();
 }
 
-root.prototype.evaluateAddValue = function(hasValue, index) {
+root.prototype.evaluateSetCurrentValue = function() {
 	var animation = this.selected.shepherd || this.selected;
 	if(!animation || !(animation instanceof SVGAnimationElement)) { return; }
 	
-	var newValue;
-	var splinePosition = 1;
+	var closest = animation.getClosest(true);
 	
-	if(animation instanceof animationGroup) {
-		newValue = parseInt(popup.content.children[0].value);
+	var hasValue = closest.perfect;		// SLACK
+	
+	var inputVal = document.getElementById('anigenAddValue');
+	var inputValX = document.getElementById('anigenAddValueX');
+	var inputValY = document.getElementById('anigenAddValueY');
+	
+	var newValue;
+	var intensity = document.getElementById('anigenIntensity') ? document.getElementById('anigenIntensity').children[0].value : null;
+	
+	if(animation instanceof animatedViewbox) {
+		var inputValWidth = document.getElementById('anigenAddValueWidth');
+		var inputValHeight = document.getElementById('anigenAddValueHeight');
+		
+		if(!inputValX || !inputValY || !inputValWidth || !inputValHeight) { return; }
+		
+		newValue = document.createElementNS("http://www.w3.org/2000/svg", "svg").createSVGRect();
+		newValue.x = inputValX.value;
+		newValue.y = inputValY.value;
+		newValue.width = inputValWidth.value;
+		newValue.height = inputValHeight.value;
+		
+	} else if(animation instanceof animationGroup) {
+		newValue = inputVal.value;
+	} else if(animation instanceof SVGAnimateMotionElement) {
+		newValue = parseFloat(inputVal.value)/100;
 	} else {
 		if(animation instanceof SVGAnimateTransformElement) {
 			
 			switch(animation.getAttribute('type')) {
 				case 'rotate':
 					newValue = new angle(
-						parseFloat(popup.content.children[0].value),
-						parseFloat(popup.content.children[1].value),
-						parseFloat(popup.content.children[2].value)
+						parseFloat(inputVal.value),
+						parseFloat(inputValX.value),
+						parseFloat(inputValY.value)
 					);
-					splinePosition = 3;
 					break;
 				case 'translate':
+					newValue = new coordinates(
+						parseFloat(inputValX.value),
+						parseFloat(inputValY.value)
+					);
+					break;
 				case 'scale':
 					newValue = new coordinates(
-						parseFloat(popup.content.children[0].value),
-						parseFloat(popup.content.children[1].value)
+						parseFloat(inputValX.value)/100,
+						parseFloat(inputValY.value)/100
 					);
-					splinePosition = 2;
 					break;
 				case 'skewX':
 				case 'skewY':
 					newValue = new angle(
-						parseFloat(popup.content.children[0].value)
+						parseFloat(inputVal.value)
 					);
 					break;
 			}
 		} else {
-			newValue = popup.content.children[0].value;
+			newValue = inputVal.value;
+			if(inputVal.hasClass('fraction')) {
+				newValue *= 0.01;
+			}
 		}
 	}
 	
-	if(hasValue && index != null) {
-		animation.setValue(index, newValue);
+	if(hasValue && !newValue.invalid && closest.closest.index != null) {
+		animation.setValue(closest.closest.index, newValue);
+		if(intensity != null && typeof animation.setIntensity === 'function') {
+			animation.setIntensity(closest.closest.index, intensity);
+		}
 	}
 	
 	var newSpline, newSplineType;
 	if(animation.getCalcMode() == 'spline') {
-		newSplineType = parseInt(popup.content.children[splinePosition].value);
+		newSplineType = parseInt(popup.content.children[popup.content.children.length-4].value);
 		var newSpline;
 		if(newSplineType == -1) {
 			newSpline = new spline(
-				popup.content.children[2].children[0].value,
-				popup.content.children[2].children[1].value,
-				popup.content.children[2].children[2].value,
-				popup.content.children[2].children[3].value
+				popup.content.children[popup.content.children.length-3].children[0].value,
+				popup.content.children[popup.content.children.length-3].children[1].value,
+				popup.content.children[popup.content.children.length-3].children[2].value,
+				popup.content.children[popup.content.children.length-3].children[3].value
 			);
 		} else {
 			newSpline = new spline(newSplineType);
 		}
 		
-		if(hasValue && index != null) {
-			animation.setSpline(index, newSpline);
+		if(hasValue && !newSpline.invalid && closest.closest.index != null) {
+			animation.setSpline(closest.closest.index, newSpline);
 		}
 		
 	}
 	
-	var relativeTime = animation.getCurrentProgress();
-	
-	if(!hasValue || index == null) {
-		animation.addValue(newValue, relativeTime, newSpline);	
+	if(!newValue.invalid && (!hasValue || closest.closest.index == null)) {
+		animation.addValue(newValue, closest.progress, newSpline, intensity);	
 	}
 	
-	animation.commit();
-	anigenManager.classes.windowAnimation.refreshKeyframes();
+	if(anigenManager.classes.windowAnimation.animation == animation) {
+		anigenManager.classes.windowAnimation.animation = animation.commit();
+		if(anigenManager.classes.windowAnimation.animation.shepherd) {
+			anigenManager.classes.windowAnimation.animation = anigenManager.classes.windowAnimation.animation.shepherd;
+		}
+		anigenManager.classes.windowAnimation.refreshKeyframes();
+	}
+	anigenManager.classes.windowAnimation.select(hasValue ? closest.closest.index : closest.closest.index+1, true);
 	this.gotoTime();
+}
+
+root.prototype.replace = function(replaceFrom, replaceTo, onlySelection, lenient) {
+	var target = onlySelection ? this.selected : this.svgElement;
+	
+	var matching = target.getElementsByAttribute(null, replaceFrom, true, lenient);
+	
+	for(var i = 0; i < matching.length; i++) {
+		var obj = {};
+		for(var j in matching[i].attributes) {
+			if((matching[i].attributes[j].name && matching[i].attributes[j].value) && ((lenient && matching[i].attributes[j].value.match(replaceFrom)) || matching[i].attributes[j].value == replaceFrom)) {
+				obj[matching[i].attributes[j].name] = replaceTo;
+				break;
+			}
+		}
+		matching[i].setAttributeHistory(obj);
+	}
+}
+
+
+root.prototype.toPath = function(target) {
+	if(!target) { target = this.selected; }
+	if(typeof target === 'string') { target = document.getElementById(target); }
+	if(!target) { return; }
+	if(typeof target.toPath !== 'function') { return; }
+	
+	var originalTree = target.cloneNode(true);
+	var newTree = target.toPath(true);
+	
+	// removes old element
+	this.history.add(new historyCreation(originalTree, newTree.parentNode.getAttribute('id'),
+		newTree.nextElementSibling ? newTree.nextElementSibling.getAttribute('id') : null, true, true));
+	// creates new element
+	this.history.add(new historyCreation(newTree.cloneNode(true), newTree.parentNode.getAttribute('id'),
+		newTree.nextElementSibling ? newTree.nextElementSibling.getAttribute('id') : null, false, true));
+	
+	anigenManager.classes.tree.seed();
+	svg.select(svg.selected.getAttribute('id'));
 }
 
 
@@ -722,27 +844,24 @@ root.prototype.createAnimation = function(owner, type, numeric, flags, other) {
 		if(!owner) { return; }
 	}
 	
-	if(!numeric) {
-		numeric = { dur: 10, begin: 0, repeatCount: 0 };
-	}
-	if(!flags) {
-		flags = { additive: false, accumulate: false, freeze: false, select: false };
-	}
-	if(!other) {
-		other = {};
-	}
+	numeric = numeric || { dur: 10, begin: 0, repeatCount: 0 };
+	flags = flags || { additive: false, accumulate: false, freeze: false, select: false };
+	other = other || {};
 	
-	if(!numeric.dur) { numeric.dur = 10; }
-	if(!numeric.begin) { numeric.begin = 0; }
-	if(!numeric.repeatCount) { numeric.repeatCount = 0; }
+	numeric.dur = numeric.dur || 10;
+	numeric.begin = numeric.begin || 0;
+	numeric.repeatCount = numeric.repeatCount || 0;
 	if(!flags.additive) { flags.additive = type == 0 ? false : true; }
-	if(!flags.accumulate) { flags.accumulate = false; }
-	if(!flags.freeze) { flags.freeze = true; }
+	flags.accumulate = flags.accumulate || false;
+	flags.freeze = flags.freeze == null ? true : flags.freeze;
 	
 	var animationElement;
 	
+	var typeText = '';
+	
 	switch(type) {
 		case 0:		// animate
+			typeText = 'attribute animation - '+other.attribute;
 			if(!other.attribute) { return; }
 			var val = owner.style[other.attribute] || owner.getAttribute(other.attribute) || this.getDefaultAttributeValue(other.attribute);
 			
@@ -753,6 +872,7 @@ root.prototype.createAnimation = function(owner, type, numeric, flags, other) {
 			animationElement.setAttribute('values', val+";"+val);
 			break;
 		case 1:		// motion
+			typeText = 'movement through path';
 			animationElement = document.createElementNS(svgNS, "animateMotion");
 			if(!numeric.rotate) { numeric.rotate = 0; }
 			if(!other.path) { other.path = 'M 0 0 L 0 0'; }
@@ -783,22 +903,27 @@ root.prototype.createAnimation = function(owner, type, numeric, flags, other) {
 			
 			switch(type) {
 				case 2:
+					typeText = 'translation';
 					animationElement.setAttribute('type', 'translate');
 					animationElement.setAttribute('values', "0 0;0 0");
 					break;
 				case 3:
+					typeText = 'rotation';
 					animationElement.setAttribute('type', 'rotate');
 					animationElement.setAttribute('values', "0 " + cx + " " + cy + ";0 " + cx + " " + cy);
 					break;
 				case 4:
+					typeText = 'scale';
 					animationElement.setAttribute('type', 'scale');
 					animationElement.setAttribute('values', "1 1;1 1");
 					break;
 				case 5:
+					typeText = 'horizontal skew';
 					animationElement.setAttribute('type', 'skewX');
 					animationElement.setAttribute('values', "0;0");
 					break;
 				case 6:
+					typeText = 'vertical skew';
 					animationElement.setAttribute('type', 'skewY');
 					animationElement.setAttribute('values', "0;0");
 					break;
@@ -821,6 +946,8 @@ root.prototype.createAnimation = function(owner, type, numeric, flags, other) {
 	
 	owner.appendChild(animationElement);
 	
+	log.report('New animation <strong>'+animationElement.getAttribute('id')+'</strong> ('+typeText+') was created and appended to <strong>'+owner.getAttribute('id')+'</strong>.');
+	
 	this.history.add(new historyCreation(animationElement.cloneNode(true), owner.id, null, false));
 	
 	// timeline.add(new timelineObject(shepherd));
@@ -829,47 +956,18 @@ root.prototype.createAnimation = function(owner, type, numeric, flags, other) {
 	anigenManager.classes.context.refresh();
 	this.gotoTime();
 	this.select(flags.select ? animationElement : this.selected);
+	return animationElement;
 }
 
 root.prototype.createAnimationViewbox = function() {
 	this.camera = new animatedViewbox(this);
 	this.ui.putOnTop();
 	anigenManager.classes.tree.seed();
+	this.ui.frame.refresh();
+	
+	log.report('New camera animation <strong>'+this.camera.getAttribute('id')+'</strong> was created.');
+	
 	this.select(this.camera.element);
-}
-
-root.prototype.refreshKeyFrameNavigation = function() {
-	var animations;
-	if(this.selected.isAnimation()) {
-		animations = [ this.selected ];
-	} else {
-		animations = this.selected.getAnimations();
-	}
-
-	this.previousTime = null;
-	this.nextTime = null;
-	if(!animations) {
-		anigenManager.classes.context.buttons.keyframePrev.disable();
-		anigenManager.classes.context.buttons.keyframeNext.disable();
-		return;
-	}
-
-	for(var i = 0; i < animations.length; i++) {
-		var prev = animations[i].getPreviousTime();
-		var next = animations[i].getNextTime();
-		if(this.previousTime == null || this.previousTime < prev) { this.previousTime = prev; }
-		if(this.nextTime == null || this.nextTime > next) { this.nextTime = next; }
-	}
-	if(this.previousTime != null) {
-		anigenManager.classes.context.buttons.keyframePrev.enable();
-	} else {
-		anigenManager.classes.context.buttons.keyframePrev.disable();
-	}
-	if(this.nextTime != null) {
-		anigenManager.classes.context.buttons.keyframeNext.enable();
-	} else {
-		anigenManager.classes.context.buttons.keyframeNext.disable();
-	}
 }
 
 // returns the selected animation, or the selected element's first animation
@@ -910,69 +1008,59 @@ root.prototype.adjustSize = function(sizeChanged) {
 
 // refreshes ui elements dependant on zoom level 
 root.prototype.refreshUI = function(sizeChanged) {
+	this.adjustSize(sizeChanged);
 	this.ui.refresh();
 	anigenManager.classes.editor.refreshZoom();
 	anigenManager.classes.rulerV.refresh();
 	anigenManager.classes.rulerH.refresh();
-	this.adjustSize(sizeChanged);
+	anigenManager.refresh();
+	
+	if(anigenManager) {
+		if(this.zoom == 1) {
+			anigenManager.classes.context.toolButtons.zoom.zoomReset.disable();
+		} else {
+			anigenManager.classes.context.toolButtons.zoom.zoomReset.enable();
+		}
+	}
 }
 
 // selects the target
 root.prototype.select = function(target) {
 	if(!target) {
-		target = this.selected;
+		target = this.selected.getAttribute('id') || this.selected;
 	}
-	if(!(target instanceof SVGElement) && target != null) {
-		if(document.getElementById(target) != null) {
-			target = document.getElementById(target);
-		} else {
-			return;
-		}
+	if(typeof target === 'string') {
+		target = document.getElementById(target);
 	}
 	if(target == null || target.isInsensitive()) { return; }
 	
 	popup.hide();
 	overlay.hide();
 	
-	svg.selected = target;
-	svg.selected.generateId();
+	var clear = target != this.selected;
+	this.selected = target;
+	this.selected.generateId();
 	
-	if(target == svg.svgElement) {
-		anigenManager.classes.context.buttons.animate.disable();
-	} else {
-		anigenManager.classes.context.buttons.animate.enable();
+	if(!target.shepherd) {
+		if(target.getAttribute('anigen:type') == 'animationGroup') { new animationGroup(target); }
+		if(target.getAttribute('anigen:type') == 'animatedViewbox') { new animatedViewbox(target); }
 	}
 	
-	if(target.isAnimation() || target.getAttribute('anigen:type') == 'animationGroup' || target.getAttribute('anigen:type') == 'animatedViewbox') {
-		anigenManager.classes.context.buttons.animate.enable();
-		
-		anigenManager.classes.windowAnimation.refresh(target != this.selected);
-		
-		if(anigenManager.classes.context.buttons.animate.state == 1) {
-			anigenManager.classes.windowAnimation.show();
-		}
-		
-	} else {
-		anigenManager.classes.context.buttons.animate.disable();
-		
-		anigenManager.classes.windowAnimation.hide();
-		
-		anigenManager.classes.context.buttons.keyframePrev.disable();
-		anigenManager.classes.context.buttons.keyframeNext.disable();
-		
+	if(target instanceof SVGAnimationElement || target.shepherd && target.shepherd instanceof SVGAnimationElement) {
+		anigenManager.classes.windowAnimation.refresh(clear);
 	}
-
+	
 	anigenManager.classes.selection.refresh();
 	anigenManager.classes.context.refresh();
 	anigenManager.classes.windowLayers.refresh();
 	anigenManager.classes.windowColors.refresh();
 	anigenManager.classes.menu.refresh();
-	
 	anigenManager.classes.tree.select(target);
 	this.ui.edit(target);
+	this.ui.putOnTop()
 }
 
-root.prototype.newAnimState = function(target, name, group) {
+root.prototype.newAnimState = function(target, name, group, isBatch) {
 	if(typeof target === 'string') { target = document.getElementById(target); }
 	
 	if(!target) { return false; }
@@ -1005,7 +1093,20 @@ root.prototype.newAnimState = function(target, name, group) {
 	if(!this.animationStates[group]) { this.animationStates[group] = []; }
 	*/
 	
-	new animationState(target, name, group);
+	if(isBatch) {
+		for(var i = 0; i < target.children.length; i++) {
+			new animationState(
+				target.children[i].getAttribute('inkscape:label') ? target.children[i].children[0] : target.children[i],
+				target.children[i].getAttribute('inkscape:label') || target.children[i].getAttribute('id'),
+				group);
+			
+			log.report('New animation state <strong>'+(target.children[i].getAttribute('inkscape:label') || target.children[i].getAttribute('id'))+'</strong> was created. Its group is <strong>'+group+'</strong>.');
+		}
+	} else {
+		new animationState(target, name, group);
+		
+		log.report('New animation state <strong>'+name+'</strong> was created. Its group is <strong>'+group+'</strong>.');
+	}
 	/*
 	if(newState) {
 		this.animationStates[group].push(newState);
@@ -1018,21 +1119,62 @@ root.prototype.newAnimState = function(target, name, group) {
 root.prototype.newAnimGroup = function(groupName) {
 	var group = this.animationStates[groupName];
 	if(!group || !group[0]) { return; }
+	
 	var animGroup = new animationGroup(group[0], null, null, [ 'd' ]);
 	if(!animGroup) { return; }
 	
-	var insertInto = this.getCurrentLayer() || this.svgElement;
-	insertInto.appendChild(animGroup.element);
-	// this.animationGroups.push(animGroup);
+	var insertInto;
+	var insertBefore;
 	
-	this.elementToCoords(animGroup.element);
+	if(this.selected instanceof SVGGElement) {
+		insertInto = this.selected;
+		insertBefore = null;
+	} else if(this.selected == this.svgElement) {
+		insertInto = this.selected;
+		insertBefore = this.ui.container;
+	} else if(this.selected.isChildOf(this.defs) || this.selected == this.defs) {
+		insertInto = this.getCurrentLayer() || this.svgElement;
+		if(insertInto == this.svgElement) {
+			insertBefore = this.ui.container;
+		} else {
+			insertBefore = null;
+		}
+	} else {
+		console.warn('other');
+		insertInto = this.selected.getViableParent();
+		insertBefore = this.selected;
+		while(insertInto.getViableParent() && !(insertInto instanceof SVGGElement && insertInto.getAttribute('anigen:type') != 'animationGroup') && insertInto != this.svgElement) {
+			insertBefore = insertInto.nextElementSibling;
+			insertInto = insertInto.getViableParent();
+		}
+	}
+	
+	// prevent insertion into other animation groups
+	var intoNew = insertInto;
+	var beforeNew = insertBefore;
+	while(intoNew != this.svgElement) {
+		beforeNew = intoNew;
+		intoNew = intoNew.getViableParent();
+		if(beforeNew && beforeNew.getAttribute('anigen:type') == 'animationGroup') {
+			insertInto = intoNew;
+			insertBefore = beforeNew;
+		}
+	}
 	
 	animGroup.element.generateId(true);
 	
+	if(insertBefore) {
+		insertInto.insertBefore(animGroup.element, insertBefore);
+		log.report('New animated group <strong>'+animGroup.getAttribute('id')+'</strong> was created in <strong>'+insertInto.getAttribute('id')+'</strong>, placed before <strong>'+insertBefore.getAttribute('id')+'</strong>. Its group name is <strong>'+groupName+'</strong>.');
+	} else {
+		insertInto.appendChild(animGroup.element);
+		log.report('New animated group <strong>'+animGroup.getAttribute('id')+'</strong> was created in <strong>'+insertInto.getAttribute('id')+'</strong>. Its group name is <strong>'+groupName+'</strong>.');
+	}
+	
+	this.elementToCoords(animGroup.element);
 	this.history.add(new historyCreation(animGroup.element.cloneNode(true), animGroup.element.parentNode.id, animGroup.element.nextElementSibling ? animGroup.element.nextElementSibling.id : null, false));
 	
 	anigenActual.eventUIRefresh();
-	
 	this.select(animGroup.element);
 }
 
@@ -1053,13 +1195,13 @@ root.prototype.changeId = function(target, toId, selectAfter) {
 	if(oldOld) {
 		this.history.add(new historyGeneric(null, 'document.getElementById("'+toId+'").id="'+targetOld+'";document.getElementById("'+oldOld+'").id="'+toId+'";',
 				'document.getElementById("'+toId+'").id="'+oldOld+'";document.getElementById("'+targetOld+'").id="'+toId+'";' ));
+		log.report('<strong>'+targetOld+'</strong> was renamed to <strong>'+toId+'</strong>. Old element <strong>'+toId+'</strong> was renamed to <strong>'+oldOld+'</strong>.');
 	} else {
 		this.history.add(new historyGeneric(null, 'document.getElementById("'+toId+'").id="'+targetOld+'";', 'document.getElementById("'+targetOld+'").id="'+toId+'";' ));
+		log.report('<strong>'+targetOld+'</strong> was renamed to <strong>'+toId+'</strong>.');
 	}
 	
-	if(target.isAnimation() || target.getAttribute('anigen:type') == 'animationGroup') {
-		timeline.refresh();
-	}
+	
 	
 	anigenManager.classes.tree.seed();
 	if(selectAfter) { this.select(target); }
@@ -1069,22 +1211,27 @@ root.prototype.changeId = function(target, toId, selectAfter) {
 root.prototype.gotoTime = function(seconds) {
 	if(seconds == null) {
 		seconds = this.svgElement.getCurrentTime();
+	} else if(seconds != this.svgElement.getCurrentTime() && popup.closeOnSeek) {
+		if(popup.buttonOk) { 
+			if(popup.noRemoteClick) {
+				popup.hide();
+			} else {
+				popup.buttonOk.click();
+			}
+		} else {
+			popup.hide();
+		}
 	}
+	
 	this.svgElement.setCurrentTime(seconds);
 	anigenManager.classes.editor.clock.update();
 	anigenManager.classes.context.refresh();
+	this.ui.selectionBox.refresh();
 }
 
 // jumps by specific time offset	
 root.prototype.seek = function(offset) {
 	this.gotoTime(this.svgElement.getCurrentTime() + offset);
-}
-
-root.prototype.getCenter = function(element) {
-	var box = element.getBBox();
-	var CTM = element.getCTMBase();
-	var adjusted = CTM.toViewport(box.x+box.width/2, box.y+box.height/2);
-	return adjusted;
 }
 
 root.prototype.rebuildAnimationStates = function(target) {
@@ -1094,15 +1241,6 @@ root.prototype.rebuildAnimationStates = function(target) {
 	if(target instanceof SVGGElement) {
 		if(target.getAttribute('anigen:type') == 'animationState') {
 			new animationState(target);
-			// var shepherd = new animationState(target);
-			/*
-			if(!this.animationStates) { this.animationStates = {}; }
-			var groupName = shepherd.group;
-			if(!this.animationStates[groupName]) {
-				this.animationStates[groupName] = [];
-			}
-			this.animationStates[groupName].push(shepherd);
-			*/
 		}
 	}
 	
@@ -1116,7 +1254,7 @@ root.prototype.rebuildAnimationStates = function(target) {
 // adjusts the incoming SVG file for the editor to work with
 root.prototype.transferIn = function() {
 	if(this.svgElement == null) { return; }
-
+	
 	if (this.svgElement.getElementsByTagName("sodipodi:namedview", true).length > 0) {
 		this.namedView = this.svgElement.getElementsByTagName("sodipodi:namedview", true)[0];
 	} else {
@@ -1125,7 +1263,9 @@ root.prototype.transferIn = function() {
 		this.svgElement.insertBefore(this.namedView, this.svgElement.children[0]);
 	}
 	var loop = this.namedView.getAttribute('anigen:loop');
-	if(loop) { anigenManager.classes.editor.clock.setMaxTime(parseFloat(loop)); }
+	var loopBegin = this.namedView.getAttribute('anigen:loopbegin');
+	if(loopBegin) { anigenManager.classes.editor.clock.setMin(parseFloat(loopBegin), true); }
+	if(loop) { anigenManager.classes.editor.clock.setMax(parseFloat(loop), true); }
 
 	if (this.svgElement.getElementsByTagName("defs").length > 0) {
 		this.defs = this.svgElement.getElementsByTagName("defs", true)[0];
@@ -1154,7 +1294,7 @@ root.prototype.transferIn = function() {
 	if(!this.svgHeight) { this.svgHeight = this.svgBox[3]; }
 	
 	if(this.namedView.getAttribute('inkscape:cx') != null) { this.posX = parseFloat(this.namedView.getAttribute('inkscape:cx')); }
-	if(this.namedView.getAttribute('inkscape:cy') != null) { this.posY = parseFloat(this.namedView.getAttribute('inkscape:cy')); }
+	if(this.namedView.getAttribute('inkscape:cy') != null) { this.posY = -1*parseFloat(this.namedView.getAttribute('inkscape:cy')); }
 	if(this.namedView.getAttribute('inkscape:zoom') != null) { this.zoom = parseFloat(this.namedView.getAttribute('inkscape:zoom')); }
 
 	this.svgElement.setAttribute("preserveAspectRatio", "xMidYMid");
@@ -1169,6 +1309,16 @@ root.prototype.transferIn = function() {
 		}
 	}
 	
+	// references
+	// this is actually unused at the moment
+	/*
+	var children = [this.svgElement].concat(this.svgElement.getChildren(true));
+	for(var i = 0; i < children.length; i++) {
+		children[i].removeAttribute('anigen:references');
+	}
+	this.svgElement.getLinkList(true, true);
+	*/
+	
 	this.refreshUI(true);
 
 	this.svgElement.setAttribute("xmlns", "http://www.w3.org/2000/svg");
@@ -1177,20 +1327,46 @@ root.prototype.transferIn = function() {
 	this.svgElement.setAttribute("xmlns:sodipodi", "http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd");
 	this.svgElement.setAttribute("xmlns:inkscape", "http://www.inkscape.org/namespaces/inkscape");
 	this.svgElement.setAttribute("xmlns:anigen", anigenNS);
+	this.svgElement.setAttribute("anigen:version", anigenActual.versionNumeric);
 }
 
 // removes UI and other editor-specific elements and restores the original width/height/bounding box of the element, returning a file-ready root svg element
 root.prototype.transferOut = function(stripIds, scale) {
-	if(scale == null || scale <= 0) { scale = 1; }
+	if(scale == null) { scale = { 'x': 1, 'y': 1 }; }
 	this.namedView.setAttribute('inkscape:cx', this.posX);
-	this.namedView.setAttribute('inkscape:cy', this.posY);
+	this.namedView.setAttribute('inkscape:cy', -1*this.posY);
 	this.namedView.setAttribute('inkscape:zoom', this.zoom);
+	
+	var oldPaused = this.svgElement.animationsPaused();
+	this.pauseToggle(false);
+	var oldTime = this.svgElement.getCurrentTime();
+	this.svgElement.setCurrentTime(0);
+	
+	var par = this.svgElement.parentNode;
+	var nex = this.svgElement.nextElementSibling;
+	
+	var selId = this.selected.getAttribute('id');
+	
+	par.removeChild(this.svgElement);
+	this.svgElement.endAnimations();
 	
 	var clone = this.svgElement.cloneNode(true);
 	
+	if(nex) {
+		par.insertBefore(this.svgElement, nex);
+	} else {
+		par.appendChild(this.svgElement);
+	}
+	this.svgElement.startAnimations();
+	
+	this.select(selId);
+	
+	this.svgElement.setCurrentTime(oldTime);
+	if(!oldPaused) { this.pauseToggle(true); }
+	
 	clone.setAttribute("viewBox", this.svgBox.join(' '));
-	clone.setAttribute("width", this.svgWidth*scale);
-	clone.setAttribute("height", this.svgHeight*scale);
+	clone.setAttribute("width", this.svgWidth*scale.x);
+	clone.setAttribute("height", this.svgHeight*scale.y);
 	
 	// removes interface
 	var children = clone.getElementsByAttribute('anigen:lock', 'interface');
@@ -1208,10 +1384,15 @@ root.prototype.transferOut = function(stripIds, scale) {
 		children[i].parentNode.removeChild(children[i]);
 	}
 	
-	clone.pauseAnimations();
-	clone.setCurrentTime(0);
-	clone.endAnimations(true);
-
+	// removes NaN pivots (which really shouldn't happen anymore)
+	// removes reference counts
+	children = clone.getChildren(true);
+	for(var i = 0; i < children.length; i++) {
+		if(isNaN(children[i].getAttribute('inkscape:transform-center-x'))) { children[i].removeAttribute('inkscape:transform-center-x'); }
+		if(isNaN(children[i].getAttribute('inkscape:transform-center-y'))) { children[i].removeAttribute('inkscape:transform-center-y'); }
+		children[i].removeAttribute('anigen:references');
+	}
+	
 	if(stripIds) {
 		clone.stripId(true);
 	}
@@ -1236,29 +1417,24 @@ root.prototype.setPageSize = function(newWidth, newHeight) {
 }
 
 // saves and downloads (opens) the svg as an SVG file
-root.prototype.save = function(quick) {
-	var type = "application\/octet-stream'";
+root.prototype.save = function(local) {
+	var type = "application\/octet-stream";
 	var container = document.createElement("div");
 	
-	var oldTime = this.svgElement.getCurrentTime();
-	var oldPaused = this.svgElement.animationsPaused();
-	this.svgElement.pauseAnimations();
-	this.svgElement.setCurrentTime(0);
-	
 	var response = this.transferOut();
-	
-	this.svgElement.setCurrentTime(oldTime);
-	if(!oldPaused) { this.svgElement.unpauseAnimations(); }
 	
 	container.appendChild(response);
 	
 	var anigenHeader = "<!-- Animated using aniGen version " + anigenActual.version + " - http://anigen.org -->";
 	var string = "<?xml version='1.0' encoding='UTF-8' standalone='no'?>\n<!DOCTYPE svg PUBLIC '-//W3C//DTD SVG 1.1//EN' 'http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd'>\n"+anigenHeader+"\n"+container.innerHTML;
 	
-	if(quick) {
+	if(local) {
 		try {
 			localStorage.setItem('quicksave', string);
 			localStorage.setItem('quicksaveFilename', this.fileName);
+			
+			log.report('<strong>File saved to browser storage.</strong>');
+			
 		} catch(ex) {
 			if(typeof(Storage) !== "undefined" && localStorage.getItem("quicksaveFilename")) {
 				popup.confirmation(null, "Not enought memory in browser storage. Previous save exists ("+localStorage.getItem("quicksaveFilename")+") - remove and try again?", "svg.removeLocal();svg.save(true);");
@@ -1277,7 +1453,9 @@ root.prototype.save = function(quick) {
 		linkan.setAttribute("download", this.fileName);
 		linkan.click();
 		document.body.removeChild(linkan);
-			
+		
+		log.report('<strong>File saved and downloaded.</strong>');
+		
 		return blobURL;
 	}
 }
@@ -1293,6 +1471,7 @@ root.prototype.loadLocal = function() {
 	var container = document.createElement('div');
 	container.innerHTML = localStorage.getItem("quicksave");
 	var newSVG = container.getElementsByTagName('svg', true)[0];
+	log.report('Opening file from browser storage.');
 	svg.fileIn(newSVG, localStorage.getItem("quicksaveFilename"), true);
 }
 
@@ -1304,19 +1483,32 @@ root.prototype.load = function(target) {
 	var newSVG = svg.upload(file, (svg.svgElement == null || !overlay.hidden));
 }
 
-root.prototype.export = function(begin, dur, fps, scale) {
+root.prototype.export = function(begin, dur, fps, scale, format, name, downsampling, crispEdges) {
+	this.exportName = name || this.fileName;
+	format = format || 'png';
 	if(begin == null || dur == null || fps == null) { return; }
-	if(scale == null || scale <= 0) { scale = 1; }
+	if(scale == null) { scale = { 'x': 1, 'y': 1 }; }
+	if(!downsampling) { downsampling = 1; }
+	downsampling = parseInt(downsampling);
+	crispEdges = crispEdges || false;
 	begin = parseFloat(begin);
 	dur = parseFloat(dur);
 	fps = parseFloat(fps);
 	if(dur <= 0 || fps <= 0) { return; }
 	if(begin < 0) { begin = 0; }
 	
+	anigenActual.exporting = true;
+	
 	var clone = this.transferOut(false, scale);
+	clone.setAttribute('preserveAspectRatio', 'none');
+	
+	if(crispEdges) {
+		clone.setAttribute('shape-rendering', 'crispEdges');
+	}
+	
 	var container = document.getElementById('svgArea');
 	container.removeChildren();
-	container.appendChild(clone);
+	//container.appendChild(clone);
 	
 	var progress = overlay.macroExportBar();
 	progress.setMin(0);
@@ -1329,35 +1521,81 @@ root.prototype.export = function(begin, dur, fps, scale) {
 		'begin': begin,
 		'FPS': fps,
 		'time': dur,
-		'canvas': document.getElementById('renderArea')
+		'format': format || 'png',
+		'svgArea': document.getElementById('svgArea'),
+		'canvas': document.getElementById('renderArea'),
+		'downsampling': downsampling,
+		'verbose': true
 	}, anigenActual.eventRenderDone);
 }
 
-root.prototype.packRendered = function() {
+root.prototype.packRendered = function(format) {
 	this.zip = new JSZip();
 	
 	if(this.svgrender.images.length == 1) {
 		// if only one image is made, saves it without zip
-		var pngFile = b64toBlob(this.svgrender.images[0], 'image/png');
-		saveAs(pngFile, this.fileName.replace(/\.svg$/, '.png'));
-		overlay.hide();
-		document.getElementById('svgArea').removeChildren();
-		return;
+		
+		switch(format) {
+			case "svg":
+				//var type = "application\/octet-stream";
+				var type = "image\/svg+xml";
+				var blob = new Blob(this.svgrender.images[0].split(), { "type" : type });
+				saveAs(blob, this.exportName.replace(/\..{3-4}$/, '.svg'));
+				overlay.hide();
+				document.getElementById('svgArea').removeChildren();
+				if(anigenActual.notify) { anigenActual.bell(); }
+				return;
+			break;
+			default:
+				var pngFile = b64toBlob(this.svgrender.images[0], 'image/png');
+				saveAs(pngFile, this.exportName.replace(/\..{3-4}$/, '.png'));
+				overlay.hide();
+				document.getElementById('svgArea').removeChildren();
+				if(anigenActual.notify) { anigenActual.bell(); }
+				return;
+			break;
+		}
 	}
 	
-	for(var i = 0; i < this.svgrender.images.length; i++) {
-		var digitsNum = Math.ceil(Math.log10(this.svgrender.images.length + 1));
-		this.zip.file("out" + ("0000000000000000000" + i).substr(-digitsNum, digitsNum) + ".png", this.svgrender.images[i], {base64: true, binary: true});
+	switch(format) {
+		case "svg":
+			for(var i = 0; i < this.svgrender.images.length; i++) {
+				var digitsNum = Math.ceil(Math.log10(this.svgrender.images.length + 1));
+				this.zip.file("out" + ("0000000000000000000" + i).substr(-digitsNum, digitsNum) + ".svg", this.svgrender.images[i], {base64: false, binary: false});
+			}
+			break;
+		default:
+			for(var i = 0; i < this.svgrender.images.length; i++) {
+				var digitsNum = Math.ceil(Math.log10(this.svgrender.images.length + 1));
+				this.zip.file("out" + ("0000000000000000000" + i).substr(-digitsNum, digitsNum) + ".png", this.svgrender.images[i], {base64: true, binary: true});
+			}
+			break;
 	}
 	
 	var content = this.zip.generate({type: "blob"});
-	saveAs(content, this.fileName.replace(/\.svg$/, '.zip'));
-	
-	overlay.hide();
+	saveAs(content, this.exportName.replace(/\..{3-4}$/, '.zip'));
 	
 	document.getElementById('svgArea').removeChildren();
-}
 	
+	this.forceRefresh();
+	
+	overlay.hide();
+	anigenActual.exporting = false;
+	
+	if(anigenActual.notify) { anigenActual.bell(); }
+}
+
+root.prototype.forceRefresh = function() {
+	var par = this.svgElement.parentNode;
+	par.removeChild(this.svgElement);
+	if(par.children[0]) {
+		par.insertBefore(this.svgElement, par.children[0]);
+	} else {
+		par.appendChild(this.svgElement);
+	}
+	this.select();
+}
+
 root.prototype.fileIn = function(fileElement, filename, isNew) {
 	if(!fileElement) {
 		return;
@@ -1381,14 +1619,15 @@ root.prototype.fileIn = function(fileElement, filename, isNew) {
 			document.title = filename + " - aniGen";
 		}
 		
+		log.report('File <strong>'+filename+'</strong> was opened.');
+		
 		this.transferIn();
+		
 		this.svgElement.pauseAnimations();
 		this.svgElement.setCurrentTime(0);
 		anigenManager.classes.editor.refreshPause();
 		
-		// this.rebuildShepherds(this.svgElement, true);
 		this.rebuildAnimationStates(this.defs);
-		//timeline.rebuild(true);
 		
 		this.history.clear();
 		
@@ -1430,7 +1669,26 @@ root.prototype.rasterIn = function(data) {
 root.prototype.mergeWith = function(other) {
 	if(!(other instanceof SVGSVGElement)) { return; }
 	
+	// to get links, element has to be in document
+	// it's put in the beginning of body so that the found elements are from other, and not the original document
+	// this still has to be checked again, in case the element actually ISN'T in the other SVG but is in the old one
+	var tempContainer = document.createElement('div');
+		tempContainer.style['display'] = 'none !important';
+	document.body.insertBefore(tempContainer, document.body.children[0]);
+	tempContainer.appendChild(other);
+	var links = other.getLinkList(true);
 	other.generateId(true);
+	
+	for(var i = 0; i < links.length; i++) {
+		if(!links[i].owner || !links[i].target || !links[i].owner.isChildOf(tempContainer) || !links[i].target.isChildOf(tempContainer)) { continue; }
+		if(links[i].css) {
+			links[i].owner.style[links[i].attribute] = links[i].type == 1 ? '#'+links[i].target.getAttribute('id') : 'url("#'+links[i].target.getAttribute('id')+'")';
+		} else {
+			links[i].owner.setAttribute(links[i].attribute, links[i].type == 1 ? '#'+links[i].target.getAttribute('id') : 'url("#'+links[i].target.getAttribute('id')+'")');
+		}
+	}
+	tempContainer.removeChild(other);
+	document.body.removeChild(tempContainer);
 	
 	var otherDefs;
 	if (other.getElementsByTagName("defs").length > 0) {
@@ -1455,14 +1713,14 @@ root.prototype.mergeWith = function(other) {
 		}
 	}
 	
-	// this.rebuildShepherds(svg.svgElement, true);
+	this.rebuildAnimationStates(this.svgElement);
 	anigenActual.eventUIRefresh(true);
 }
 
 // uploads an SVG file and passes it on
 root.prototype.upload = function(file, isNew) {
 	if(!file || !(file.type.match('image/svg*') || file.type.match('image/jpeg*') || file.type.match('image/png*'))) {
-		console.log('Unsupported image format.');
+		console.error('Unsupported image format.');
 		return null;
 	}
 	if((file.type.match('image/jpeg*') || file.type.match('image/png*')) && isNew) { return null; }
@@ -1615,7 +1873,7 @@ root.prototype.getAnimatableAttributes = function(nodeName) {
 	
 	switch(nodeName.toLowerCase()) {
 		case "g":
-			response = attrsGroup;
+			response = attrsGroup.concat(attrsNonGroup);
 			break;
 		case "rect":
 			response = [ "x", "y", "width", "height", "rx", "ry" ].concat(attrsGroup).concat(attrsNonGroup);
@@ -1647,6 +1905,9 @@ root.prototype.getAnimatableAttributes = function(nodeName) {
 			break;
 		case "stop":
 			response = [ "stop-color", "stop-opacity", "offset" ].concat(attrsGroup);
+			break;
+		case "fegaussianblur":
+			response = [ 'stdDeviation' ];
 			break;
 		default:
 			response = false;
@@ -1774,65 +2035,171 @@ root.prototype.getDefaultAttributeValue = function(attribute) {
 	}
 }
 
-root.prototype.rotate = function(target, angle, origin, makeHistory) {
-	// TODO
-	
+root.prototype.rotate = function(target, change, aroundCenter, makeHistory) {
 	if(typeof target === 'string') {
 		target = document.getElementById(target);
 	}
-	if(!target) { return; }
+	if(!target || ((change.angle == null) && (change.x == null || change.y == null || change.dX == null || change.dY == null))) { return; }
 	
-	var CTM = target.getCTMBase();
-	var aOrigin = CTM.toUserspace(origin.x, origin.y);
+	var origin;
 	
+	if(aroundCenter) {
+		origin = target.getPivot(true);
+	} else {
+		origin = this.ui.selectionBox.origin || target.getPivot(true);
+	}
+	
+	if(!(target.parentNode instanceof SVGElement)) { return; }
+	var CTM = target.parentNode.getCTMBase();
+	
+	var angle;
+	if(change.angle != null) { 
+		angle = change.angle;
+	} else {
+		// assume x, y, dX, dY - arrive at x,y by difference of dX,dY
+		var fromAngle = 180*Math.atan2(((change.y-change.dY) - origin.y), ((change.x-change.dX) - origin.x))/Math.PI;
+		var toAngle = 180*Math.atan2((change.y - origin.y), (change.x - origin.x))/Math.PI;
+		var angle = toAngle - fromAngle;
+	}
+	
+	if(CTM.a < 0) { angle *= -1; }
+	if(CTM.d < 0) {	angle *= -1; }
+	
+	origin = CTM.toUserspace(origin.x, origin.y);
+	
+	var rotationMatrix = document.createElementNS("http://www.w3.org/2000/svg", "svg").createSVGMatrix();
+		rotationMatrix = rotationMatrix.translate(origin.x, origin.y);
+		rotationMatrix = rotationMatrix.rotate(angle);
+		rotationMatrix = rotationMatrix.translate(-1*origin.x, -1*origin.y);
+		
 	var matrix = target.getTransformBase();
-		matrix = matrix.translate(aOrigin.x, aOrigin.y);
-		matrix = matrix.rotate(angle);
-		matrix = matrix.translate(-1*aOrigin.x, -1*aOrigin.y);
+		matrix = rotationMatrix.multiply(matrix);
 		
 	var oldTransform = target.getTransformBase();
 	
-	target.setAttribute('transform', matrix);
-	
 	if(makeHistory) {
-		this.history.add(new historyAttribute(target.id,
-			{ 'transform': oldTransform },
-			{ 'transform': matrix.toString() }, true));
+		target.setAttributeHistory({'transform': matrix}, true);
+	} else {
+		target.setAttribute('transform', matrix);
 	}
-}
-
-root.prototype.scale = function(target, ratio, origin, makeHistory) {
-	// TODO
 	
-	if(typeof target === 'string') {
-		target = document.getElementById(target);
-	}
-	if(!target) { return; }
-	
-	var matrix = target.getTransformBase();
-	
-	var originA = matrix.toUserspace(origin.x, origin.y);
-	
-		matrix = matrix.scaleNonUniform(ratio.x, ratio.y);
-		
-	var originB = matrix.toUserspace(origin.x, origin.y);
-	
-//	var delta = matrix.toViewport(originB.x - originA.x, originB.y - originA.y);
-	
-	var delta = { 'x': originB.x - originA.x, 'y': originB.y - originA.y };
-	
-	
-		matrix = matrix.translate(delta.x, delta.y);
-		
-	var oldTransform = target.getTransformBase();
-	
-	target.setAttribute('transform', matrix);
-	
-	if(makeHistory) {
-		this.history.add(new historyAttribute(target.id,
-			{ 'transform': oldTransform },
-			{ 'transform': matrix.toString() }, true));
+	if(!aroundCenter) {
+		target.setPivot(this.ui.selectionBox.origin.x, this.ui.selectionBox.origin.y, true, true);
+	} else {
+		this.ui.selectionBox.origin = null;
 	}
 	
 }
 
+root.prototype.scale = function(target, change, aroundOrigin, makeHistory) {
+	if(typeof target === 'string') {
+		target = document.getElementById(target);
+	}
+	
+	if(!target || ((change.scaleX == null || change.scaleY == null) && (change.x == null || change.y == null || change.dX == null || change.dY == null))) { return; }
+	
+	var origin;
+	
+	if(aroundOrigin) {
+		origin = change.origin || target.getPivot(true);
+	} else {
+		origin = this.ui.selectionBox.origin || target.getPivot(true);
+	}
+	
+	var coordFrom = { 'x': change.x-change.dX, 'y': change.y-change.dY };
+	
+	var ratio = {};
+	
+	if(change.scaleX != null && change.scaleY != null) {
+		ratio.x = change.scaleX;
+		ratio.y = change.scaleY;
+	} else {
+		ratio.x = (change.x-origin.x)/(coordFrom.x-origin.x);
+		ratio.y = (change.y-origin.y)/(coordFrom.y-origin.y);
+	}
+	
+	if(!(target.parentNode instanceof SVGElement)) { return; }
+	var CTM = target.parentNode.getCTMBase();
+	origin = CTM.toUserspace(origin.x, origin.y);
+	
+	var matrix = target.getTransformBase();
+	
+	var scaleMatrix = document.createElementNS("http://www.w3.org/2000/svg", "svg").createSVGMatrix();
+		scaleMatrix = scaleMatrix.translate(origin.x, origin.y);
+		scaleMatrix = scaleMatrix.scaleNonUniform(ratio.x, ratio.y);
+		scaleMatrix = scaleMatrix.translate(-1*origin.x, -1*origin.y);
+	
+		matrix = scaleMatrix.multiply(matrix);
+	
+	var oldTransform = target.getTransformBase();
+	
+	if(makeHistory) {
+		target.setAttributeHistory({'transform': matrix}, true);
+	} else {
+		target.setAttribute('transform', matrix);
+	}
+	
+	if(!aroundOrigin) {
+		target.setPivot(this.ui.selectionBox.origin.x, this.ui.selectionBox.origin.y, true, true);
+	} else {
+		this.ui.selectionBox.origin = null;
+	}
+}
+
+root.prototype.skew = function(target, skewX, change, aroundOrigin, makeHistory) {
+	if(typeof target === 'string') {
+		target = document.getElementById(target);
+	}
+	
+	if(!target || change.x == null || change.y == null || change.dX == null || change.dY == null) { return; }
+	
+	if(aroundOrigin) {
+		origin = change.origin || target.getPivot(true);
+	} else {
+		origin = this.ui.selectionBox.origin || target.getPivot(true);
+	}
+	
+	if(!(target.parentNode instanceof SVGElement)) { return; }
+	var CTM = target.parentNode.getCTMBase();
+	origin = CTM.toUserspace(origin.x, origin.y);
+	
+	if(CTM.a < 0) { change.dX *= -1; }
+	if(CTM.d < 0) {	change.dY *= -1; }
+	
+	var fromAngle, toAngle;
+	if(skewX) {
+		var fromAngle = 180*Math.atan2((change.y-change.dY-origin.y), (change.x - origin.x))/Math.PI;
+		var toAngle = 180*Math.atan2((change.y-change.dY-origin.y), ((change.x-change.dX) - origin.x))/Math.PI;
+	} else {
+		var fromAngle = 180*Math.atan2((change.y-change.dY-origin.y), (change.x-change.dX-origin.x))/Math.PI;
+		var toAngle = 180*Math.atan2((change.y-origin.y), (change.x-change.dX-origin.x))/Math.PI;
+	}
+	var angle = toAngle - fromAngle;
+	
+	var matrix = target.getTransformBase();
+	
+	var skewMatrix = document.createElementNS("http://www.w3.org/2000/svg", "svg").createSVGMatrix();
+		skewMatrix = skewMatrix.translate(origin.x, origin.y);
+	if(skewX) {
+		skewMatrix = skewMatrix.skewX(angle);
+	} else {
+		skewMatrix = skewMatrix.skewY(angle);
+	}
+	
+	skewMatrix = skewMatrix.translate(-1*origin.x, -1*origin.y);
+	matrix = skewMatrix.multiply(matrix);
+	
+	var oldTransform = target.getTransformBase();
+	
+	if(makeHistory) {
+		target.setAttributeHistory({'transform': matrix}, true);
+	} else {
+		target.setAttribute('transform', matrix);
+	}
+	
+	if(!aroundOrigin) {
+		target.setPivot(this.ui.selectionBox.origin.x, this.ui.selectionBox.origin.y, true, true);
+	} else {
+		this.ui.selectionBox.origin = null;
+	}
+}

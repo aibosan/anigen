@@ -7,7 +7,7 @@
 function highlight() {
 	this.container = document.createElementNS(svgNS, "g");
     this.container.setAttribute("anigen:lock", "interface");
-	this.color = new color('#ff0000');
+	this.color = '#ff0000'
 }
 
 highlight.prototype.setElement = function(element) {
@@ -24,12 +24,29 @@ highlight.prototype.refresh = function() {
 	this.container.removeChildren();
 	if(!this.element) { return; }
 	
+	if(this.element.isAnimation()) {
+		this.color = '#0000ff';
+	} else if(this.element.hasAnimation()) {
+		var animations = this.element.getAnimations();
+		this.color = '#ff0000';
+		for(var i = 0; i < animations.length; i++) {
+			if(animations[i] instanceof SVGAnimateElement) {
+				this.color = '#0000ff';
+				break;
+			}
+		}
+	} else {
+		this.color = '#ff0000';
+	}
+	
 	this.clone = this.element.cloneNode(false);
+		
 	var transform = this.element.getCTMBase();
 	this.clone.setAttribute('transform', transform);
     this.clone.setAttribute("anigen:lock", "interface");
 	this.clone.style.fill = 'none';
-	this.clone.style.stroke = this.color.getHex();
+	this.clone.style.stroke = this.color;
+	this.clone.style.strokeDasharray = null;
 	this.clone.style.filter = null;
 	this.clone.removeAttribute('filter');
 	this.clone.style.clipPath = null;

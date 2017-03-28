@@ -18,7 +18,7 @@ ul.tree ul {
 }
 
 ul.tree li {
-    position: relative;
+    /*position: relative;*/
     list-style: none;
 }
 

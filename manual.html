@@ -36,7 +36,7 @@
 	
 	<section id="introduction">
 		<h1>Introduction</h1>
-		<p>This document serves as user manual for the <strong>aniGen</strong> editor, version 0.8.0.
+		<p>This document serves as user manual for the <strong>aniGen</strong> editor, version 0.8.1.
 		The manual describes the interface, controls and files, provides a basic explanation of SVG animation, and a set of examples which can serve as basic tutorials.</p>
 		<p style="color:red">This document may be incomplete, or partially out of date with current version. If you find discrepancies, please follow the <a href="#bugs" style="color:red; font-weight: bold;">bug reporting</a> section.</p>
 		
@@ -69,7 +69,7 @@
 	<section id="interface">
 		<h1>User interface</h1>
 		<img src="_images/editor_overview.png" alt="Overview of the aniGen editor's main window.">
-		<p>The main window of aniGen (shown above) consists of seven main sections:</p>
+		<p>The main window of aniGen (shown above) consists of eight main sections:</p>
 			<ul>
 				<li><strong>Main menu</strong></li> 
 				<li><strong>Global information</strong></li> 
@@ -78,6 +78,7 @@
 				<li><strong>Canvas</strong> with rulers</li> 
 				<li><strong>XML editor</strong></li> 
 				<li><strong>Windows</strong></li> 
+				<li><strong>Event log</strong></li> 
 			</ul>
 		<p>The XML editor and windows are toggled by the icons on right side of toolbar.</p>
 		
@@ -87,13 +88,14 @@
 			<ul>
 				<li><strong>File</strong>
 					<ul>
-						<li><i class="material-icons">folder_open</i><strong>Open</strong> - shows file open dialogue, which allows you to open a new SVG file (see <a href="#files_opening">file opening</a>).</li> 
+						<li><i class="material-icons">folder_open</i><strong>Open</strong> (ctrl+o) - shows file open dialogue, which allows you to open a new SVG file (see <a href="#files_opening">file opening</a>).</li> 
 						<li><i class="material-icons">save</i><strong>Save</strong> (ctrl+s) - attempts to save the current SVG document to browser's local storage, ovewriting previous save. If the storage space is insufficient, a prompt is given to save the file locally.</li>
 						<li><i class="material-icons">file_download</i><strong>Save and download</strong> (ctrl+shift+s) - saves the current SVG document and downloads it..</li>
-						<li><i class="material-icons">archive</i><strong>Export</strong> (ctrl+shift+e) - opens the export dialogue, allowing you to export the current SVG as an archived series of PNG images (see <a href="#files_exporting">file exporting</a>).</li>
+						<li><i class="material-icons">archive</i><strong>Export</strong> (ctrl+shift+e) - opens the export dialogue, allowing you to export the current SVG as an archived series of PNG images or static SVGs (see <a href="#files_exporting">file exporting</a>).</li>
+						<li><i class="material-icons">launch</i><strong>Show preview</strong> (ctrl+shift+p) opens a preview window, showing only the area to be exported. See <a href="#interface_preview">preview window</a>.</li>
 						
 						<li><i class="material-icons">description</i><strong>Document properties</strong> - allows the change of the document's dimensions.</li>
-						<li><i class="material-icons">settings</i><strong>Settings</strong> - toggles element highlights, progress curves, nodes, page border, and rulers. See <a href="#settings">settings</a>.</li>
+						<li><i class="material-icons">settings</i><strong>Settings</strong> - toggles element highlights, progress curves, nodes, page border, and rulers. See <a href="#interface_settings">settings</a>.</li>
 					</ul>
 				</li> 
 				<li><strong>Edit</strong>
@@ -113,17 +115,17 @@
 						</li> 
 						<li><i class="material-icons">content_copy</i><strong>Copy</strong> (ctrl+c) - places a copy of currently selected element into the <em>clipboard</em>.</li>
 						<li><i class="material-icons">storage</i><strong>Duplicate</strong> (ctrl+d) - creates a copy of currently selected element over it.</li>
-						<li><i class="material-icons">link</i><strong>Create link</strong> (alt+l) - creates a <a href="#elements_common_use">use link</a> of the currently selected element.</li>
+						<li><i class="material-icons">link</i><strong>Create link</strong> (ctrl+l or alt+d) - creates a <a href="#elements_common_use">use link</a> of the currently selected element.</li>
 						<li><i class="material-icons">delete</i><strong>Delete</strong> (delete) - removes currently selected element from the document.</li>
 					</ul>
 				</li> 
 				<li><strong>Object</strong>
 					<ul>
 						<li><i class="material-icons">crop_din</i><strong>Group</strong> (ctrl+g) - places the current selection into a group.</li> 
-						<li><i class="material-icons">crop_free</i><strong>Ungroup</strong> (ctrl+alt+g) - removes the currently selected group, placing its child elements into its parent.</li> 
-						<li><i class="material-icons">fingerprint</i><strong>Object to animation state</strong> - opens the animation state dialogue (see <a href="#animatied_groups">animated groups</a>).</li>
-						<li><i class="material-icons turn-90">power_settings_new</i><strong>Create animated group</strong> - allows the creation of animated group from previously saved states (see <a href="#animatied_groups">animated groups</a>).</li>
-						<li><i class="material-icons">settings_applications</i><strong>Manage animation states</strong> - opens dialogue with existing animation state groups and their given states (see <a href="#animatied_groups">animated groups</a>).</li>
+						<li><i class="material-icons">crop_free</i><strong>Ungroup</strong> (ctrl+u) - removes the currently selected group, placing its child elements into its parent.</li> 
+						<li><i class="material-icons">fingerprint</i><strong>Object to animation state</strong> - opens the animation state dialogue (see <a href="#animated_groups">animated groups</a>).</li>
+						<li><i class="material-icons turn-90">power_settings_new</i><strong>Create animated group</strong> - allows the creation of animated group from previously saved states (see <a href="#animated_groups">animated groups</a>).</li>
+						<li><i class="material-icons">settings_applications</i><strong>Manage animation states</strong> - opens dialogue with existing animation state groups and their given states (see <a href="#animated_groups">animated groups</a>).</li>
 					</ul>
 				</li> 
 				<li><strong>Animation</strong>
@@ -170,7 +172,7 @@
 				<li><strong>Tag name</strong> - see <a href="#elements">Elements and the XML tree</a>.</li> 
 				<li><strong>Identifier</strong> - or the element's unique name.</li> 
 				<li><strong>Layer name</strong> (when applicable) - if an Inkscape layer is selected, its name is displayed here.</li> 
-				<li><strong>Animated group name</strong> (when applicable) - if animated group is selected, its group name is displayed here (see <a href="#animatied_groups">animated groups</a>).</li>
+				<li><strong>Animated group name</strong> (when applicable) - if animated group is selected, its group name is displayed here (see <a href="#animated_groups">animated groups</a>).</li>
 			</ul>
 			<p><img src="_images/selection_layer.png" alt="Selection information of a layer.">Selection information of a layer. Left to right: tag name (<strong>g</strong> for group), identifier ("layer1"), inkscape's group name ("mouth").</p>
 			<p><img src="_images/selection_animation_group.png" alt="Selection information of an animated group.">Selection information of an animated group. Left to right: tag name (<strong>g</strong> for group), identifier ("g4138"), group type ("animated group"), group name ("mouth-female-3q").</p>
@@ -182,7 +184,7 @@
 				<li><i class="material-icons flip-h">near_me</i><strong>Group selection tool</strong> - see <a href="#tools_group">tools - group selection</a></li> 
 				<li><i class="material-icons flip-v">edit</i><strong>Element selection tool</strong> - see <a href="#tools_element">tools - element selection</a></li> 
 				<li><i class="material-icons">search</i><strong>Zoom tool</strong> - see <a href="#tools_zoom">tools - zoom</a></li> 
-				<li><i class="material-icons">colorize</i><strong>Picker tool</strong> - see <a href="#tools_picker">tools - picker</a></li> 
+				<li><i class="material-icons flip-v">colorize</i><strong>Picker tool</strong> - see <a href="#tools_picker">tools - picker</a></li> 
 				<li><i class="material-icons turn-90">power_settings_new</i><strong>Animate element</strong> - same function as <a href="#interface_menu">menu - animation</a></li> 
 				<li><i class="material-icons">reorder</i><strong>Edit button</strong> - allows the editing of all element's attributes (see <a href="#elements_attributes">elements - attributes</a>).</li> 
 				<li><i class="material-icons">details</i><strong>Children</strong> - shows the list of element's children (see <a href="#elements">elements - basics</a>).</li> 
@@ -208,13 +210,15 @@
 			<p><img src="_images/window_keyframes1.png" alt="Keyframes window">Keyframes window shows the <a href="#animation_keyframes">keyframes</a> and <a href="#animation_timing">timing</a> of currently selected animation.
 				(See <a href="#animation">animation</a> for more details.)</p>
 			<p>While details may vary, each keyframe generally has a percentage (its position relative to the duration of the animation), time (the same, as time relative to the animation's beginning) and one or more values.
-				Animations with the <em>spline</em> <a href="#animation_timing_interpolation">interpolation mode</a> also show the respective <a href="#animation_timing_splines">splines</a> between every pair of keyframes.
-				Splines can be changed between various presets or a custom value can be given instead.</p>
-			<p>Clicking the percent or time value allows you to change it, with certain restrictions. First (0%) and last (100%) keyframes' times cannot be changed. Keyframes between any other two can only be changed in the interval between their
-				neighbours (e.g. the selected keyframe can only be set between 0% and 50%, or 0 and 5 seconds respecively).</p>
+				Animations with the <em>spline</em> <a href="#animation_timing_interpolation">interpolation mode</a> also show the respective <a href="#animation_timing_splines">splines</a> between every pair of keyframes.</p>
+			<p>Clicking the percent or time value of each keyframe allows you to change it, within the 0% - 100% range, or boundaries given by the animation's duration respectively.</p>
 			<p>Keyframes can be selected by clicking the striped button on the left. To select multiple frames, hold ctrl. Holding shift will select all frames between the furthest already selected frame and the frame clicked.</p>
 			<p>Values can be changed with standard input fields. If multiple keyframes are selected, all of their values are changed when you change one. It's also possible to drag the keyframes to switch their values with one another, 
 				or move them up and down with <em>page up</em> / <em>page down</em>. Selected keyframes can be duplicated with <em>ctrl+d</em> and deleted with <em>delete</em>.</p>
+			<p><img src="_images/window_keyframes_spline1.png" alt="Keyframes window - spline menu"><img class="right" src="_images/window_keyframes_spline2.png" alt="Keyframes window - spline editor">Splines can be changed between various presets or a custom value can be given instead. If custom spline is selected, a button allows the user to edit it.</p>
+			<p>The editor shows spline as the red curve, defined by its two control points (handles). The rectangles shown depict a five second animation, the top rectangle showing linear progression, the bottom showing progression as set by the given spline. Input fields allow direct change the spline's numeric components, and change with the handles. Any changes are immediately applied to the animation. Selecting multiple keyframes changes the spline for all of them.</p>
+			
+			
 			<p>Selected keyframes are affected by the context menu (right click). If none is selected, the clicked keyframe is affected, except the cases noted below.</p>
 			<ul>
 				<li><i class="material-icons">arrow_upward</i><strong>Move up</strong> - moves the keyframe's values and spline (if applicable) up.</li>
@@ -223,12 +227,14 @@
 				
 				<li><i class="material-icons">add_circle_outline</i><strong>Create inbetwen</strong> - creates keyframes with values halfway between all selected pairs of keyframes.</li>
 				<li><i class="material-icons">timer</i><strong>Balance keyframes</strong> - sets the selected keyframes in even intervals between one another. First and last keyframes of each block of selected frames are not affected. If no frames are selected, all keyframes are affected instead.</li>
-				<li><i class="material-icons">flip</i><strong>Invert values</strong> (when applicable) - inverts the values of selected keyframes. If no keyframes are selected, all are affected. Inversion is applicable in following cases:
+				<li><i class="material-icons">replay</i><strong>Reverse keyframes</strong> - switches keyframes around to reverse the animation. If no keyframes are selected, the entire animation is reversed. If keyframes are selected, every interval is reversed individually.</li>
+				<li><i class="material-icons">zoom_out_map</i><strong>Scale values...</strong> (when applicable) - provides a dialogue which allows the user to multiply some numerical values of all selected keyframes. Namely:
 					<ul>
-						<li><a href="#animation_types_transform_translate">Translation</a> - X and Y values are multiplied by minus one.</li>
-						<li><a href="#animation_types_transform_rotate">Rotation</a> and <a href="#animation_types_transform_skew">skewing</a> - Angle values are multiplied by minus one.</li>
-						<li><a href="#animation_types_transform_scale">Scaling</a> - X and Y values inverted (changed to 1/X and 1/Y).</li>
-						<li><a href="#animation_types_attribute">Attribute animation</a> - only if the affected attribute is <em>display</em> or <em>visibility</em> - values are changed to their opposites.</li>
+						<li><a href="#animation_types_transform_translate">Translation</a> and <a href="#animation_types_transform_scale">scaling</a> - X and Y cordinates</li>
+						<li><a href="#animation_types_transform_rotate">Rotation</a> angles and X/Y coordinates</li>
+						<li><a href="#animation_types_transform_skew">Skewing</a> - angles</li>
+						<li><a href="#animated_groups">Animated groups</a> - intensity values</li>
+						<!-- <li><a href="#animation_types_attribute">Attribute animation</a> - only if the affected attribute is <em>display</em> or <em>visibility</em> - values are changed to their opposites.</li> -->
 					</ul>
 				</li>
 				<li><i class="material-icons">delete</i><strong>Remove keyframes</strong> - deletes selected keyframes (except first and last keyframe).</li>
@@ -303,23 +309,61 @@
 			<p>Elements are shown (from top to bottom) in order of <em>rendering</em>, meaning the lowest elements will be on top of the drawing.</p>
 			<p>Some elements in XML tree have specific icons:</p>
 			<ul>
-				<li><i class="material-icons">settings</i><strong>Animations</strong></li>
+				<li><i class="material-icons">settings</i><strong><a href="#animation">Animations</a></strong></li>
 				<li><i class="material-icons">settings_applications</i><strong><a href="#animation_groups">Animated groups</a></strong></li>
 				<li><i class="material-icons">link</i><strong><a href="#elements_common_use">Use elements</a></strong> (links)</li>
-				<li><i class="material-icons">label</i><i class="material-icons">label_outline</i><strong>Graphical elements</strong> (e.g. <a href="#elements_common_cicle">circles</a>, <a href="#elements_common_cicle">paths</a> etc.) as well as other general elements.</li> 
-				<li><i class="material-icons">folder</i><i class="material-icons">folder_open</i><strong>Group elements</strong> - namely <a href="#elements_common_g">groups</a> and <a href="#elements_common_svg">root SVG element</a>.</li> 
+				<li><i class="material-icons">label</i><i class="material-icons">label_outline</i><strong>Visual elements</strong> (e.g. <a href="#elements_common_cicle">circles</a>, <a href="#elements_common_cicle">paths</a> etc.) as well as other general elements.</li> 
+				<li><i class="material-icons">folder</i><i class="material-icons">folder_open</i><strong>Container elements</strong> - namely <a href="#elements_common_g">groups</a> and <a href="#elements_common_svg">root SVG element</a>.</li> 
 				<li><i class="material-icons">layers</i><strong>Layers</strong></li> 
-				<li><i class="material-icons">videocam</i><strong>Camera</strong> made with <a href="#animation_types_camera">camera animation</a>.</li> 
+				<li><i class="material-icons">videocam</i><strong><a href="#animation_types_camera">Camera</a></strong></li> 
 				<li><i class="material-icons">star</i><i class="material-icons">star_outline</i><strong>Definitions</strong> - a <a href="#elements_common_defs">defs</a> element, hosting various elements, such as:</li> 
 					<ul>
 						<li><i class="material-icons">gesture</i><strong>Inkscape path effects</strong></li> 
 						<li><i class="material-icons">gradient</i><strong>Gradients</strong></li> 
-						<li><i class="material-icons">signal_cellular_null</i><strong>Clip paths</strong></li> 
+						<li><i class="material-icons">flip</i><strong>Clip paths</strong></li> 
 						<li><i class="material-icons">blur_on</i><strong>Filters</strong></li> 
 						<li><i class="material-icons">folder_special</i><strong>AniGen animation state groups</strong></li> 
 					</ul>
 			</ul>
 		</section>
+		
+		<section id="interface_log">
+			<h2>Event log</h2>
+			<p>Keeps information about actions made during editing, such as copying, pasting, deleting etc.</p>
+		</section>
+		
+		
+		<section id="interface_preview">
+			<h2>Preview window</h2>
+			<p>Shows the animation's canvas as it will look when exported. Limited controls are available:
+				<ul>
+					<li><strong>F5</strong> refreshes the preview to sync with the changes you've made. By default, preview also synces each time the SVG's <a href="#animation_types_camera">camera</a> is changed. This can be disabled through <a href="#interface_settings">settings</a>.</li>
+					<li><strong>Pause</strong> or <strong>space</strong> pauses / unpauses animations</li>
+					<li><strong>Alt + Pause</strong> resets animations</li>
+					<li><strong>Ctrl + mouse wheel</strong> zooms in and out</li>
+					<li><strong>Ctrl + alt + mouse wheel</strong> zooms in and out and fits the window to match</li>
+					<li><strong>Enter</strong> fits the window to the current size</li>
+					<li><strong>Alt + Enter</strong> sets size to 100%</li>
+				</ul>
+			</p>
+			<p>Canvas is painted in with white, the remaining portion of the window is black.</p>
+		</section>
+		
+		<section id="interface_settings">
+			<h2>Settings</h2>
+			<p><img src="_images/settings.png" alt="Settings dialogue">
+				<ul>
+					<li><strong>Show element highlights</strong> - red outline of selected element, if applicable</li>
+					<li><strong>Show progress curves</strong> - green lines connecting corresponding nodes when multiple animation keyframes are selected</li>
+					<li><strong>Show nodes</strong> - display or hide all editing nodes</li>
+					<li><strong>Show page border</strong> - shows a gray outline over the current canvas</li>
+					<li><strong>Show rulers</strong></li>
+					<li><strong>Refersh preview when camera is changed</strong> automatically refreshes <a href="#interface_preview">preview window</a> when <a href="#animation_types_camera">camera</a> is changed. This can result in performance drops.</li>
+					<li><strong>Automatically refresh selection box</strong> continuously refreshes selection box when animations are running. This can result in performance drops.</li>
+				</ul>
+			</p>
+		</section>
+		
 		
 	</section>
 	
@@ -344,15 +388,29 @@
 		
 		<section id="files_exporting">
 			<h2>Exporting</h2>
-			<p><img src="_images/dialogue_export1.png" alt="File export dialogue">Current SVG can be exported as a series of PNGs archived in a ZIP.
-				The dialogue allows the user to set the beginning of the animation (in seconds), duration of exported animation (in seconds) and the framerate (in frames per second).</p>
+			<p><img src="_images/dialogue_export1.png" alt="File export dialogue">Current SVG can be exported as a series of PNGs or static SVGs archived in a ZIP. User can set:
+			<ul>
+				<li><strong>Begin time</strong> in seconds</li>
+				<li><strong>Duration time</strong> in seconds</li>
+				<li><strong>Framerate</strong> in frames per second</li>
+				<li><strong>Export size</strong> in pixels, with optional aspect ratio lock</li>
+				<li><strong>Output name</strong>, the name of the exported file</li>
+				<li><strong>Output type</strong>, either PNGs or static SVGs</li>
+				<li><strong>Downsampling</strong> - renders SVG in higher resolution and scales it down. This takes more time, but can remove certain types of artifacts made by native browser anti aliasing.</li>
+				<li><strong>Shape rendering</strong> - switches between native rendering and rendering with crisp edges. The latter creates pixel-perfect renders with <em>no native anti aliasing</em>. Combining this with downsampling setting can create anti aliased pictures with higher precision and less artifacting than native settings, but takes way more time.</li>				
+				<li><strong>Notification</strong>, which sounds when export is finished</li>
+			</ul>
+			<p><em>Static SVGs</em> will create individual SVG files for each frame, stripped of all animations.</p>
+			<p>Default duration is set to the loop length specified by the user with <em>animation→loop animation...</em> dialogue, or is computed as the least common multiple of all animation durations.</p>
+			<p>If only one frame is exported, it's downloaded directly instead of in a ZIP.</p>
 			<p><img src="_images/dialogue_export2.png" alt="Rendering in progress">While rendering, the editor will be unavailable. Progress and estimated time to completion (HH:MM:SS) is shown.
 				Progress percentage is shown in the page title.
 				The rendering process can take significant time, which scales with the number of elements in the SVG. Furthermore, each PNG is stored in the computer's memory. It's recommended to export longer animations, 
 				or animations with extremely large size, in smaller segments. Rendering process can be canceled (with slight delay).</p>
 			<p><img src="_images/dialogue_export3.png" alt="Files being packed into a ZIP">When all frames are rendered, they are packed into a ZIP, which then triggers the standard save dialogue of the browser.
 				This process takes some time, but comperatively little to the rendering process.</p>
-			<p>Exporting is currently in testing phases. If you enounter problems (such as differences between the SVG's animation and exported frames), see <a href="#bugs">bug reporting</a>.</p>
+			<p><strong>Note:</strong> While mostly working, exporting is still in its testing phases. Save your work before you export and please <a href="#bugs">report</a> any problems.</p>
+			<p><strong>Note:</strong> High resolutions, high downsampling settings, and long export times can lead to browser running out of allocated memory. It's advised to save your work before exporting, and export larger animations in shorter intervals.</p>
 		</section>
 		
 	</section>
@@ -365,63 +423,93 @@
 			<p>Generally used for selecting elements by clicking in a manner similar to Inkscape. Specific <a href="#tools">tools</a> may change the default behavior.</p>
 			<p><strong>Right click</strong> usually opens a context menu (for selected element, or contextual to the given window).</p>
 			<p><strong>Middle button</strong> allows user to drag the canvas view.</p>
-			<p><strong>Scroll wheel</strong> moves view up and down. <em>Shift + wheel</em> moves view left and right. <em>Ctrl + wheel</em> zooms in and out.</p>
+			<p><strong>Scroll wheel</strong> moves view up and down. <em>Shift + wheel</em> moves view left and right. <em>Ctrl + wheel</em> zooms in and out. <em>Alt + wheel</em> seeks (moves time) forward and backward, <em>ctrl</em> mask increases the seek distance.</p>
 		</section>
 		
 		<section id="controls_keyboard">
 			<h2>Keyboard shortcuts</h2>
-			<table>
-				<tr><th>Shortcut</th><th>Modifiers</th><th>Function</th></tr>
-				<tr><td>F1</td><td></td><td>Select the <a href="#tools_group">group selection tool</a></td></tr>
-				<tr><td>F2</td><td></td><td>Select the <a href="#tools_element">element selection tool</a></td></tr>
-				<tr><td>F3</td><td></td><td>Select the <a href="#tools_zoom">zoom tool</a></td></tr>
-				<tr><td>F5</td><td></td><td>Refreshes the window (after confirmation)</td></tr>
-				<tr><td>F7</td><td></td><td>Select the <a href="#tools_picker">picker tool</a></td></tr>
-				<tr><td>Spacebar</td><td></td><td>Pause / unpause animations</td></tr>
-				<tr><td>Pause</td><td></td><td>Pause / unpause animations</td></tr>
-				<tr><td></td><td>Alt</td><td>Reset animations</td></tr>
-				<tr><td>Escape</td><td></td><td>Hide popup / dialogue</td></tr>
-				<tr><td>Page Up</td><td></td><td>Raise currently selected element</td></tr>
-				<tr><td>Page Down</td><td></td><td>Lower currently selected element</td></tr>
-				<tr><td>Home</td><td></td><td>Raise currently selected element to the top of its parent</td></tr>
-				<tr><td>End</td><td></td><td>Lower currently selected element to the bottom of its parent</td></tr>
-				<tr><td>Delete</td><td></td><td>Remove currently selected element</td></tr>
-				<tr><td>Arrow keys</td><td></td><td>Move selected element</td></tr>
-				<tr><td>←</td><td>Ctrl</td><td>Go to previous keyframe of selected animation</td></tr>
-				<tr><td></td><td>Alt</td><td>Select previous sibling of selected element</td></tr>
-				<tr><td>→</td><td>Ctrl</td><td>Go to next keyframe of selected animation</td></tr>
-				<tr><td></td><td>Alt</td><td>Select next sibling of selected element</td></tr>
-				<tr><td>↑</td><td>Alt</td><td>Select parent of selected element</td></tr>
-				<tr><td>↓</td><td>Alt</td><td>Select first child of selected element</td></tr>
-				<tr><td>+</td><td>Shift</td><td>Seek forward (10s if animation is running, 1s if animation is paused)</td></tr>
-				<tr><td></td><td></td><td>Seek forward (1s if animation is running, 100ms if animation is paused)</td></tr>
-				<tr><td></td><td>Alt</td><td>Seek forward (100ms if animation is running, 10ms if animation is paused)</td></tr>
-				<tr><td></td><td>Ctrl</td><td>Zoom in</td></tr>
-				<tr><td>-</td><td>Shift</td><td>Seek back (10s if animation is running, 1s if animation is paused)</td></tr>
-				<tr><td></td><td></td><td>Seek back (1s if animation is running, 100ms if animation is paused)</td></tr>
-				<tr><td></td><td>Alt</td><td>Seek back (100ms if animation is running, 10ms if animation is paused)</td></tr>
-				<tr><td></td><td>Ctrl</td><td>Zoom out</td></tr>
-				<tr><td>A</td><td>Ctrl</td><td>Select / unselect all keyframes (keyframe window only)</td></tr>
-				<tr><td>C</td><td>Ctrl</td><td>Copy selected element into clipboard</td></tr>
-				<tr><td>D</td><td>Ctrl</td><td>Duplicate selected element</td></tr>
-				<tr><td>E</td><td>Ctrl + Shift</td><td>Open <em>Export</em> dialogue</td></tr>
-				<tr><td>G</td><td>Ctrl</td><td>Group selected element</td></tr>
-				<tr><td>G</td><td>Ctrl + Alt</td><td>Ungroup selected group</td></tr>
-				<tr><td>K</td><td>Ctrl</td><td>Sets current value for selected animation</td></tr>
-				<tr><td></td><td>Ctrl + Shift</td><td>Open / close the <em>Keyframes and timing</em> window</td></tr>
-				<!-- <tr><td>L</td><td>Ctrl</td><td>Creates a &lt;use&gt; link element.</td></tr> -->
-				<tr><td>L</td><td>Ctrl + Shift</td><td>Open / close the <em>Layers</em> window</td></tr>
-				<tr><td>O</td><td>Ctrl</td><td>Open the <em>open</em> dialogue</td></tr>
-				<tr><td>P</td><td>Ctrl</td><td>Pause / unpause animations</td></tr>
-				<tr><td>R</td><td>Ctrl</td><td>Sets current value for selected animation</td></tr>
-				<tr><td>S</td><td>Ctrl</td><td>Saves SVG into browser local storage</td></tr>
-				<tr><td></td><td>Ctrl + Shigt</td><td>Save and download SVG</td></tr>
-				<tr><td>V</td><td>Ctrl</td><td>Paste element or animation timing (animation to animation)</td></tr>
-				<tr><td>X</td><td>Ctrl</td><td>Cut element and move it to clipboard</td></tr>
-				<tr><td></td><td>Ctrl + Shift</td><td>Open / close the <em>XML editor</em> window</td></tr>
-				<tr><td>Y</td><td>Ctrl</td><td>Redo</td></tr>
-				<tr><td>Z</td><td>Ctrl</td><td>Undo</td></tr>
-				<tr><td></td><td>Ctrl + Shift</td><td>Redo</td></tr>
+			<table class='keyboard'>
+				<!-- <tr><th>Shortcut</th><th>Function</th></tr> -->
+				<tr><td><span class='key'>F1</span></td><td>Select the <a href="#tools_group">group selection tool</a></td></tr>
+				<tr><td><span class='key'>F2</span></td><td>Select the <a href="#tools_element">element selection tool</a></td></tr>
+				<tr><td><span class='key'>F3</span></td><td>Select the <a href="#tools_zoom">zoom tool</a></td></tr>
+				<tr><td><span class='key'>F5</span></td><td>Refreshes the window (after confirmation)</td></tr>
+				<tr><td><span class='key'>F7</span></td><td>Select the <a href="#tools_picker">picker tool</a></td></tr>
+				
+				<tr><td></td><td></td></tr>
+				
+				<tr><td><span class='key'>Space</span>/<span class='key'>Pause</span>/<span class='key'>Ctrl + P</span></td><td>Pause / unpause animations</td></tr>
+				<tr><td><span class='key'>Alt + Pause</span></td><td>Reset animations</td></tr>
+				
+				<tr><td><span class='key'>Ctrl + ←</span>/<span class='key'>1</span></td><td>Go to previous keyframe of selected animation</td></tr>
+				<tr><td><span class='key'>Ctrl + →</span>/<span class='key'>3</span></td><td>Go to next keyframe of selected animation</td></tr>
+				<tr><td><span class='key'>Ctrl + ↓</span>/<span class='key'>2</span></td><td>Go to the closest keyframe of currently selected animation</td></tr>
+								
+				<tr><td><span class='key'>+</span>/<span class='key'>E</span></td><td>Seek forward (1s if animation is running, 100ms if animation is paused)</td></tr>
+				<tr><td><span class='key'>Shift + +</span>/<span class='key'>Shift + E</span></td><td>Seek forward (10s if animation is running, 1s if animation is paused)</td></tr>
+				<tr><td><span class='key'>Alt + +</span>/<span class='key'>Alt + E</span></td><td>Seek forward (100ms if animation is running, 10ms if animation is paused)</td></tr>
+				
+				<tr><td><span class='key'>-</span>/<span class='key'>Q</span></td><td>Seek back (1s if animation is running, 100ms if animation is paused)</td></tr>
+				<tr><td><span class='key'>Alt + -</span>/<span class='key'>Alt + Q</span></td><td>Seek back (100ms if animation is running, 10ms if animation is paused)</td></tr>
+				<tr><td><span class='key'>Shift + -</span>/<span class='key'>Shift + Q</span></td><td>Seek back (10s if animation is running, 1s if animation is paused)</td></tr>
+				
+				<tr><td></td><td></td></tr>
+				
+				<tr><td><span class='key'>Ctrl + A</span></td><td>Select / unselect all keyframes (keyframe window only)</td></tr>
+				<tr><td><span class='key'>W</span>/<span class='key'>Ctrl + R</span></td><td>Set current value for selected animation</td></tr>
+				
+				<tr><td></td><td></td></tr>
+				
+				<tr><td><span class='key'>Escape</span></td><td>Hide popup / dialogue</td></tr>
+				<tr><td><span class='key'>Ctrl + +</span></td><td>Zoom in</td></tr>
+				<tr><td><span class='key'>Ctrl + -</span></td><td>Zoom out</td></tr>
+				
+				<tr><td><span class='key'>Delete</span></td><td>Remove currently selected element</td></tr>
+				
+				<tr><td><span class='key'>Ctrl + Y</span>/<span class='key'>Ctrl + Shift + Z</span></td><td>Redo</td></tr>
+				<tr><td><span class='key'>Ctrl + Z</span></td><td>Undo</td></tr>
+				
+				<tr><td></td><td></td></tr>
+				
+				<tr><td><span class='key'>Page Up</span></td><td>Raise currently selected element</td></tr>
+				<tr><td><span class='key'>Page Down</span></td><td>Lower currently selected element</td></tr>
+				<tr><td><span class='key'>Home</span></td><td>Raise currently selected element to the top of its parent</td></tr>
+				<tr><td><span class='key'>End</span></td><td>Lower currently selected element to the bottom of its parent</td></tr>
+				
+				
+				<tr><td><span class='key'>←</span>/<span class='key'>↑</span>/<span class='key'>↓</span>/<span class='key'>→</span></td><td>Move selected element</td></tr>
+				
+				<tr><td></td><td></td></tr>
+				
+				<tr><td><span class='key'>Alt + ←</span>/<span class='key'>Shift + A</span></td><td>Select previous sibling of selected element</td></tr>
+				<tr><td><span class='key'>Alt + →</span>/<span class='key'>Shift + D</span></td><td>Select next sibling of selected element</td></tr>
+				<tr><td><span class='key'>Alt + ↑</span>/<span class='key'>Shift + W</span></td><td>Select parent of selected element</td></tr>
+				<tr><td><span class='key'>Alt + ↓</span>/<span class='key'>Shift + S</span></td><td>Select first child of selected element</td></tr>
+				
+				<tr><td><span class='key'>Alt + ↑</span>/<span class='key'>Alt + W</span></td><td>Select closest animation parent of selected element</td></tr>
+				
+				<tr><td></td><td></td></tr>
+				
+				<tr><td><span class='key'>Ctrl + Shift + E</span></td><td>Open <em>Export</em> dialogue</td></tr>
+				<tr><td><span class='key'>Ctrl + Shift + K</span></td><td>Open / close the <em>Keyframes and timing</em> window</td></tr>
+				<tr><td><span class='key'>Ctrl + Shift + L</span></td><td>Open / close the <em>Layers</em> window</td></tr>
+				<tr><td><span class='key'>Ctrl + Shift + X</span></td><td>Open / close the <em>XML editor</em> window</td></tr>
+				
+				<tr><td><span class='key'>Ctrl + O</span></td><td>Open the <em>open</em> dialogue</td></tr>
+				<tr><td><span class='key'>Ctrl + S</span></td><td>Saves SVG into browser local storage</td></tr>
+				<tr><td><span class='key'>Ctrl + Shift + S</span></td><td>Save and download SVG</td></tr>
+				
+				<tr><td></td><td></td></tr>
+				
+				
+				<tr><td><span class='key'>Ctrl + C</span></td><td>Copy selected element into clipboard</td></tr>
+				<tr><td><span class='key'>Ctrl + X</span></td><td>Cut element and move it to clipboard</td></tr>
+				<tr><td><span class='key'>Ctrl + V</span></td><td>Paste element or animation timing (animation to animation)</td></tr>
+				<tr><td><span class='key'>Ctrl + D</span></td><td>Duplicate selected element</td></tr>
+				<tr><td><span class='key'>Ctrl + L</span>/<span class='key'>Alt + D</span></td><td>Creates a &lt;use&gt; link element.</td></tr>
+				<tr><td><span class='key'>Ctrl + G</span></td><td>Group selected element</td></tr>
+				<tr><td><span class='key'>Ctrl + U</span></td><td>Ungroup selected element</td></tr>
+				
 			</table>
 		</section>
 		
@@ -638,7 +726,7 @@
 		
 		<section id="tools_zoom">
 			<h2>Zoom</h2>
-				<p><i class="material-icons flip-h">search</i>Zooms in or out at the factor of square root of two.</p>
+				<p><i class="material-icons">search</i>Zooms in or out at the factor of square root of two.</p>
 				<ul>
 					<li><strong>Left click</strong> - zoom in.</li>
 					<li><strong>Right click</strong> - zoom out</li>
@@ -647,7 +735,7 @@
 		
 		<section id="tools_picker">
 			<h2>Picker</h2>
-				<p><i class="material-icons flip-h">colorize</i>Based on Inkscape's "Picker" tool. When a graphical element is selected:</p>
+				<p><i class="material-icons flip-v">colorize</i>Based on Inkscape's "Picker" tool. When a graphical element is selected:</p>
 				<ul>
 					<li><strong>Left click</strong> - sets the fill color of current element to that of the clicked one (clicking SVG sets fill to "none").</li>
 					<li><strong>Ctrl + left click</strong> - sets the stroke color of current element to that of the clicked one (clicking SVG sets stroke to "none").</li>
@@ -658,6 +746,7 @@
 					<li><strong>Motion animation</strong> - sets motion path to the data present in clicked path.</li>
 					<li><strong>Shift + click</strong> - if clicked element has an animation, copies its timing.</li>
 				</ul>
+				<p>Right-click context menu will also show additional options tied to the selected element and target.</p>
 				
 		</section>
 	</section>
@@ -785,22 +874,24 @@
 				
 			</section>
 			
-			<section id="animatied_groups">
+			<section id="animated_groups">
 				<h2>Animated groups</h2>
 					<p><img src="_images/states1.png" alt="Object menu">
 						<img class="right" src="_images/context_menu.png" alt="Context menu">
 						AniGen expands the basic animation functionality by introducing animated groups.</p>
 					<p>The user can select any element (including groups) and save it as an <em>animation state</em> with main menu or right-click context menu.</p>
 					<p>States are grouped according to the number and order of elements, so that standard path animation is applicable between all of them. When created, animated group allows the user to set each state from the group as the value of given keyframes. This allows the user to quickly change one complex shape to another without the need to create and synchronize large number of attribute animations.</p>
-					<section id="animatied_groups_state">
+					<section id="animated_groups_state">
 						<h3>Animation state</h3>
 						<p><img src="_images/states2.png" alt="Animation state dialogue">Animation states are set by selecting an object, and chosing <em>object→object to animation state</em> from the main menu, or via right-click context menu.</p>
-						<p><img src="_images/states3.png" alt="Animation state dialogue">When selected, the user will be able to pick a name for the given state, as well as the group. If no group exists, or no group shares the element model necessary, the user will have to pick the <em>New group</em> option and naming the group.</p>
+						<p><img src="_images/states3.png" alt="Animation state dialogue">When selected, the user will be able to pick a name for the given state, as well as the group. If no group exists, or no group shares the <span class="help" title="This means the general structure of nested elements, i.e. the number of groups and types of child elements in them.">element model</span> necessary, the user will have to pick the <em>New group</em> option and naming the group.</p>
 						
 						<p><strong>Note:</strong> if a group is made into a state, its transformation is disregarded. This means one can duplicate a group, move it somewhere else, and tweak elements therein without fear of making the final animation travel the distance.</p>
+						
+						<p><strong>Note:</strong> if all children of selected elements share the same <span class="help" title="This means the general structure of nested elements, i.e. the number of groups and types of child elements in them.">element model</span>, a <em>batch</em> option is provided. This allows the user to set all the <em>child</em> elements as individual states, sharing the same group. For example, if the selected element is a layer, which has a number of sub-layers, each with a single state, the <em>batch</em> option will create a group named after the parent layer, and popuplate it with states named after each individual sub-layer. <strong>This is experimental.</strong></p>
 					</section>
 					
-					<section id="animatied_groups_group">
+					<section id="animated_groups_group">
 						<h3>Animated group</h3>
 						<p>
 							<img src="_images/window_keyframes3.png" alt="Keyframe window - animated group">
@@ -813,7 +904,7 @@
 						<p>Another addition is the ability to select which attributes will be animated. By default, the <em>d</em> attribute (see <a href="#elements_common_path">paths</a>) is animated, but more can be added as the users desires.</p>
 					</section>
 					
-					<section id="animatied_groups_manager">
+					<section id="animated_groups_manager">
 						<h3>State manager</h3>
 						<p><img style="width: 30%" src="_images/state_manager1.png" alt="Animation state manager">
 							<img class="right" style="width: 40%" src="_images/state_manager2.png" alt="Animation state interpolation">
@@ -852,6 +943,42 @@
 	
 </body>
 
-<script type="text/javascript" src="tableOfContents.js"></script>
+<script type="text/javascript">
+	function explore(target, list) {
+		if(!list) {
+			var toc = document.getElementById('tableOfContents');
+			list = document.createElement('ol');
+			toc.appendChild(list);
+		}
+		if(!target) {
+			target = document.body;
+		}
+		
+		for(var i = 0; i < target.children.length; i++) {
+			if(target.children[i].nodeName == "SECTION") {
+				if(list.nodeName == "LI") {
+					var newOl = document.createElement('ol');
+					list.appendChild(newOl);
+					list = newOl;
+				}
+				var newLi = document.createElement('li');
+				var newA = document.createElement('a');
+				list.appendChild(newLi);
+				newLi.appendChild(newA);
+				newA.setAttribute('href', '#'+target.children[i].getAttribute('id'));
+				newA.innerHTML = target.children[i].children[0].innerHTML;
+				explore(target.children[i], newLi);
+			}
+		}
+	}
+
+	explore();
+
+	var menu = document.getElementById('menu');
+	list = document.createElement('ol');
+	menu.appendChild(list);
+
+	explore(document.body, list);
+</script>
 
 </html>

@@ -38,8 +38,8 @@ connector.prototype.adjustZoom = function() {
 connector.prototype.refresh = function() {
 	var CTM = this.path.getCTMBase();
 	
-	var absA = this.pointA.getAbsolute();
-	var absB = this.pointB.getAbsolute();
+	var absA = (typeof this.pointA.getAbsolute === 'function') ? this.pointA.getAbsolute() : { 'x': this.pointA.x, 'y': this.pointA.y };
+	var absB = (typeof this.pointB.getAbsolute === 'function') ? this.pointB.getAbsolute() : { 'x': this.pointB.x, 'y': this.pointB.y };
 	
 	var adjA = CTM.toUserspace(absA.x, absA.y);
 	var adjB = CTM.toUserspace(absB.x, absB.y);
@@ -48,6 +48,12 @@ connector.prototype.refresh = function() {
 	this.path.setAttribute('y1', adjA.y);
 	this.path.setAttribute('x2', adjB.x);
 	this.path.setAttribute('y2', adjB.y);
+}
+
+connector.prototype.setSize = function(value) {
+	if(!value || isNaN(value) || value <= 0) { return; }
+	this.size = value;
+	this.path.setAttribute("stroke-width", this.size+"px");
 }
 
 connector.prototype.hide = function() {

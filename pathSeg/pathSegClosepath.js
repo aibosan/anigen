@@ -33,3 +33,6 @@ pathSegClosepath.prototype.clone = function() {
 	return new pathSegClosepath();
 }
 
+pathSegClosepath.prototype.getMin = pathSegClosepath.prototype.getMax = function() {
+	return null;
+}

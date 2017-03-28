@@ -32,7 +32,7 @@ overlay.prototype.hide = function() {
 	this.container.parentNode.style.opacity = 0;
 	this.container.parentNode.style.height = "0%";
 	this.hidden = true;
-	document.body.focus();
+	document.activeElement.blur();
 }
 overlay.prototype.show = function() {
 	if(this.animate) {
@@ -158,11 +158,21 @@ overlay.prototype.macroSettings = function() {
 	this.setHeader("Settings");
 	
 	this.add(build.table([
-		[ "Show element highlights", build.input('checkbox', anigenActual.settings.get('highlight'), { 'title': 'Red curve highlighting currently selected element.' }) ],
-		[ "Show progress curves", build.input('checkbox', anigenActual.settings.get('progressCurve'), { 'title': 'Green lines connecting positions of corresponding animation nodes.' }) ],
-		[ "Show nodes", build.input('checkbox', anigenActual.settings.get('nodes'), { 'title': 'Green lines connecting positions of corresponding animation nodes.' }) ],
-		[ "Show page border", build.input('checkbox', anigenActual.settings.get('canvasFrame')) ],
-		[ "Show rulers", build.input('checkbox', anigenActual.settings.get('rulers')) ]
+		[ "Show element highlights",
+			new uiButton(['check_box_outline_blank', 'check_box'], null, ['Red curve highlighting currently selected element.', 0], { 'class': 'md-24', 'state': anigenActual.settings.get('highlight') })],
+		[ "Show progress curves",
+			new uiButton(['check_box_outline_blank', 'check_box'], null, ['Green lines connecting positions of corresponding animation nodes.', 0], { 'class': 'md-24', 'state': anigenActual.settings.get('progressCurve') })],
+		[ "Show nodes",
+			new uiButton(['check_box_outline_blank', 'check_box'], null, ['Green lines connecting positions of corresponding animation nodes.', 0], { 'class': 'md-24', 'state': anigenActual.settings.get('nodes') })],
+		[ "Show page border",
+			new uiButton(['check_box_outline_blank', 'check_box'], null, null, { 'class': 'md-24', 'state': anigenActual.settings.get('canvasFrame') })],
+		[ "Show rulers",
+			new uiButton(['check_box_outline_blank', 'check_box'], null, null, { 'class': 'md-24', 'state': anigenActual.settings.get('rulers') })],
+		[ "Refresh preview when camera is changed",
+			new uiButton(['check_box_outline_blank', 'check_box'], null, ["Disabling can improve performance on some systems", 0], { 'class': 'md-24', 'state': anigenActual.settings.get('previewAutorefresh') })],
+		[ "Automatically refresh selection box",
+			new uiButton(['check_box_outline_blank', 'check_box'], null, ["Disabling can improve performance on some systems", 0], { 'class': 'md-24', 'state': anigenActual.settings.get('selectionboxAutorefresh') })]
+			
 	]));
 	
 	this.addButtonOk('anigenActual.settings.evaluateOverlay();', true);
@@ -198,19 +208,6 @@ overlay.prototype.macroOpen = function() {
 	
 
 	this.show();
-}
-
-overlay.prototype.macroExportBar = function() {
-	this.reset();
-	this.setHeader("Exporting");
-	
-	var progress = new progressBar({ 'id': 'anigenProgressBar' });
-	this.add(progress.container);
-	
-	this.addButtonCancel('svg.svgrender.pause();document.title = svg.fileName + " - aniGen";document.getElementById("svgArea").removeChildren();', true);
-	
-	this.show();
-	return progress;
 }
 
 overlay.prototype.macroAnimationStatesManager = function() {
@@ -293,7 +290,7 @@ overlay.prototype.macroStateInbetween = function(value1, value2, firstValueIndex
 	
 	tArray.push([
 		stateSelection1,
-		build.input('text', states[value1].name+'-'+states[value2].name),
+		build.input('text', 'variant-'+states[value1].name),
 		stateSelection2
 	]);
 	
@@ -341,7 +338,6 @@ overlay.prototype.macroStateInbetweenRefresh = function(groupName, hard) {
 	var ratio = parseFloat(this.content.children[0].children[2].children[1].children[1].value);
 	
 	if(state1Index == null || state2Index == null || ratio == null) {
-		console.log('!');
 		return;
 	}
 	
@@ -365,22 +361,143 @@ overlay.prototype.macroExport = function() {
 	this.reset();
 	this.setHeader("Export file");
 	
-	this.add(build.p("Warning: Exporting files can sometimes break gradients - you should save your work before exporting."))
+	this.add(build.p("It's advised to save your work before exporting."))
+	
+	
+	var beginning = anigenManager.classes.editor.clock.minTime || 0;
+	var duration = anigenManager.classes.editor.clock.maxTime;
+	if(!duration) {
+		var raw = svg.svgElement.getElementsByTagName('animate', true, true);
+		var allDur = [];
+		
+		
+		for(var i = 0; i < raw.length; i++) {
+			allDur.push(raw[i].getDur().seconds);
+		}
+		allDur.sort();
+		
+		var uniqueDur = [];
+		var last = null;
+		for(var i = 0; i < allDur.length; i++) {
+			if(last == null || last < allDur[i]) {
+				last = allDur[i];
+				uniqueDur.push(last);
+			}
+		}
+		
+		duration = mmc(uniqueDur);
+	}
+	duration -= beginning;
+	duration = String(duration);
+	
+	var nameCheck = "";
+		nameCheck += 'var dur=parseFloat(document.getElementById("anigenInputDur").value);';
+		nameCheck += 'var fps=parseFloat(document.getElementById("anigenInputFramerate").value);';
+		nameCheck += 'var suffix=Math.floor(fps*dur)==1 ? "."+document.getElementById("anigenSelectType").value : ".zip";';
+		nameCheck += 'var filename=document.getElementById("anigenInputName");';
+		nameCheck += 'if(!filename.value.match(/\\+suffix+$/)) { filename.value = filename.value.replace(/\\..*$/,"")+suffix; }';
+	
+	var typeSelect = build.select([
+		{ 'text': "PNGs", 'value': 'png' },
+		{ 'text': "Static SVGs", 'value': 'svg' }
+	]);
+		typeSelect.style.width = "100%";
+		typeSelect.setAttribute('id', 'anigenSelectType');
+		typeSelect.setAttribute('onchange', nameCheck);
+	
+	// TODO: browser can run out of memory, and DS 8 is about when crispEdges stop to matter
+	var aaSelect = build.select([
+		{ 'text': "No downsampling", 'value': '1' },
+		{ 'text': "2", 'value': '2' },
+		{ 'text': "4", 'value': '4' },
+		{ 'text': "8", 'value': '8' },
+		{ 'text': "16", 'value': '16' }
+	]);
+		aaSelect.style.width = "100%";
+		aaSelect.setAttribute('id', 'anigenSelectAA');
+		aaSelect.setAttribute('title', 'Image will be rendered in larger resolution and then scaled down, potentially improving quality at the cost of rendering speed. High multipliers can lead to browser running out of memory - save your work before you export with this setting!');
+	
+	var crispSelect = build.select([
+		{ 'text': "Native shape rendering", 'value': '0', 'title': 'Renders with native setting in mind.' },
+		{ 'text': "Crisp edges", 'value': '1', 'title': 'Enforces shape-rendering: crispEdges, creating pixel perfect (but blocky) images. Reduces rendering time and SVG artifacting stemming from anti-aliasing. Combine with downsampling for optimal results.' }
+	]);
+		crispSelect.style.width = "100%";
+		crispSelect.setAttribute('id', 'anigenSelectCrisp');
+	
+	var aaTable = build.table([[
+		aaSelect,
+		crispSelect
+	]]);
+	
+	var name;
+	if(svg.svgElement.getAttribute('inkscape:export-filename')) {
+		name = svg.svgElement.getAttribute('inkscape:export-filename');
+		name = name.replace(/^.*[\\\/]/, '');
+	} else {
+		name = svg.fileName;
+	}
+	name = name.replace(/\..{3,4}$/, '.zip');
+	
+	var nameInput = build.input('text', name, { 'id': 'anigenInputName', 'onkeyup': 'var start=this.selectionStart;var finish=this.selectionEnd;var dir=this.selectionDirection;'+nameCheck+'this.setSelectionRange(start, finish, dir);' });
+	
+	var ratioButton = new uiButton([ 'lock_open', 'lock' ], null, [ 'Maintain aspect ratio', 'Disregard aspect ratio' ], {'class': 'md-24', 'state': 1});
+	ratioButton.setAttribute('id', 'anigenInputRatio');
+	var sizeTable = build.table([[
+		build.input('number', svg.svgWidth, { 'id': 'anigenInputWidth', 'min': '0', 'step': 1, 'title': 'Width (px)',
+			'onchange': 'if(document.getElementById("anigenInputRatio").shepherd.state!=1){return;}document.getElementById("anigenInputHeight").value=parseInt(this.value*(svg.svgHeight/svg.svgWidth));'
+		}),
+		ratioButton,
+		build.input('number', svg.svgHeight, { 'id': 'anigenInputHeight', 'min': '0', 'step': 1, 'title': 'Height (px)',
+			'onchange': 'if(document.getElementById("anigenInputRatio").shepherd.state!=1){return;}document.getElementById("anigenInputWidth").value=parseInt(this.value*(svg.svgWidth/svg.svgHeight));'
+		})
+	]]);
 	
 	this.add(build.table([
-		[ "Begin at", build.input('number', '0', { 'id': 'anigenInputBegin' }), build.button("←", { "onclick": "this.parentNode.previousSibling.children[0].value = 0;" }) ],
-		[ "Duration (seconds)", build.input('number', String(anigenManager.classes.editor.clock.maxTime || 10), { 'id': 'anigenInputDur', 'min': '0'}),
-			build.button("←", { "onclick": "this.parentNode.previousSibling.children[0].value = 10;" }) ],
-		[ "Frames per second", build.input('number', '30', { 'id': 'anigenInputFramerate', 'min': '0'}),
+		[ "Begin at (seconds)", build.input('number', beginning, { 'id': 'anigenInputBegin' }), build.button("←", { "onclick": "this.parentNode.previousSibling.children[0].value = "+beginning+";" }) ],
+		[ "Duration (seconds)", build.input('number', duration, { 'id': 'anigenInputDur', 'min': '0', 'onkeyup': nameCheck }),
+			build.button("←", { "onclick": "this.parentNode.previousSibling.children[0].value = "+duration+";" }) ],
+		[ "Frames per second", build.input('number', '30', { 'id': 'anigenInputFramerate', 'min': '0', 'onkeyup': nameCheck }),
 			build.button("←", { "onclick": "this.parentNode.previousSibling.children[0].value = 30;" }) ],
-		[ "Scale (%)", build.input('number', '100', { 'id': 'anigenInputScale', 'min': '0'}),
-			build.button("←", { "onclick": "this.parentNode.previousSibling.children[0].value = 100;" }) ]
+		[ "Export size", sizeTable,
+			build.button("←", { "onclick": "document.getElementById('anigenInputWidth').value=svg.svgWidth;document.getElementById('anigenInputHeight').value=svg.svgHeight;document.getElementById('anigenInputRatio').shepherd.setState(1);" }) ],
+		[ "Output name", nameInput, build.button("←", { "onclick": "this.parentNode.previousSibling.children[0].value = '"+name+"';"+nameCheck }) ],
+		[ "Output type", typeSelect, "" ],
+		[ "Downsampling", aaTable, build.button("←", { "onclick": "document.getElementById('anigenSelectAA').setSelected(0);document.getElementById('anigenSelectCrisp').setSelected(0);" }) ],
+		[ "", [
+			new uiButton(['notifications_off', 'notifications_active'], ['anigenActual.notify=true;', 'anigenActual.notify=false;'], [ 'Notification disabled', 'Notification enabled' ], {'state': anigenActual.notify ? 1 : 0, 'class': 'md-24'}),
+			/*"Notify on finish",*/
+			new uiButton('volume_up', 'anigenActual.bell();', 'Preview', {'class': 'md-24'})
+			], "" ],
+			
 	]));
 	
-	this.addButtonOk("svg.export(document.getElementById('anigenInputBegin').value, document.getElementById('anigenInputDur').value, document.getElementById('anigenInputFramerate').value, parseFloat(document.getElementById('anigenInputScale').value)/100)", true);
+	var okAction = '';
+		okAction += "svg.export(document.getElementById('anigenInputBegin').value,";
+		okAction += "document.getElementById('anigenInputDur').value,";
+		okAction += "document.getElementById('anigenInputFramerate').value,";
+		okAction += "{ 'x': document.getElementById('anigenInputWidth').value/svg.svgWidth, 'y': document.getElementById('anigenInputHeight').value/svg.svgHeight },";
+		okAction += "document.getElementById('anigenSelectType').value,";
+		okAction += "document.getElementById('anigenInputName').value,";
+		okAction += "document.getElementById('anigenSelectAA').value,"
+		okAction += "document.getElementById('anigenSelectCrisp').value == '1');"
+	
+	this.addButtonOk(okAction, true);
 	this.addButtonCancel(null, true);
 	
 	this.show();
+}
+
+overlay.prototype.macroExportBar = function() {
+	this.reset();
+	this.setHeader("Exporting");
+	
+	var progress = new progressBar({ 'id': 'anigenProgressBar' });
+	this.add(progress.container);
+	
+	this.addButtonCancel('svg.svgrender.pause();anigenActual.exporting = false;document.title = svg.fileName + " - aniGen";document.getElementById("svgArea").removeChildren();svg.forceRefresh();', true);
+	
+	this.show();
+	return progress;
 }
 
 overlay.prototype.macroEdit = function(target) {
@@ -473,5 +590,15 @@ overlay.prototype.macroEdit = function(target) {
 	this.show();
 }
 
+overlay.prototype.test = function() {
+	this.reset();
+	this.setHeader("Test");
+	
+	this.add(new splineEditor(240, '.25 .25 .25 1', { 'move': 'console.log(this.value, ":)");' }));
+	
+	this.addButtonOk(null, true);
+
+	this.show();
+}
 
 

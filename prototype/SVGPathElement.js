@@ -16,6 +16,35 @@ SVGPathElement.prototype.getPathData = function() {
 	// baseVal
 	this.pathData.baseVal = new pathSegList();
 	
+	
+	// this works, but it makes the path flicker between static and animated states (TODO)	
+	/*
+	// remove all animations
+	var animArray = [];
+	var nextArray = [];
+	for(var i = 0; i < this.children.length; i++) {
+		if(this.children[i] instanceof SVGAnimateElement && this.children[i].getAttribute('attributeName') == 'd') {
+			nextArray.push(this.children[i].nextElementSibling);
+			animArray.push(this.children[i]);
+		}
+	}
+	for(var i = 0; i < animArray.length; i++) { this.removeChild(animArray[i]); }
+	
+	var path = this.getAttribute('d') || '';
+	
+	// put them back
+	animArray.reverse();
+	nextArray.reverse();
+	for(var i = 0; i < animArray.length; i++) {
+		if(nextArray[i]) {
+			this.insertBefore(animArray[i], nextArray[i]);
+		} else {
+			this.appendChild(animArray[i], nextArray[i]);
+		}
+	}
+	
+	*/
+	
 	var path = this.getAttribute('d') || '';
 	path = path.replace(/,/g, ' ').replace(/^\s+|\s+$/g, '').replace(/\s+/g, ' ');
 	path = path.split(' ');
@@ -346,10 +375,10 @@ SVGPathElement.prototype.inbetween = function(other, ratio) {
 			out.appendItem(pathData.baseVal.getItem(i).inbetween(otherData.baseVal.getItem(i), ratio));
 		} catch(er) {
 			if(ratio <= 0.5) {
-				console.log(er, 'Defaulting to path 1.');
+				console.warn(er, 'Defaulting to path 1.');
 				return pathData.baseVal;
 			} else {
-				console.log(er, 'Defaulting to path 2.');
+				console.warn(er, 'Defaulting to path 2.');
 				return otherData.baseVal;
 			}
 		}
@@ -369,11 +398,17 @@ SVGPathElement.prototype.generateAnchors = function(offset) {
 	var lastH2 = null;
 	
 	var lastM = null;
+	var lastMIndex = null;
+	var firstH1 = null;
+	var firstH1Index = null;
+	var lastH2 = null;
+	var lastH2Index = null;
+	var zCounter = 0;
+	
 	var threshold = 0.01;
 	
 	var pathData = this.getPathData().baseVal;
 	var nodeTypes = this.getAttribute('sodipodi:nodetypes');
-	
 	
 	for(var i = 0; i < pathData.length; i++) {
 		var pData = pathData.arr[i];
@@ -394,22 +429,22 @@ SVGPathElement.prototype.generateAnchors = function(offset) {
 		if(pData.x != null && pData.y != null) {
 			var adjustedXY = CTM.toViewport(pData.x, pData.y);
 			var nodeShape = 'diamond';
-			if(nodeTypes && nodeTypes[i]) {
-				if(nodeTypes[i] == 's') { nodeShape = 'rectangle'; }		// smooth
-				if(nodeTypes[i] == 'z') { nodeShape = 'rectangle'; }		// symmetrical
-				if(nodeTypes[i] == 'a') { nodeShape = 'circle'; }			// auto-smooth
+			if(nodeTypes && nodeTypes[i-zCounter]) {
+				if(nodeTypes[i-zCounter] == 's') { nodeShape = 'rectangle'; }		// smooth
+				if(nodeTypes[i-zCounter] == 'z') { nodeShape = 'rectangle'; }		// symmetrical
+				if(nodeTypes[i-zCounter] == 'a') { nodeShape = 'circle'; }			// auto-smooth
 			}
 			segmentAnchors.point = new anchor({'x': adjustedXY.x, 'y': adjustedXY.y }, this, nodeShape,
 				{ 'move': 'this.element.moveTo('+i+', relative.x, relative.y, true, false, true, true);',
-					'click': 'if(keys.ctrlKey){this.element.cycleNodeType('+i+', true);};' });
+					'click': 'if(keys.ctrlKey){this.element.cycleNodeType('+(i-zCounter)+', true);};svg.select();' });
 		}
 		
 		if(lastPoint && segmentAnchors.handle1) {
-			var constraint = new constraintLinear(lastPoint, segmentAnchors.handle1, false, true);
+			var constraint = new constraintLinear(lastPoint, segmentAnchors.handle1, { 'optional': true });
 			segmentAnchors.handle1.constraint = constraint;
 		}
 		if(segmentAnchors.point && segmentAnchors.handle2) {
-			var constraint = new constraintLinear(segmentAnchors.point, segmentAnchors.handle2, false, true);
+			var constraint = new constraintLinear(segmentAnchors.point, segmentAnchors.handle2, { 'optional': true });
 			segmentAnchors.handle2.constraint = constraint;
 		}
 		
@@ -417,6 +452,14 @@ SVGPathElement.prototype.generateAnchors = function(offset) {
 			switch(j) {
 				case 'point':
 					lastPoint = segmentAnchors[j];
+					
+					if(pData.pathSegTypeAsLetter.toLowerCase() == 'l' || pData.pathSegTypeAsLetter.toLowerCase() == 'z' || 
+						pData.pathSegTypeAsLetter.toLowerCase() == 'h' || pData.pathSegTypeAsLetter.toLowerCase() == 'v') {
+							lastH1 = null;
+							lastH2 = null;
+							break;
+					}
+					
 					if(lastH2) {		// if previous handle 2 exists, it is added to point's children (but action already exists)
 						var slave = new connector(lastPoint, lastH2);
 						lastPoint.addChild(lastH2);
@@ -427,8 +470,14 @@ SVGPathElement.prototype.generateAnchors = function(offset) {
 				case 'handle2':
 					segmentAnchors[j].selectable = false;
 					lastH2 = segmentAnchors[j];
+					lastH2Index = i;
 					break;
 				case 'handle1':
+					if(!firstH1) {
+						firstH1 = segmentAnchors[j];
+						firstH1Index = i;
+					}
+				
 					segmentAnchors[j].selectable = false;
 					var thisPoint = segmentAnchors[j];
 					if(lastPoint) {		// if last point exists, handle 1 is added to its children and to the actions
@@ -437,17 +486,17 @@ SVGPathElement.prototype.generateAnchors = function(offset) {
 						lastPoint.actions.move += 'this.element.moveBy('+(i)+', dRelative.x, dRelative.y, false, true, false, true);';
 						connectors.push(slave);
 					}
-					if(lastH2 && i > 0 && nodeTypes && nodeTypes[i-1]) {		// if last handle2 exists...
-						switch(nodeTypes[i-1]) {
-							case 'a':
-							case 's':
+					if(lastH2 && i > 0 && nodeTypes && nodeTypes[i-1-zCounter]) {		// if last handle2 exists...
+						switch(nodeTypes[i-1-zCounter]) {
+							case 'a':	// auto-smooth
+							case 's':	// smooth
 								lastH2.bound = thisPoint;
 								lastH2.center = lastPoint;
 								thisPoint.bound = lastH2;
 								thisPoint.center = lastPoint;
 								lastH2.actions.moveLocal = thisPoint.actions.moveLocal = 'var angle = this.getAngle()+180;var out = this.bound.setAngle(angle);this.bound.evaluate(out.absolute, out.dAbsolute, out.relative, out.dRelative);'
 								break;
-							case 'z':
+							case 'z':	// symmetrical
 								lastH2.bound = thisPoint;
 								lastH2.center = lastPoint;
 								thisPoint.bound = lastH2;
@@ -455,9 +504,9 @@ SVGPathElement.prototype.generateAnchors = function(offset) {
 								lastH2.actions.moveLocal = thisPoint.actions.moveLocal = 'var distance = { "x": this.x-this.center.x, "y": this.y-this.center.y }; var out = this.bound.setPosition(this.center.x-distance.x, this.center.y-distance.y);this.bound.evaluate(out.absolute, out.dAbsolute, out.relative, out.dRelative);';
 								break;
 						}
-						if(nodeTypes[i-1] == 'a') {
-							lastH2.actions.move += 'this.element.setNodeType('+(i-1)+', "s", true);'
-							thisPoint.actions.move += 'this.element.setNodeType('+(i-1)+', "s", true);'
+						if(nodeTypes[i-1-zCounter] == 'a') {
+							lastH2.actions.move += 'this.element.setNodeType('+(i-1-zCounter)+', "s", true);'
+							thisPoint.actions.move += 'this.element.setNodeType('+(i-1-zCounter)+', "s", true);'
 						}
 					}
 					break;
@@ -472,28 +521,67 @@ SVGPathElement.prototype.generateAnchors = function(offset) {
 		if(!segmentAnchors.point) { lastPoint = null; }
 		if(!segmentAnchors.handle2) { lastH2 = null; }
 		
-		if(pathData.arr[i] instanceof pathSegMoveto) { lastM = segmentAnchors; }
+		
+		
+		if(pathData.arr[i] instanceof pathSegMoveto) {
+			lastMIndex = i;
+			lastM = segmentAnchors;
+			firstH1 = null;
+			firstH1Index = null;
+			lastH2 = null;
+			lastH2Index = null;
+		}
 		
 		// node merger
 		if(pathData.arr[i+1] && pathData.arr[i+1] instanceof pathSegClosepath) {
+			
+			if(nodeTypes && firstH1 && lastH2 && nodeTypes[lastMIndex-zCounter] == nodeTypes[lastH2Index-zCounter] && nodeTypes[lastMIndex-zCounter]) {
+				switch(nodeTypes[lastH2Index-zCounter]) {
+					case 'a':	// auto-smooth
+					case 's':	// smooth
+						lastH2.bound = firstH1;
+						lastH2.center = lastPoint;
+						firstH1.bound = lastH2;
+						firstH1.center = lastPoint;
+						lastH2.actions.moveLocal = firstH1.actions.moveLocal = 'var angle = this.getAngle()+180;var out = this.bound.setAngle(angle);this.bound.evaluate(out.absolute, out.dAbsolute, out.relative, out.dRelative);'
+						break;
+					case 'z':	// symmetrical
+						lastH2.bound = firstH1;
+						lastH2.center = lastPoint;
+						firstH1.bound = lastH2;
+						firstH1.center = lastPoint;
+						lastH2.actions.moveLocal = firstH1.actions.moveLocal = 'var distance = { "x": this.x-this.center.x, "y": this.y-this.center.y }; var out = this.bound.setPosition(this.center.x-distance.x, this.center.y-distance.y);this.bound.evaluate(out.absolute, out.dAbsolute, out.relative, out.dRelative);';
+						break;	
+				}
+			}
+			zCounter++;
+			
+			
 			if(lastM.point && lastPoint && lastM.point != lastPoint && Math.abs(lastM.point.x-lastPoint.x) < threshold && Math.abs(lastM.point.y-lastPoint.y) < threshold) {
 				lastM.point.actions.move += lastPoint.actions.move;
 				lastM.point.actions.click += lastPoint.actions.click;
-				for(var i = 0; i < lastPoint.children.length; i++) {
-					lastM.point.addChild(lastPoint.children[i]);
+				for(var k = 0; k < lastPoint.children.length; k++) {
+					lastM.point.addChild(lastPoint.children[k]);
 				}
-				for(var i = 0; i < lastPoint.connectors.length; i++) {
-					lastPoint.connectors[i].pointA = lastM.point;
-					lastM.point.addConnector(lastPoint.connectors[i]);
+				for(var k = 0; k < lastPoint.connectors.length; k++) {
+					lastPoint.connectors[k].pointA = lastM.point;
+					lastM.point.addConnector(lastPoint.connectors[k]);
 				}
-				for(var i = anchors.length-1; i >= 0; i--) {
-					if(anchors[i] == lastPoint) {
-						anchors.splice(i, 1);
+				for(var k = anchors.length-1; k >= 0; k--) {
+					if(anchors[k] == lastPoint) {
+						anchors.splice(k, 1);
 						break;
 					}
 				}
-				
+				i++;
 			}
+			
+			lastMIndex = null;
+			lastM = null;
+			firstH1 = null;
+			firstH1Index = null;
+			lastH2 = null;
+			lastH2Index = null;
 		}
 	}
 	
@@ -533,6 +621,15 @@ SVGPathElement.prototype.setNodeType = function(index, letter, makeHistory) {
 			nodeTypes += 'c';
 		}
 	}
+	
+	if(!this.pathData) { this.getPathData(); }
+	
+	var zCounter = 0;
+	for(var i = 0; i < index; i++) {
+		if(!this.pathData.baseVal.arr[i]) { return; }
+		if(this.pathData.baseVal.arr[i] instanceof pathSegClosepath) { zCounter++; }
+	}
+	
 	if(index < 0 || index >= nodeTypes.length) { throw new DOMException(1); }
 	nodeTypes = nodeTypes.split('');
 	if(nodeTypes[index] == letter) {
@@ -542,7 +639,7 @@ SVGPathElement.prototype.setNodeType = function(index, letter, makeHistory) {
 	}
 	nodeTypes = nodeTypes.join('');
 	
-	if(!this.pathData) { this.getPathData(); }
+	index += zCounter;
 	
 	var point, handle1, handle2;
 	point = handle2 = this.pathData.baseVal.getItem(index);
@@ -556,53 +653,53 @@ SVGPathElement.prototype.setNodeType = function(index, letter, makeHistory) {
 			}
 		}
 	}
-	if(!point || point.x == null || point.y == null ||
-		!handle1 || handle1.x1 == null || handle1.y1 == null ||
-		!handle2 || handle2.x2 == null || handle2.y2 == null) { return; }
-	
-	switch(letter) {
-		case 'z':		// symetrical
-		case 's':		// smooth
-			var vHandle1 = { 'x': handle1.x1 - point.x, 'y': handle1.y1 - point.y };
-			var vHandle2 = { 'x': handle2.x2 - point.x, 'y': handle2.y2 - point.y };
-			var rHandle1 = Math.sqrt(vHandle1.x*vHandle1.x + vHandle1.y*vHandle1.y);
-			var rHandle2 = Math.sqrt(vHandle2.x*vHandle2.x + vHandle2.y*vHandle2.y);
-			var aHandle1 = Math.atan2(vHandle1.y, vHandle1.x);
-			if(aHandle1 < 0) { aHandle1 += 2*Math.PI; }
-			var aHandle2 = Math.atan2(vHandle2.y, vHandle2.x);
-			if(aHandle2 < 0) { aHandle2 += 2*Math.PI; }
-			var fSwitch = false;
-			var aH1PH2 = aHandle2 >= aHandle1 ? aHandle2 - aHandle1 : aHandle1 - aHandle2;
-			if(aH1PH2 > Math.PI) { aH1PH2 = 2*Math.PI - aH1PH2; fSwitch = !fSwitch; }
-			var aDelta = (Math.PI-aH1PH2)/2;
-			if(fSwitch) {
-				aHandle1 += aDelta;
-				aHandle2 -= aDelta;
-			} else {
-				aHandle1 -= aDelta;
-				aHandle2 += aDelta;
-			}
-			if(letter == 'z') {
-				rHandle1 = rHandle2 = (rHandle1+rHandle2)/2
-			}
-			handle1.x1 = point.x + rHandle1*Math.cos(aHandle1);
-			handle1.y1 = point.y + rHandle1*Math.sin(aHandle1);
-			handle2.x2 = point.x + rHandle2*Math.cos(aHandle2);
-			handle2.y2 = point.y + rHandle2*Math.sin(aHandle2);
-			break;
-		case 'a':		// auto-smooth
-			// TODO: too complex and niche
-			break;
-	}	
-	
-	if(makeHistory && svg && svg.history) {
-		svg.history.add(new historyAttribute(this.id, 
-			{ 'sodipodi:nodetypes': this.getAttribute('sodipodi:nodetypes') },
-			{ 'sodipodi:nodetypes': nodeTypes },	
-			true));;
+	if(point && point.x != null && point.y != null &&
+		handle1 && handle1.x1 != null && handle1.y1 != null &&
+		handle2 && handle2.x2 != null && handle2.y2 != null) {
+		
+		
+		switch(letter) {
+			case 'z':		// symetrical
+			case 's':		// smooth
+				var vHandle1 = { 'x': handle1.x1 - point.x, 'y': handle1.y1 - point.y };
+				var vHandle2 = { 'x': handle2.x2 - point.x, 'y': handle2.y2 - point.y };
+				var rHandle1 = Math.sqrt(vHandle1.x*vHandle1.x + vHandle1.y*vHandle1.y);
+				var rHandle2 = Math.sqrt(vHandle2.x*vHandle2.x + vHandle2.y*vHandle2.y);
+				var aHandle1 = Math.atan2(vHandle1.y, vHandle1.x);
+				if(aHandle1 < 0) { aHandle1 += 2*Math.PI; }
+				var aHandle2 = Math.atan2(vHandle2.y, vHandle2.x);
+				if(aHandle2 < 0) { aHandle2 += 2*Math.PI; }
+				var fSwitch = false;
+				var aH1PH2 = aHandle2 >= aHandle1 ? aHandle2 - aHandle1 : aHandle1 - aHandle2;
+				if(aH1PH2 > Math.PI) { aH1PH2 = 2*Math.PI - aH1PH2; fSwitch = !fSwitch; }
+				var aDelta = (Math.PI-aH1PH2)/2;
+				if(fSwitch) {
+					aHandle1 += aDelta;
+					aHandle2 -= aDelta;
+				} else {
+					aHandle1 -= aDelta;
+					aHandle2 += aDelta;
+				}
+				if(letter == 'z') {
+					rHandle1 = rHandle2 = (rHandle1+rHandle2)/2
+				}
+				handle1.x1 = point.x + rHandle1*Math.cos(aHandle1);
+				handle1.y1 = point.y + rHandle1*Math.sin(aHandle1);
+				handle2.x2 = point.x + rHandle2*Math.cos(aHandle2);
+				handle2.y2 = point.y + rHandle2*Math.sin(aHandle2);
+				break;
+			case 'a':		// auto-smooth
+				// TODO: too complex and niche
+				break;
+		}
 	}
 	
-	this.setAttribute('sodipodi:nodetypes', nodeTypes);
+	if(makeHistory) {
+		this.setAttributeHistory({ 'sodipodi:nodetypes': nodeTypes });
+	} else {
+		this.setAttribute('sodipodi:nodetypes', nodeTypes);
+	}
+	
 	
 	this.setPathData(this.pathData, makeHistory);
 }
@@ -613,7 +710,9 @@ SVGPathElement.prototype.setNodeType = function(index, letter, makeHistory) {
 // TODO: finish autosmooth nodes, currently only
 // 		-> c -> s -> z ->
 SVGPathElement.prototype.cycleNodeType = function(index, makeHistory) {
+	
 	var nodeTypes = this.getAttribute('sodipodi:nodetypes');
+	
 	if(!nodeTypes) {
 		this.getPathData();
 		nodeTypes = "";
@@ -674,16 +773,60 @@ SVGPathElement.prototype.getCenter = function(viewport) {
 	
 	var pathData = this.getPathData();
 	
+	var lastBase;
+	var lastAnim;
+	
+	var CTM = this.getCTMBase();
+	var CTMAnim = this.getCTMAnim();
+	
 	for(var i = 0; i < pathData.baseVal.length; i++) {
-		if(pathData.baseVal.getItem(i).x != null && (xMax == null || xMax < pathData.baseVal.getItem(i).x)) { xMax = pathData.baseVal.getItem(i).x; }
-		if(pathData.baseVal.getItem(i).x != null && (xMin == null || xMin > pathData.baseVal.getItem(i).x)) { xMin = pathData.baseVal.getItem(i).x; }
-		if(pathData.baseVal.getItem(i).y != null && (yMax == null || yMax < pathData.baseVal.getItem(i).y)) { yMax = pathData.baseVal.getItem(i).y; }
-		if(pathData.baseVal.getItem(i).y != null && (yMin == null || yMin > pathData.baseVal.getItem(i).y)) { yMin = pathData.baseVal.getItem(i).y; }
-		if(i < pathData.animVal.length) {
-			if(pathData.animVal.getItem(i).x != null && (xMax_anim == null || xMax_anim < pathData.animVal.getItem(i).x)) { xMax_anim = pathData.animVal.getItem(i).x; }
-			if(pathData.animVal.getItem(i).x != null && (xMin_anim == null || xMin_anim > pathData.animVal.getItem(i).x)) { xMin_anim = pathData.animVal.getItem(i).x; }
-			if(pathData.animVal.getItem(i).y != null && (yMax_anim == null || yMax_anim < pathData.animVal.getItem(i).y)) { yMax_anim = pathData.animVal.getItem(i).y; }
-			if(pathData.animVal.getItem(i).y != null && (yMin_anim == null || yMin_anim > pathData.animVal.getItem(i).y)) { yMin_anim = pathData.animVal.getItem(i).y; }
+		var item = pathData.baseVal.getItem(i);
+		var itemAnim = pathData.animVal.getItem(i);
+		
+		var adjusted;
+		
+		if(item.x != null && item.y != null) {
+			adjusted = viewport ? CTM.toViewport(item.x, item.y) : { 'x': item.x, 'y': item.y };
+			if(xMin == null || xMin > adjusted.x) { xMin = adjusted.x; }
+			if(xMax == null || xMax < adjusted.x) { xMax = adjusted.x; }
+			if(yMin == null || yMin > adjusted.y) { yMin = adjusted.y; }
+			if(yMax == null || yMax < adjusted.y) { yMax = adjusted.y; }
+		}
+		if(item.x1 != null && item.y1 != null) {
+			adjusted = viewport ? CTM.toViewport(item.x1, item.y1) : { 'x': item.x1, 'y': item.y1 };
+			if(xMin == null || xMin > adjusted.x) { xMin = adjusted.x; }
+			if(xMax == null || xMax < adjusted.x) { xMax = adjusted.x; }
+			if(yMin == null || yMin > adjusted.y) { yMin = adjusted.y; }
+			if(yMax == null || yMax < adjusted.y) { yMax = adjusted.y; }
+		}
+		if(item.x2 != null && item.y2 != null) {
+			adjusted = viewport ? CTM.toViewport(item.x2, item.y2) : { 'x': item.x2, 'y': item.y2 };
+			if(xMin == null || xMin > adjusted.x) { xMin = adjusted.x; }
+			if(xMax == null || xMax < adjusted.x) { xMax = adjusted.x; }
+			if(yMin == null || yMin > adjusted.y) { yMin = adjusted.y; }
+			if(yMax == null || yMax < adjusted.y) { yMax = adjusted.y; }
+		}
+		
+		if(itemAnim.x != null && itemAnim.y != null) {
+			adjusted = viewport ? CTMAnim.toViewport(itemAnim.x, itemAnim.y) : { 'x': itemAnim.x, 'y': itemAnim.y };
+			if(xMin_anim == null || xMin_anim > adjusted.x) { xMin_anim = adjusted.x; }
+			if(xMax_anim == null || xMax_anim < adjusted.x) { xMax_anim = adjusted.x; }
+			if(yMin_anim == null || yMin_anim > adjusted.y) { yMin_anim = adjusted.y; }
+			if(yMax_anim == null || yMax_anim < adjusted.y) { yMax_anim = adjusted.y; }
+		}
+		if(itemAnim.x1 != null && itemAnim.y1 != null) {
+			adjusted = viewport ? CTMAnim.toViewport(itemAnim.x1, itemAnim.y1) : { 'x': itemAnim.x1, 'y': itemAnim.y1 };
+			if(xMin_anim == null || xMin_anim > adjusted.x) { xMin_anim = adjusted.x; }
+			if(xMax_anim == null || xMax_anim < adjusted.x) { xMax_anim = adjusted.x; }
+			if(yMin_anim == null || yMin_anim > adjusted.y) { yMin_anim = adjusted.y; }
+			if(yMax_anim == null || yMax_anim < adjusted.y) { yMax_anim = adjusted.y; }
+		}
+		if(itemAnim.x2 != null && itemAnim.y2 != null) {
+			adjusted = viewport ? CTMAnim.toViewport(itemAnim.x2, itemAnim.y2) : { 'x': itemAnim.x2, 'y': itemAnim.y2 };
+			if(xMin_anim == null || xMin_anim > adjusted.x) { xMin_anim = adjusted.x; }
+			if(xMax_anim == null || xMax_anim < adjusted.x) { xMax_anim = adjusted.x; }
+			if(yMin_anim == null || yMin_anim > adjusted.y) { yMin_anim = adjusted.y; }
+			if(yMax_anim == null || yMax_anim < adjusted.y) { yMax_anim = adjusted.y; }
 		}
 	}
 	
@@ -691,17 +834,9 @@ SVGPathElement.prototype.getCenter = function(viewport) {
 	
 	var cx = xMin+(xMax-xMin)/2;
 	var cy = yMin+(yMax-yMin)/2;
-	
 	var cx_anim = xMin_anim+(xMax_anim-xMin_anim)/2;
 	var cy_anim = yMin_anim+(yMax_anim-yMin_anim)/2;
 	
-	if(viewport) {
-		var CTM = this.getCTMBase();
-		var adjusted = CTM.toViewport(cx, cy);
-		var adjusted_anim = CTM.toViewport(cx_anim, cy_anim);
-		return { 'x': adjusted.x, 'y': adjusted.y, 'x_anim': adjusted_anim.x, 'y_anim': adjusted_anim.y,
-			'left': xMin, 'right': xMax, 'top': yMin, 'bottom': yMax };
-	}
 	return { 'x': cx, 'y': cy, 'x_anim': cx_anim, 'y_anim': cy_anim,
 		'left': xMin, 'right': xMax, 'top': yMin, 'bottom': yMax };
 }
@@ -733,6 +868,11 @@ SVGPathElement.prototype.consumeTransform = function(matrixIn) {
 SVGPathElement.prototype.toPath = function() {
 	return this;
 }
+
+SVGPathElement.prototype.isVisualElement = function() { return true; }
+
+
+
 
 /*
 SVGEllipseElement.prototype.getAbsoluteRectangle = function() {

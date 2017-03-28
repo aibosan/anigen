@@ -43,8 +43,6 @@ function time(input) {
 				break;
         }
     }
-	
-	// CONSTRUCTOR ENDS
 }
 
 time.prototype.clone = function() {

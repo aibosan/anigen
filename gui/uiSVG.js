@@ -14,9 +14,10 @@ function uiSVG() {
 	
 	this.target = null;
 	
-	this.selected = [];
 	this.selectedIndexes = [];
 	this.allSelected = false;
+	
+	this.anchorOffset = { 'x': 0, 'y': 0 };
 	
     this.anchors = [];
 	
@@ -40,11 +41,11 @@ uiSVG.prototype.addSelect = function(target) {
 			if(this.selectedIndexes.indexOf(i) != -1) { return; }	// already selected
 			this.selectedIndexes.push(i);
 			this.selectedIndexes.sort();
-			this.selected.push(target);
 			target.select(true);
 			break;
 		}
 	}
+	this.refreshSelection();
 }
 
 uiSVG.prototype.removeSelect = function(target) {
@@ -52,9 +53,6 @@ uiSVG.prototype.removeSelect = function(target) {
 		if(this.anchorContainer.children[i] == target.container) {
 			this.selectedIndexes.splice(this.selectedIndexes.indexOf(i), 1);
 			var index = this.selected.indexOf(target);
-			if(index >= 0) {
-				this.selected.splice(this.selected.indexOf(target), 1);
-			}
 			target.select(false);
 			break;
 		}
@@ -63,12 +61,9 @@ uiSVG.prototype.removeSelect = function(target) {
 }
 
 uiSVG.prototype.clearSelect = function() {
-	for(var i = 0; i < this.selected.length; i++) {
-		this.selected[i].select(false);
-	}
-	this.selected = [];
 	this.selectedIndexes = [];
 	this.allSelected = false;
+	this.refreshSelection();
 }
 
 uiSVG.prototype.selectAll = function() {
@@ -80,19 +75,17 @@ uiSVG.prototype.selectAll = function() {
 	}
 	this.allSelected = true;
 	this.edit(svg.selected);
+	this.refreshSelection();
 }
 
-uiSVG.prototype.rebuildSelect = function(soft) {
-	if(!soft) {
-		for(var i = 0; i < this.anchorContainer.children.length; i++) {
-			this.anchorContainer.children[i].select(false);
-		}
-	}
-	this.selected = [];
-	for(var i = 0; i < this.selectedIndexes.length; i++) {
-		if(this.anchorContainer.children[this.selectedIndexes[i]] && this.anchorContainer.children[this.selectedIndexes[i]].shepherd && typeof this.anchorContainer.children[this.selectedIndexes[i]].shepherd.select === 'function') {
-			this.anchorContainer.children[this.selectedIndexes[i]].shepherd.select(true);
-			this.selected.push(this.anchorContainer.children[this.selectedIndexes[i]].shepherd);
+uiSVG.prototype.refreshSelection = function() {
+	for(var i = 0; i < this.anchorContainer.children.length; i++) {
+		if(!this.anchorContainer.children[i].shepherd || typeof this.anchorContainer.children[i].shepherd.select !== 'function') { continue; }
+		
+		if(this.selectedIndexes.indexOf(i) > -1) {
+			this.anchorContainer.children[i].shepherd.select(true);
+		} else {
+			this.anchorContainer.children[i].shepherd.select(false);
 		}
 	}
 }
@@ -108,9 +101,7 @@ uiSVG.prototype.addAnchor = function(anchor, anchorGroup) {
 	if(this.anchors[anchorGroup] == null) { this.anchors[anchorGroup] = []; }
 	this.anchors[anchorGroup].push(anchor);
 	this.anchorContainer.appendChild(anchor.container || anchor);
-	if(anchor.selectable) {
-		if(anchor.selected) { this.addSelect(anchor); } else { this.removeSelect(anchor); }
-	}
+	
 }
 
 // removes anchor from the UI group
@@ -133,7 +124,8 @@ uiSVG.prototype.clearAnchors = function() {
 
 uiSVG.prototype.setAnchorOffset = function(x, y) {
 	if(x == null || y == null) { return; }
-	this.anchorContainer.setAttribute('transform', 'translate('+x+', '+y+')');
+	this.anchorOffset = { 'x': x, 'y': x };
+	this.anchorContainer.setAttribute('transform', 'translate('+this.anchorOffset.x+', '+this.anchorOffset.y+')');
 }
 
 // removes anchors with (nearly) equal locations, condensing them into a single anchor
@@ -282,17 +274,23 @@ uiSVG.prototype.condenseAnchors = function(anchorGroup) {
 	}
 }
 
-uiSVG.prototype.refresh = function() {
+uiSVG.prototype.refresh = function(hard) {
 	this.putOnTop();
-	this.frame.refresh();
-	if(svg.camera) { svg.camera.adjustZoom(); }
+	if(svg.camera) {
+		svg.camera.adjustZoom();
+	} else {
+		this.frame.refresh();
+	}
 	this.selectionBox.adjustZoom();
 	this.highlight.adjustZoom();
-	if(svg.camera) { svg.camera.adjustZoom(); }
 	for(var i in this.anchors) {
 		for(var j = 0; j < this.anchors[i].length; j++) {
 			if(typeof this.anchors[i][j].adjustZoom === 'function') {
 				this.anchors[i][j].adjustZoom();
+			} else {
+				if(this.anchors[i][j].style) {
+					this.anchors[i][j].style.strokeWidth = 2/(svg.zoom)+'px';
+				}
 			}
 		}
 	}
@@ -301,16 +299,20 @@ uiSVG.prototype.refresh = function() {
 uiSVG.prototype.setContainer = function(container) {
 	this.container = container;
 	this.container.removeChildren();
-	this.container.appendChild(this.selectionBox.container);
 	this.container.appendChild(this.frame.container);
+	
+	
 	this.highlight = new highlight();
 	this.container.appendChild(this.highlight.container);
+	
+	this.container.appendChild(this.selectionBox.container);
 	
 	this.anchorContainer = document.createElementNS(svgNS, "g");
 	this.container.appendChild(this.anchorContainer);
 }
 
 uiSVG.prototype.edit = function(target) {
+	this.setAnchorOffset(0, 0);
 	this.selectionBox.hide();
 	this.highlight.hide();
 	this.clearAnchors();
@@ -320,12 +322,28 @@ uiSVG.prototype.edit = function(target) {
 	}
 	
 	if(this.target != target || target == null) {
-		this.clearSelect();
+		this.selectedIndexes = [];
 	}
 	
+	if(!target) { target = this.target; }
 	this.target = target;
 	
-	this.highlight.setElement(target.element || target);
+	switch(anigenActual.tool) {
+		case 1:
+			this.selectionBox.showArrows();
+			break;
+		case 2:
+			this.selectionBox.hideArrows();
+			this.highlight.setElement(target.element || target);
+			break;
+		case 3:
+			this.selectionBox.hideArrows();
+			break;
+		case 4:
+			this.selectionBox.hideArrows();
+			break;
+	}
+	
 	this.selectionBox.setElement(target.element || target);
 	
 	if(!(target instanceof animationGroup) && (target instanceof SVGSVGElement || target instanceof SVGGElement && target.getAttribute('inkscape:groupmode') == 'layer'
@@ -334,6 +352,9 @@ uiSVG.prototype.edit = function(target) {
 	}
 	
 	if(!target || !(typeof target.generateAnchors === 'function')) { return; }
+	
+	if(anigenActual.tool != 2 && !(anigenActual.tool == 1 && target instanceof SVGAnimationElement)) { return; }
+	
 	var anchorData;
 	
 	anchorData = target.generateAnchors();
@@ -362,9 +383,15 @@ uiSVG.prototype.edit = function(target) {
 		for(var i = 0; i < anchorData.anchors.length; i++) {
 			for(var j = 0; j < anchorData.anchors[i].length; j++) {
 				this.addAnchor(anchorData.anchors[i][j], 2+i);
+				
+				if(anchorData.anchors[i][j].selected) {
+					if(this.selectedIndexes.indexOf(this.anchorContainer.children.length-1) == -1) {
+						this.selectedIndexes.push(this.anchorContainer.children.length-1);
+					}
+				}
 			}
 		}
 	}
+	this.refreshSelection();
 	
-	this.rebuildSelect(true);
 }

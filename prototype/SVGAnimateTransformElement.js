@@ -66,6 +66,8 @@ SVGAnimateTransformElement.prototype.setAngle = function(index, angle) {
 
 SVGAnimateTransformElement.prototype.isInvertible = function() { return true; }
 
+SVGAnimateTransformElement.prototype.isScalable = function() { return true; }
+
 SVGAnimateTransformElement.prototype.generateAnchors = function() {
 	var paths = [];
 	var connectors = [];
@@ -74,7 +76,7 @@ SVGAnimateTransformElement.prototype.generateAnchors = function() {
 	
 	var CTM = this.getCTMBase();
 	
-	var center = this.getCenter(true);
+	var center = this.getCenter(true) || { 'x': 0, 'y': 0 };
 	
 	var mouseUpAction = "svg.select();"
 	
@@ -82,13 +84,35 @@ SVGAnimateTransformElement.prototype.generateAnchors = function() {
 	
 	this.getKeyframes();
 	
+	/*
+	var CTMDynamic = this.parentNode.getCTMAnim();
+	var dX = CTMDynamic.e - CTM.e;
+	var dY = CTMDynamic.f - CTM.f;
+	svg.ui.setAnchorOffset(dX, dY);
+	*/
+	
 	
 	switch(this.getAttribute('type')) {
 		case 'translate':
+			// new but problematic
+			/*
+			if(this.parentNode && this.parentNode instanceof SVGElement) {
+				var newCenter = { 'x': 0, 'y': 0 };
+				if(this.parentNode.parentNode && this.parentNode.parentNode instanceof SVGElement) {
+					newCenter = this.parentNode.parentNode.getPivot(true);
+				} else {
+					newCenter = this.parentNode.getPivot(true);
+				}
+				
+				center = newCenter;
+				
+			}
+			*/
+		
 			connectors = [];
 			anchors = [];
 			
-			//svg.ui.setAnchorOffset(center.x, center.y);
+			// svg.ui.setAnchorOffset(center.x, center.y);
 			
 			var moveAction = "";
 			
@@ -107,7 +131,7 @@ SVGAnimateTransformElement.prototype.generateAnchors = function() {
 				} else {
 					var constraint;
 					if(lastAnchor) {
-						constraint = new constraintLinear({ 'x': adjusted.x+center.x, 'y': adjusted.y+center.y }, { 'x': lastAnchor.x+center.x, 'y': lastAnchor.y+center.y }, false, true);
+						constraint = new constraintLinear({ 'x': adjusted.x+center.x, 'y': adjusted.y+center.y }, { 'x': lastAnchor.x+center.x, 'y': lastAnchor.y+center.y }, { 'optional': true });
 					} else {
 						constraint = new constraintPosition({ 'x': adjusted.x+center.x, 'y': adjusted.y+center.y }, true);
 					}
@@ -119,7 +143,8 @@ SVGAnimateTransformElement.prototype.generateAnchors = function() {
 							}, constraint);
 					newAnchor.setOffset(center.x, center.y);
 					
-					if(anigenManager.classes.windowAnimation.selected.length > 0 && anigenManager.classes.windowAnimation.selected.indexOf(i) != -1) {
+					if(anigenManager.classes.windowAnimation.selected.length > 0 &&
+						anigenManager.classes.windowAnimation.selected.indexOf(i) != -1) {
 						newAnchor.select(true);
 					}
 					
@@ -134,6 +159,9 @@ SVGAnimateTransformElement.prototype.generateAnchors = function() {
 				}
 				
 				if(i == this.keyframes.length-1 && firstAnchor && lastAnchor && firstAnchor != lastAnchor && Math.abs(lastAnchor.x - firstAnchor.x) < threshold && Math.abs(lastAnchor.y - firstAnchor.y) < threshold) {
+					if(lastAnchor.selected) {
+						firstAnchor.select(true);
+					}
 					firstAnchor.addConnector(slave);
 					slave.pointB = firstAnchor;
 					firstAnchor.actions.move += lastAnchor.actions.move;
@@ -150,8 +178,9 @@ SVGAnimateTransformElement.prototype.generateAnchors = function() {
 			anchors = [ anchors ];
 			break;
 		case 'rotate':
+			
 			var initialAngleOffset = this.parentNode.getCTMBase().decompose().rotation;
-							
+			
 			anchors[0] = [];
 			anchors[1] = [];
 			
@@ -167,6 +196,7 @@ SVGAnimateTransformElement.prototype.generateAnchors = function() {
 			
 			for(var i = 0; i < this.keyframes.length; i++) {
 				var adjusted = CTM.toViewport(this.keyframes.getItem(i).value.x, this.keyframes.getItem(i).value.y);
+				
 				var angle = this.keyframes.getItem(i).value.angle - initialAngleOffset;
 				
 				if(lastOrigin && Math.abs(lastOrigin.x - adjusted.x) < threshold && Math.abs(lastOrigin.y - adjusted.y) < threshold) {
@@ -182,6 +212,7 @@ SVGAnimateTransformElement.prototype.generateAnchors = function() {
 							'move': "this.element.setAngle("+i+", this.angle, true);",
 							'mouseup': mouseUpAction
 							});
+							
 						anchors[1].push(handleAnchor);
 						lastHandle = handleAnchor;
 						
@@ -200,7 +231,7 @@ SVGAnimateTransformElement.prototype.generateAnchors = function() {
 					var originConstraint;
 					if(lastOrigin) {
 						var adjustedPrev = CTM.toViewport(this.keyframes.getItem(i-1).value.x, this.keyframes.getItem(i-1).value.y);
-						originConstraint = new constraintLinear({ 'x': adjusted.x+center.x, 'y': adjusted.y+center.y }, { 'x': lastOrigin.x+center.x, 'y': lastOrigin.y+center.y }, false, true);
+						originConstraint = new constraintLinear({ 'x': adjusted.x+center.x, 'y': adjusted.y+center.y }, { 'x': lastOrigin.x+center.x, 'y': lastOrigin.y+center.y }, { 'optional': true });
 					} else {
 						originConstraint = new constraintPosition({ 'x': adjusted.x+center.x, 'y': adjusted.y+center.y }, true);
 					}
@@ -280,7 +311,7 @@ SVGAnimateTransformElement.prototype.generateAnchors = function() {
 			
 			var vectorZero = { 'x': center.x - zero.x, 'y': center.y - zero.y };
 			
-			var zeroAnchor = new anchor({ 'x': zero.x, 'y': zero.y}, this, 'circle',
+			var zeroAnchor = new anchor({ 'x': zero.x, 'y': zero.y}, this, 'cross',
 				{ 'move': "this.element.setZero(absolute.x, absolute.y, true);",
 					'mouseup': mouseUpAction },
 				new constraintPosition(zero, true));
@@ -312,7 +343,7 @@ SVGAnimateTransformElement.prototype.generateAnchors = function() {
 						this, 'rectangle', 
 						{ 'move': "this.element.setPosition("+i+", (absolute.x-("+zero.x+"))/"+vectorZero.x+", (absolute.y-("+zero.y+"))/"+vectorZero.y+", true);",
 						  'mouseup': mouseUpAction },
-						new constraintLinear(zero, center, false, true));
+						new constraintLinear(zero, center, { 'optional': true }));
 					
 					if(lastXY) {
 						var slaveXY = new connector(lastXY, anchXY, '#aa0000');
@@ -367,7 +398,7 @@ SVGAnimateTransformElement.prototype.generateAnchors = function() {
 			center = this.getFarCorner();
 			var zero = CTM.toViewport(0, 0);
 			
-			var zeroAnchor = new anchor({ 'x': zero.x, 'y': zero.y}, this, 'circle',
+			var zeroAnchor = new anchor({ 'x': zero.x, 'y': zero.y}, this, 'cross',
 				{ 'move': "this.element.setZero(absolute.x, absolute.y, true);",
 						  'mouseup': mouseUpAction });
 			//new constraintLinear(zero, { 'x': zero.x, 'y': zero.y+1}));
@@ -404,7 +435,7 @@ SVGAnimateTransformElement.prototype.generateAnchors = function() {
 						this, 'rectangle',
 						{ 'move': 'this.element.setAngle('+i+', 180*Math.atan(('+vectorZero.x+'*(-1)+relative.x-('+zero.x+'))/'+vectorZero.y+')/Math.PI, true);', 
 						  'mouseup': mouseUpAction },
-						new constraintLinear({ 'x': 0, 'y': center.y }, { 'x': 1, 'y': center.y }, false, false));
+						new constraintLinear({ 'x': 0, 'y': center.y }, { 'x': 1, 'y': center.y }));
 					
 					
 					if(lastAnchor) {
@@ -456,7 +487,7 @@ SVGAnimateTransformElement.prototype.generateAnchors = function() {
 			center = this.getFarCorner();
 			var zero = CTM.toViewport(0,0);
 			
-			var zeroAnchor = new anchor({ 'x': zero.x, 'y': zero.y}, this, 'circle',
+			var zeroAnchor = new anchor({ 'x': zero.x, 'y': zero.y}, this, 'cross',
 				{ 'move': "this.element.setZero(absolute.x, absolute.y, true);",
 						  'mouseup': mouseUpAction });
 			//new constraintLinear(zero, { 'x': zero.x+1, 'y': zero.y}));
@@ -493,7 +524,7 @@ SVGAnimateTransformElement.prototype.generateAnchors = function() {
 						this, 'rectangle',
 						{ 'move': 'this.element.setAngle('+i+', 180*Math.atan(('+vectorZero.y+'*(-1)+relative.y-('+zero.y+'))/'+vectorZero.x+')/Math.PI, true);', 
 						  'mouseup': mouseUpAction },
-						new constraintLinear({ 'x': center.x, 'y': 0 }, { 'x': center.x, 'y': 1 }, false, false));
+						new constraintLinear({ 'x': center.x, 'y': 0 }, { 'x': center.x, 'y': 1 }));
 					
 					
 					if(lastAnchor) {
@@ -552,10 +583,6 @@ SVGAnimateTransformElement.prototype.valuesToViewport = function(CTM) {
 			this.setPosition(i, adjusted.x, adjusted.y);
 		}
 	}
-	/*
-	console.log(this.getAttribute('values'));
-	console.log(this.keyframes.getValues());
-	*/
 }
 
 SVGAnimateTransformElement.prototype.valuesToUserspace = function(CTM) {
@@ -569,54 +596,35 @@ SVGAnimateTransformElement.prototype.valuesToUserspace = function(CTM) {
 			this.setPosition(i, adjusted.x, adjusted.y);
 		}
 	}
-	/*
-	console.log(this.getAttribute('values'));
-	console.log(this.keyframes.getValues());
-	*/
 }
 
 
 
 SVGAnimateTransformElement.prototype.getCurrentValue = function(time) {
-	var progress = this.getCurrentProgress(time);
+	var closest = this.getClosest(true, time);
 	
-	this.getKeyframes();
-	var timeBefore, timeAfter;
-	var before, after;
-	
-	for(var i = 0; i < this.keyframes.length; i++) {
-		if(this.keyframes.getItem(i).time == progress) {
-			timeBefore = progress;
-			before = i;
-			break;
-		} else if(this.keyframes.getItem(i).time < progress) {
-			timeBefore = this.keyframes.getItem(i).time;
-			before = i;
-		} else if(timeAfter == null) {
-			timeAfter = this.keyframes.getItem(i).time;
-			after = i;
-			break;
+	if(!closest.running) {
+		if(!closest.previous.frame) {		// hasn't started
+			return null;
+		} else {	// ended already
+			if(this.getAttribute('fill') == 'freeze') {
+				return closest.previous.frame.value;
+			}
+			return null;
 		}
 	}
 	
-	if(timeBefore == progress) {
-		return this.keyframes.getItem(before).value;
-	}
-	if(after == null) {
-		if(this.getAttribute('fill') == 'freeze') {
-			return this.keyframes.getItem(before).value;
-		} else {
-			return null;
-		}	
+	if(closest.closest.frame.time == closest.progress) {
+		return closest.closest.frame.value;
 	}
 	
-	var ratio = (progress-timeBefore)/(timeAfter-timeBefore);
+	var ratio = (closest.progress-closest.previous.frame.time)/(closest.next.frame.time-closest.previous.frame.time);
 	
-	if(this.keyframes.getItem(after).spline) {
-		ratio = this.keyframes.getItem(after).spline.getValue(ratio);
+	if(closest.next.frame.spline) {
+		ratio = closest.next.frame.spline.getValue(ratio);
 	}
 	
-	return this.keyframes.getItem(before).value.inbetween(this.keyframes.getItem(after).value, ratio);
+	return closest.previous.frame.value.inbetween(closest.next.frame.value, ratio);
 }
 
 SVGAnimateTransformElement.prototype.getCurrentValueReadable = function(time, negate) {
@@ -637,6 +645,7 @@ SVGAnimateTransformElement.prototype.getCurrentValueReadable = function(time, ne
 			break;
 		case 'scale':
 			if(negate) {
+				if(value.x == 0 || value.y == 0) { return null; }
 				return 'scale('+(1/value.x)+' '+(1/value.y)+')';
 			}
 			return 'scale('+value.x+' '+value.y+')';

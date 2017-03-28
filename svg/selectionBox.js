@@ -13,6 +13,7 @@ function selectionBox() {
     this.trY = 0;
 
     this.container = document.createElementNS(svgNS, "g");
+	this.container.setAttribute("shape-rendering", "crispEdges");
     this.container.setAttribute("anigen:lock", "interface");
     this.container.setAttribute("id", "anigenSelectionBox");
 
@@ -21,45 +22,62 @@ function selectionBox() {
     this.container.appendChild(this.rect1);
     this.container.appendChild(this.rect2);
 
+	this.containerArrows = document.createElementNS(svgNS, 'g');
+	this.container.appendChild(this.containerArrows);
+	
     this.rect1.setAttribute("anigen:lock", "interface");
     this.rect2.setAttribute("anigen:lock", "interface");
 
-    this.rect1.setAttribute("style", "stroke-linecap:round;fill:none;stroke-opacity:0.5;stroke:#ffffff");
-    this.rect2.setAttribute("style", "stroke-linecap:round;fill:none;stroke:#000000");
+    this.rect1.setAttribute("style", "stroke-linecap:butt;fill:none;stroke:#fff");
+    this.rect2.setAttribute("style", "stroke-linecap:butt;fill:none;stroke:#000");
 
 	this.arrows = [];
+	this.origin = null;
+	
+	this.arrowsHidden = false;
 	
 	this.showRotation = false;
 }
 
 selectionBox.prototype.isHidden = function() {
-	return this.container.getAttribute("display") == "none";
+	return this.container.style.display == "none";
 }
 selectionBox.prototype.hide = function() {
-	this.container.setAttribute("display", "none");
+	this.container.style.display = "none";
 }
 selectionBox.prototype.show = function() {
-	this.container.removeAttribute("display");
+	this.container.style.display = null;
 }
 
-selectionBox.prototype.userspaceToInitial = function(inX, inY, CTM) {
-	var inMatrix = svg.svgElement.createSVGMatrix();
-	inMatrix.a = 0; inMatrix.d = 0; inMatrix.e = inX; inMatrix.f = inY;
-	var outMatrix = CTM.multiply(inMatrix);
-	return { 
-		x: (outMatrix.e)/svg.zoom+svg.viewBox.x,
-		y: (outMatrix.f)/svg.zoom+svg.viewBox.y
-	};
+selectionBox.prototype.isArrowsHidden = function() {
+	return this.arrowsHidden;
+}
+selectionBox.prototype.hideArrows = function() {
+	for(var i = 0; i < this.arrows.length; i++) {
+		this.arrows[i].container.style.display = 'none';
+	}
+	this.arrowsHidden = true;
+}
+selectionBox.prototype.showArrows = function() {
+	for(var i = 0; i < this.arrows.length; i++) {
+		this.arrows[i].container.style.display = null;
+	}
+	this.arrowsHidden = false;
 }
 
 selectionBox.prototype.adjustZoom = function() {
-	this.rect1.setAttribute("stroke-dasharray", (6/svg.zoom)+","+(4/svg.zoom));
-	this.rect2.setAttribute("stroke-dasharray", (6/svg.zoom)+","+(4/svg.zoom));
-	this.rect1.setAttribute("stroke-width", 3/svg.zoom+"px");
+	this.rect1.setAttribute("stroke-dasharray", (5/svg.zoom)+","+(5/svg.zoom));
+	this.rect2.setAttribute("stroke-dasharray", (5/svg.zoom)+","+(5/svg.zoom));
+	
+	this.rect2.setAttribute("stroke-dashoffset", (-5/svg.zoom));
+	
+	
+	this.rect1.setAttribute("stroke-width", 1/svg.zoom+"px");
 	this.rect2.setAttribute("stroke-width", 1/svg.zoom+"px");
 	for(var i = 0; i < this.arrows.length; i++) {
 		this.arrows[i].adjustZoom();
 	}
+	if(this.origin) { this.origin.adjustZoom(); }
 }
 
 selectionBox.prototype.getCenter = function() {
@@ -67,7 +85,7 @@ selectionBox.prototype.getCenter = function() {
 }
 
 selectionBox.prototype.setElement = function(element) {
-	if(!element || !(typeof element.getBBox === 'function') || element instanceof animatedViewbox) {
+	if(!element) {
 		this.element = null;
 		return;
 	}
@@ -79,30 +97,54 @@ selectionBox.prototype.setElement = function(element) {
 }
 
 selectionBox.prototype.refresh = function() {
-	if(!this.element || !(typeof this.element.getBBox === 'function')) { return; }
-	var CTM = this.element.getCTM();
-	var bbox = this.element.getBBox();
-	this.setArea(bbox, CTM);
-}
-
-
-selectionBox.prototype.setArea = function(area, CTM) {
-	if(CTM == null) { CTM = svg.svgElement.createSVGMatrix(); }
-	if(area == null) { return; }
-
-	var tl = this.userspaceToInitial(area.x, area.y, CTM);
-	var tr = this.userspaceToInitial(area.x+area.width, area.y, CTM);
-	var br = this.userspaceToInitial(area.x+area.width, area.y+area.height, CTM);
-	var bl = this.userspaceToInitial(area.x, area.y+area.height, CTM);
-
-	this.blX = Math.min(tl.x, tr.x, br.x, bl.x);
-	this.trX = Math.max(tl.x, tr.x, br.x, bl.x);
-	this.blY = Math.min(tl.y, tr.y, br.y, bl.y);
-	this.trY = Math.max(tl.y, tr.y, br.y, bl.y);
-
+	if(!this.element || this.element == svg.svgElement || this.element instanceof SVGDefsElement) {
+		this.element = null;
+		return;
+	}
+	
+	if(anigenActual.tool != 1 || this.element.shepherd instanceof animatedViewbox) {
+		this.hideArrows();
+	} else {
+		this.showArrows();
+	}
+	
+	
+	/*
+	if(typeof this.element.getCenter === 'function' && this.element.getCenter(true)) {
+		// this is too expensive
+		var center = this.element.getCenter(true);
+		this.blX = center.left_anim != null ? center.left_anim : center.left;
+		this.trX = center.right_anim != null ? center.right_anim : center.right;
+		this.blY = center.top_anim != null ? center.top_anim : center.top;
+		this.trY = center.bottom_anim != null ? center.bottom_anim : center.bottom;
+	} else
+	*/
+		if(typeof this.element.getBBox === 'function') {	// .getCenter doesn't work properly, and I'm not finding out why now
+		// bbox fallback
+		var CTM = this.element.getCTM();
+		var area = this.element.getBBox();
+		if(!CTM) { return; }
+		
+		var tl = CTM.toViewport(area.x, area.y);
+		var tr = CTM.toViewport(area.x+area.width, area.y);
+		var br = CTM.toViewport(area.x+area.width, area.y+area.height);
+		var bl = CTM.toViewport(area.x, area.y+area.height);
+		
+		this.blX = Math.min(tl.x, tr.x, br.x, bl.x)/svg.zoom+svg.viewBox.x;
+		this.trX = Math.max(tl.x, tr.x, br.x, bl.x)/svg.zoom+svg.viewBox.x;
+		this.blY = Math.min(tl.y, tr.y, br.y, bl.y)/svg.zoom+svg.viewBox.y;
+		this.trY = Math.max(tl.y, tr.y, br.y, bl.y)/svg.zoom+svg.viewBox.y;
+	} else {
+		// all is lost
+		this.element = null;
+		return;
+	}
+	
 	this.container.removeChildren();
 	this.container.appendChild(this.rect1);
 	this.container.appendChild(this.rect2);
+	this.containerArrows.removeChildren();
+	this.container.appendChild(this.containerArrows);
 	
 	this.adjustZoom();
 
@@ -111,35 +153,128 @@ selectionBox.prototype.setArea = function(area, CTM) {
 	
 	this.arrows = [];
 	
-	// rotation
-	if(this.showRotation) {
-		this.arrows.push(new arrow({'x': this.trX, 'y': this.blY}, this.element, 'rotate', 1, {'x': this.trX+(this.blX-this.trX)/2, 'y': this.blY+(this.trY-this.blY)/2}, { 'move': 'svg.ui.selectionBox.hide();svg.rotate(this.element, angle, this.origin, true);'}, new constraintDistance({'x': this.trX+(this.blX-this.trX)/2, 'y': this.blY+(this.trY-this.blY)/2}, Math.sqrt((this.blX-this.trX)*(this.blX-this.trX)/4+(this.trY-this.blY)*(this.trY-this.blY)/4))));
-		this.arrows.push(new arrow({'x': this.blX, 'y': this.blY}, this.element, 'rotate', 2, {'x': this.trX+(this.blX-this.trX)/2, 'y': this.blY+(this.trY-this.blY)/2}, { 'move': 'svg.ui.selectionBox.hide();svg.rotate(this.element, angle, this.origin, true);'}, new constraintDistance({'x': this.trX+(this.blX-this.trX)/2, 'y': this.blY+(this.trY-this.blY)/2}, Math.sqrt((this.blX-this.trX)*(this.blX-this.trX)/4+(this.trY-this.blY)*(this.trY-this.blY)/4))));
-		this.arrows.push(new arrow({'x': this.blX, 'y': this.trY}, this.element, 'rotate', 3, {'x': this.trX+(this.blX-this.trX)/2, 'y': this.blY+(this.trY-this.blY)/2}, { 'move': 'svg.ui.selectionBox.hide();svg.rotate(this.element, angle, this.origin, true);'}, new constraintDistance({'x': this.trX+(this.blX-this.trX)/2, 'y': this.blY+(this.trY-this.blY)/2}, Math.sqrt((this.blX-this.trX)*(this.blX-this.trX)/4+(this.trY-this.blY)*(this.trY-this.blY)/4))));
-		this.arrows.push(new arrow({'x': this.trX, 'y': this.trY}, this.element, 'rotate', 4, {'x': this.trX+(this.blX-this.trX)/2, 'y': this.blY+(this.trY-this.blY)/2}, { 'move': 'svg.ui.selectionBox.hide();svg.rotate(this.element, angle, this.origin, true);'}, new constraintDistance({'x': this.trX+(this.blX-this.trX)/2, 'y': this.blY+(this.trY-this.blY)/2}, Math.sqrt((this.blX-this.trX)*(this.blX-this.trX)/4+(this.trY-this.blY)*(this.trY-this.blY)/4))));
-		
-		/*
-		// skewing
-		this.arrows.push(new arrow({'x': this.trX+(this.blX-this.trX)/2, 'y': this.blY}, this.element, 'scaleH', 1.5));
-		this.arrows.push(new arrow({'x': this.blX, 'y': this.blY+(this.trY-this.blY)/2}, this.element, 'scaleH', 2.5));
-		this.arrows.push(new arrow({'x': this.trX+(this.blX-this.trX)/2, 'y': this.trY}, this.element, 'scaleH', 3.5));
-		this.arrows.push(new arrow({'x': this.trX, 'y': this.blY+(this.trY-this.blY)/2}, this.element, 'scaleH', 4.5));
-		*/
+	if(this.arrowsHidden) {
+		this.containerArrows.style.display = 'none';
+		return;
 	} else {
-		// scaling
-		this.arrows.push(new arrow({'x': this.trX, 'y': this.blY}, this.element, 'scaleD', 1, {'x': this.blX, 'y': this.trY}, { 'move': 'svg.ui.selectionBox.hide();svg.scale(this.element, ratio, this.origin, true);'}));
-		this.arrows.push(new arrow({'x': this.blX, 'y': this.blY}, this.element, 'scaleD', 2, {'x': this.trX, 'y': this.trY}, { 'move': 'svg.ui.selectionBox.hide();svg.scale(this.element, ratio, this.origin, true);'}));
-		this.arrows.push(new arrow({'x': this.blX, 'y': this.trY}, this.element, 'scaleD', 3, {'x': this.trX, 'y': this.blY}, { 'move': 'svg.ui.selectionBox.hide();svg.scale(this.element, ratio, this.origin, true);'}));
-		this.arrows.push(new arrow({'x': this.trX, 'y': this.trY}, this.element, 'scaleD', 4, {'x': this.blX, 'y': this.blY}, { 'move': 'svg.ui.selectionBox.hide();svg.scale(this.element, ratio, this.origin, true);'}));
-		
-		this.arrows.push(new arrow({'x': this.trX+(this.blX-this.trX)/2, 'y': this.blY}, this.element, 'scaleV', 1.5, {'x': this.trX+(this.blX-this.trX)/2, 'y': this.trY}, { 'move': 'svg.ui.selectionBox.hide();svg.scale(this.element, {"x": 1, "y": ratio.y }, this.origin, true);'}));
-		this.arrows.push(new arrow({'x': this.blX, 'y': this.blY+(this.trY-this.blY)/2}, this.element, 'scaleV', 2.5, {'x': this.trX, 'y': this.blY+(this.trY-this.blY)/2}, { 'move': 'svg.ui.selectionBox.hide();svg.scale(this.element, {"x": ratio.x, "y": 1 }, this.origin, true);'}));
-		this.arrows.push(new arrow({'x': this.trX+(this.blX-this.trX)/2, 'y': this.trY}, this.element, 'scaleV', 3.5, {'x': this.trX+(this.blX-this.trX)/2, 'y': this.blY}, { 'move': 'svg.ui.selectionBox.hide();svg.scale(this.element, {"x": 1, "y": ratio.y }, this.origin, true);'}));
-		this.arrows.push(new arrow({'x': this.trX, 'y': this.blY+(this.trY-this.blY)/2}, this.element, 'scaleV', 4.5, {'x': this.blX, 'y': this.blY+(this.trY-this.blY)/2}, { 'move': 'svg.ui.selectionBox.hide();svg.scale(this.element, {"x": ratio.x, "y": 1 }, this.origin, true);'}));
+		this.containerArrows.style.display = null;
 	}
 	
-	for(var i = 0; i < this.arrows.length; i++) {
-		this.container.appendChild(this.arrows[i].container);
+	var origin = {'x': this.trX+(this.blX-this.trX)/2, 'y': this.blY+(this.trY-this.blY)/2};
+	var originBase = {'x': this.trX+(this.blX-this.trX)/2, 'y': this.blY+(this.trY-this.blY)/2};	// for further use
+	
+	//Inkscape's pivot is absolute coordinates in relation to the center of the element.
+	if(this.element.getAttribute('inkscape:transform-center-x') && !isNaN(this.element.getAttribute('inkscape:transform-center-x'))) {
+		origin.x += parseFloat(this.element.getAttribute('inkscape:transform-center-x'));
 	}
+	if(this.element.getAttribute('inkscape:transform-center-y') && !isNaN(this.element.getAttribute('inkscape:transform-center-y'))) {
+		origin.y += parseFloat(this.element.getAttribute('inkscape:transform-center-y'));
+	}
+	
+	var mouseUpAction = 'svg.select();';
+	
+	
+	if(!this.origin || this.origin.element != this.element) {
+		this.origin = new anchor(origin, this.element, 'cross',
+			/*{ 	'move': "this.element.setPivot(absolute.x-"+originBase.x+", absolute.y-"+originBase.y+", true);",*/
+			{ 	'move': "this.element.setPivot(absolute.x, absolute.y, true, true);",
+				'mouseup': mouseUpAction },
+			new constraintPosition(originBase, true));
+			this.origin.selectable = false;
+	}
+	
+	if(this.showRotation) {
+		if(window.event && window.event.shiftKey) {
+			this.origin.hide();
+		} else {
+			this.origin.show();
+		}
+	} else {
+		if(window.event && window.event.shiftKey) {
+			this.origin.show();
+		} else {
+			this.origin.hide();
+		}
+	}
+	
+	var pos = {
+		'topRight': {'x': this.trX, 'y': this.trY}, 'topLeft': {'x': this.blX, 'y': this.trY},
+		'botRight': {'x': this.trX, 'y': this.blY}, 'botLeft': {'x': this.blX, 'y': this.blY},
+		'topMid': {'x': this.trX+(this.blX-this.trX)/2, 'y': this.trY},
+		'botMid': {'x': this.trX+(this.blX-this.trX)/2, 'y': this.blY},
+		'midLeft': {'x': this.blX, 'y': this.trY+(this.blY-this.trY)/2 },
+		'midRight': {'x': this.trX, 'y': this.trY+(this.blY-this.trY)/2 },
+		'center': {'x': this.trX+(this.blX-this.trX)/2, 'y': this.trY+(this.blY-this.trY)/2 }
+	};
+	
+	
+	
+	// rotation
+	if(this.showRotation) {
+		this.arrows.push(new arrow(pos.botRight, this.element, 'rotate', 1, origin,
+			{ 'move': 'svg.rotate(this.element, {"x": absolute.x, "y": absolute.y, "dX": dAbsolute.x, "dY": dAbsolute.y}, keys.shiftKey, true);', 'mouseup': mouseUpAction }));
+		
+		this.arrows.push(new arrow(pos.botLeft, this.element, 'rotate', 2, origin,
+			{ 'move': 'svg.rotate(this.element, {"x": absolute.x, "y": absolute.y, "dX": dAbsolute.x, "dY": dAbsolute.y}, keys.shiftKey, true);', 'mouseup': mouseUpAction }));
+		
+		this.arrows.push(new arrow(pos.topLeft, this.element, 'rotate', 3, origin,
+			{ 'move': 'svg.rotate(this.element, {"x": absolute.x, "y": absolute.y, "dX": dAbsolute.x, "dY": dAbsolute.y}, keys.shiftKey, true);', 'mouseup': mouseUpAction }));
+		
+		this.arrows.push(new arrow(pos.topRight, this.element, 'rotate', 4, origin,
+			{ 'move': 'svg.rotate(this.element, {"x": absolute.x, "y": absolute.y, "dX": dAbsolute.x, "dY": dAbsolute.y}, keys.shiftKey, true);', 'mouseup': mouseUpAction }));
+		
+		// skewing
+		this.arrows.push(new arrow(pos.botMid, this.element, 'scaleH', 1.5, pos.center,
+			{ 'move': 'svg.skew(this.element, true, {"origin": this.origin, "x": absolute.x, "y": absolute.y, "dX": dAbsolute.x, "dY": dAbsolute.y}, keys.shiftKey, true);', 'mouseup': mouseUpAction },
+			new constraintLinear(pos.botLeft, pos.botRight)));
+			
+		this.arrows.push(new arrow(pos.midLeft, this.element, 'scaleV', 2.5, pos.center,
+			{ 'move': 'svg.skew(this.element, false, {"origin": this.origin, "x": absolute.x, "y": absolute.y, "dX": dAbsolute.x, "dY": dAbsolute.y}, keys.shiftKey, true);', 'mouseup': mouseUpAction },
+			new constraintLinear(pos.topLeft, pos.botLeft)));
+			
+		this.arrows.push(new arrow(pos.topMid, this.element, 'scaleH', 3.5, pos.center,
+			{ 'move': 'svg.skew(this.element, true, {"origin": this.origin, "x": absolute.x, "y": absolute.y, "dX": dAbsolute.x, "dY": dAbsolute.y}, keys.shiftKey, true);', 'mouseup': mouseUpAction },
+			new constraintLinear(pos.topLeft, pos.topRight)));
+			
+		this.arrows.push(new arrow(pos.midRight, this.element, 'scaleV', 4.5, pos.center,
+			{ 'move': 'svg.skew(this.element, false, {"origin": this.origin, "x": absolute.x, "y": absolute.y, "dX": dAbsolute.x, "dY": dAbsolute.y}, keys.shiftKey, true);', 'mouseup': mouseUpAction },
+			new constraintLinear(pos.topRight, pos.botRight)));
+		
+	} else {
+		// scaling
+		this.arrows.push(new arrow(pos.botRight, this.element, 'scaleD', 1, pos.topLeft,
+			{ 'move': 'svg.scale(this.element, {"origin": this.origin, "x": absolute.x, "y": absolute.y, "dX": dAbsolute.x, "dY": dAbsolute.y}, !keys.shiftKey, true);', 'mouseup': mouseUpAction },
+			new constraintLinear(pos.botRight, origin, { 'optional': true }) ));
+			
+		this.arrows.push(new arrow(pos.botLeft, this.element, 'scaleD', 2, pos.topRight,
+			{ 'move': 'svg.scale(this.element, {"origin": this.origin, "x": absolute.x, "y": absolute.y, "dX": dAbsolute.x, "dY": dAbsolute.y}, !keys.shiftKey, true);', 'mouseup': mouseUpAction },
+			new constraintLinear(pos.botLeft, origin, { 'optional': true }) ));
+			
+		this.arrows.push(new arrow(pos.topLeft, this.element, 'scaleD', 3, pos.botRight,
+			{ 'move': 'svg.scale(this.element, {"origin": this.origin, "x": absolute.x, "y": absolute.y, "dX": dAbsolute.x, "dY": dAbsolute.y}, !keys.shiftKey, true);', 'mouseup': mouseUpAction },
+			new constraintLinear(pos.topLeft, origin, { 'optional': true }) ));
+			
+		this.arrows.push(new arrow(pos.topRight, this.element, 'scaleD', 4, pos.botLeft,
+			{ 'move': 'svg.scale(this.element, {"origin": this.origin, "x": absolute.x, "y": absolute.y, "dX": dAbsolute.x, "dY": dAbsolute.y}, !keys.shiftKey, true);', 'mouseup': mouseUpAction },
+			new constraintLinear(pos.topRight, origin, { 'optional': true }) ));
+		
+		this.arrows.push(new arrow(pos.botMid, this.element, 'scaleV', 1.5, pos.topMid,
+			{ 'move': 'svg.scale(this.element, {"origin": this.origin, "x": absolute.x, "y": absolute.y, "dX": 0, "dY": dAbsolute.y}, !keys.shiftKey, true);', 'mouseup': mouseUpAction }));
+			
+		this.arrows.push(new arrow(pos.midLeft, this.element, 'scaleH', 2.5, pos.midRight,
+			{ 'move': 'svg.scale(this.element, {"origin": this.origin, "x": absolute.x, "y": absolute.y, "dX": dAbsolute.x, "dY": 0}, !keys.shiftKey, true);', 'mouseup': mouseUpAction }));
+			
+		this.arrows.push(new arrow(pos.topMid, this.element, 'scaleV', 3.5, pos.botMid,
+			{ 'move': 'svg.scale(this.element, {"origin": this.origin, "x": absolute.x, "y": absolute.y, "dX": 0, "dY": dAbsolute.y}, !keys.shiftKey, true);', 'mouseup': mouseUpAction }));
+			
+		this.arrows.push(new arrow(pos.midRight, this.element, 'scaleH', 4.5, pos.midLeft,
+			{ 'move': 'svg.scale(this.element, {"origin": this.origin, "x": absolute.x, "y": absolute.y, "dX": dAbsolute.x, "dY": 0}, !keys.shiftKey, true);', 'mouseup': mouseUpAction }));
+	}
+	
+	
+	for(var i = 0; i < this.arrows.length; i++) {
+		this.containerArrows.appendChild(this.arrows[i].container);
+	}
+	if(this.origin) { this.containerArrows.appendChild(this.origin.container); }
 	
 }

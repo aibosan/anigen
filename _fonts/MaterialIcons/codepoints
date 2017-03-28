@@ -758,7 +758,7 @@ shuffle e043
 signal_cellular_4_bar e1c8
 signal_cellular_connected_no_internet_4_bar e1cd
 signal_cellular_no_sim e1ce
-signal_cellular_null e1cf
+flip e1cf
 signal_cellular_off e1d0
 signal_wifi_4_bar e1d8
 signal_wifi_4_bar_lock e1d9

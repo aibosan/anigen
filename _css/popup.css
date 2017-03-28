@@ -5,14 +5,28 @@
 	box-shadow: 0px 2px 4px #999;
 	border-radius: 5px;
 	z-index: 209;
-	padding: .5ex;
+	padding: 1ex;
 	transition: opacity 0.2s;
 }
 
 .popup > div {
 	border-radius: 5px;
+	background-color: #fbfbfb;
 	/*overflow: hidden;*/
 }
+
+.popup.draggable > div * {
+	cursor: auto;
+}
+
+.popup.draggable {
+	cursor: pointer;
+}
+
+.popup.draggable > div {
+	cursor: pointer;
+}
+
 
 .popup *:not(table):not(tr):not(i) {
 	vertical-align: middle;
@@ -33,6 +47,12 @@
 
 .popup button.black {
 	margin-left: 1ex;
+}
+
+.popup button.middle {
+	border-radius: 0px;
+	margin-left: 0px;
+	margin-right: 0px;
 }
 
 .popup input {
@@ -83,4 +103,10 @@
 
 .popup-menu td {
 	/*padding: .5ex;*/
+}
+
+.popup-menu td:nth-child(3) {
+	text-align: right;
+	opacity: 0.5;
+	margin-left: 1em;
 }

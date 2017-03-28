@@ -20,14 +20,33 @@ function angle() {
 		if(typeof arguments[1] === 'number') { this.x = arguments[1]; }
 		if(typeof arguments[2] === 'number') { this.y = arguments[2]; }
 	}
+	
+	if((this.angle == null && this.x == null && this.y == null) ||
+		isNaN(this.angle) || isNaN(this.x) || isNaN(this.y)) {
+		this.invalid = true;
+	}
 }
 
 angle.prototype.isInvertible = function() {
 	return true;
 }
 
+angle.prototype.isScalable = function() {
+	return true;
+}
+
 angle.prototype.invert = function() {
 	if(this.angle != null) { this.angle *= -1; }
+}
+
+angle.prototype.scale = function(factor) {
+	if(typeof factor === 'number') {
+		if(this.angle != null) { this.angle *= factor; }
+	} else {
+		if(this.x != null) { this.x *= factor.x; }
+		if(this.y != null) { this.y *= factor.y; }
+		if(this.angle != null) { this.angle *= factor.angle; }
+	}
 }
 
 angle.prototype.toString = function() {

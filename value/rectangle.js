@@ -17,6 +17,11 @@ function rectangle(input) {
     if(input.length >= 2 && !isNaN(input[1])) { this.y = parseFloat(input[1]); }
 	if(input.length >= 1 && !isNaN(input[2])) { this.width = parseFloat(input[2]); }
     if(input.length >= 2 && !isNaN(input[3])) { this.height = parseFloat(input[3]); }
+	
+	if(this.height == null && this.width == null && this.x == null && this.y == null) {
+		this.invalid = true;
+	}
+	
 }
 
 rectangle.prototype.invert = function() {

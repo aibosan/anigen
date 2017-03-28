@@ -10,16 +10,20 @@ function settings() {
 		'colors': false,
 		'keyframes': false,
 		'layers': false,
+		'bottom': true,
 		
 		'highlight': true,
 		'progressCurve': false,
 		'nodes': true,
 		'canvasFrame': true,
 		'rulers': true,
+		'previewAutorefresh': false,
+		'selectionboxAutorefresh': true,
 		
 		'windowsWidth': 256,
 		'treeWidth': 256,
-		'timelineHeight': 96
+		'timelineHeight': 96,
+		'bottomHeight': 24
 	}
 }
 
@@ -41,7 +45,14 @@ settings.prototype.loadData = function() {
 	this.data.progressCurve = data[8] && data[8] != '0' ? true : false;
 	this.data.nodes = data[9] && data[9] != '1' ? false : true;
 	this.data.canvasFrame = data[10] && data[10] != '1' ? false : true;
-	this.data.canvasFrame = data[11] && data[11] != '1' ? false : true;
+	this.data.rulers = data[11] && data[11] != '1' ? false : true;
+	
+	this.data.previewAutorefresh = data[12] && data[12] != '0' ? true : false;
+	this.data.selectionboxAutorefresh = data[13] && data[13] != '1' ? false : true;
+	
+	this.data.bottom = data[14] && data[14] != '1' ? false : true;
+	
+	this.data.bottomHeight = parseInt(data[15]);
 	
 	if(this.data.windowsWidth > window.innerWidth/2) { this.data.windowsWidth = window.innerWidth/2; }
 	if(this.data.treeWidth > window.innerWidth/2) { this.data.treeWidth = window.innerWidth/2; }
@@ -63,7 +74,13 @@ settings.prototype.saveData = function() {
 		(this.data.progressCurve ? '1' : '0'),
 		(this.data.nodes ? '1' : '0'),
 		(this.data.canvasFrame ? '1' : '0'),
-		(this.data.rulers ? '1' : '0')
+		(this.data.rulers ? '1' : '0'),
+		
+		(this.data.previewAutorefresh ? '1' : '0'),
+		(this.data.selectionboxAutorefresh ? '1' : '0'),
+		
+		(this.data.bottom ? '1' : '0'),
+		this.data.bottomHeight
 	];
 		
 	setData('anigenSettings', serialized.join(';'));
@@ -81,11 +98,14 @@ settings.prototype.set = function(data, value) {
 settings.prototype.evaluateOverlay = function(table) {
 	table = table || overlay.content.children[0];
 	
-	this.set("highlight", table.children[0].children[1].children[0].checked);
-	this.set("progressCurve", table.children[1].children[1].children[0].checked);
-	this.set("nodes", table.children[2].children[1].children[0].checked);
-	this.set("canvasFrame", table.children[3].children[1].children[0].checked);
-	this.set("rulers", table.children[4].children[1].children[0].checked);
+	this.set("highlight", table.children[0].children[1].children[0].shepherd.state == 1);
+	this.set("progressCurve", table.children[1].children[1].children[0].shepherd.state == 1);
+	this.set("nodes", table.children[2].children[1].children[0].shepherd.state == 1);
+	this.set("canvasFrame", table.children[3].children[1].children[0].shepherd.state == 1);
+	this.set("rulers", table.children[4].children[1].children[0].shepherd.state == 1);
+	
+	this.set("previewAutorefresh", table.children[5].children[1].children[0].shepherd.state == 1);
+	this.set("selectionboxAutorefresh", table.children[6].children[1].children[0].shepherd.state == 1);
 	
 	if(svg && svg.ui) {
 		svg.ui.edit(svg.selected);
@@ -94,6 +114,14 @@ settings.prototype.evaluateOverlay = function(table) {
 }
 
 settings.prototype.apply = function() {
+	if(this.data.bottom) { 
+		anigenManager.named.bottom.show();
+		anigenManager.classes.context.buttons.log.setState(1);
+	} else {
+		anigenManager.named.bottom.hide();
+		anigenManager.classes.context.buttons.log.setState(0);
+	}
+	
 	if(this.data.tree) { 
 		anigenManager.named.left.show();
 		anigenManager.classes.context.buttons.tree.setState(1);
@@ -144,5 +172,10 @@ settings.prototype.apply = function() {
 	}
 	
 	anigenManager.named.left.setWidth(this.data.treeWidth);
-	anigenManager.named.right.setWidth(this.data.windowsWidth);
+	anigenManager.named.right.setX(window.innerWidth - this.data.windowsWidth);
+	
+	anigenManager.named.bottom.setY(window.innerHeight - this.data.bottomHeight);
+	anigenManager.named.bottom.refresh();
+	
+	anigenManager.refresh();
 }

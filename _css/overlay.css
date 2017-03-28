@@ -75,7 +75,7 @@ div.overlay table {
     width: 100%;
 }
 
-div.overlay td, div.overlay td * {
+div.overlay td, div.overlay td > * {
 	vertical-align: middle;
 }
 

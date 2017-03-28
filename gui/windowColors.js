@@ -19,30 +19,45 @@ windowColors.prototype.seed = function() {
 	
 	this.imgRight.actions = [ "anigenManager.classes.windowColors.hide();anigenManager.classes.context.buttons.colors.setState(0);" ];
 	
+	this.ui = {};
+	
+	var recursiveButton =
+		new uiButton([ 'sync_disabled', 'autorenew' ], [
+			null,
+			null ],
+			[
+			'Local - changes apply only to the element itself',
+			'Recursive - changes will apply to all children'
+			]
+		);
+	recursiveButton.style.float = "right";
+	this.ui.recursiveButton = recursiveButton.shepherd;
+	this.footer.appendChild(recursiveButton);
+	this.heading.appendChild(recursiveButton);
+	
+	
 	this.tab1 = this.addTab('Fill');
 	this.tab2 = this.addTab('Stroke paint');
 	this.tab3 = this.addTab('Stroke style');
 	
-	this.ui = {};
-	
 	this.ui.strokeWidth = build.input('number', 0, { 'min': 0, 'step': 0.01,
-		'onchange': 'svg.selected.setAttributeHistory({ "strokeWidth": this.value });'
+		'onchange': 'svg.selected.setAttributeHistory({ "strokeWidth": this.value }, null, anigenManager.classes.windowColors.ui.recursiveButton.state);'
 	});
 	this.ui.strokeMiterLimit = build.input('number', 0, { 'min': 0, 'max': 50, 'step': 0.01,
-		'onchange': 'svg.selected.setAttributeHistory({ "strokeMiterlimit": this.value });'
+		'onchange': 'svg.selected.setAttributeHistory({ "strokeMiterlimit": this.value }, null, anigenManager.classes.windowColors.ui.recursiveButton.state);'
 	});
 	
 	this.ui.strokeJoin = build.select([		
 		{ 'text': 'Miter join', 'value': 'miter' },
 		{ 'text': 'Round join', 'value': 'round' },
 		{ 'text': 'Bevel join', 'value': 'bevel' }
-	], { 'onchange': 'svg.selected.setAttributeHistory({ "strokeLinejoin": this.value });' });
+	], { 'onchange': 'svg.selected.setAttributeHistory({ "strokeLinejoin": this.value }, null, anigenManager.classes.windowColors.ui.recursiveButton.state);' });
 	
 	this.ui.strokeCap = build.select([		
 		{ 'text': 'Butt cap', 'value': 'butt' },
 		{ 'text': 'Round cap', 'value': 'round' },
 		{ 'text': 'Square cap', 'value': 'square' }
-	], { 'onchange': 'svg.selected.setAttributeHistory({ "strokeLinecap": this.value });' });
+	], { 'onchange': 'svg.selected.setAttributeHistory({ "strokeLinecap": this.value }, null, anigenManager.classes.windowColors.ui.recursiveButton.state);' });
 	
 	
 	var strokeTable = build.table([
@@ -65,8 +80,8 @@ windowColors.prototype.seed = function() {
 	this.tab5.appendChild(disabledWarning);
 	
 	
-	var opacityAction = 'svg.selected.setAttributeHistory({"opacity": this.value/100});this.parentNode.nextElementSibling.children[0].value = this.value;';
-	var opacityInputAction = 'svg.selected.setAttributeHistory({"opacity": this.value/100});this.parentNode.previousElementSibling.children[0].value = this.value;';
+	var opacityAction = 'svg.selected.setAttributeHistory({"opacity": this.value/100}, null, anigenManager.classes.windowColors.ui.recursiveButton.state);this.parentNode.nextElementSibling.children[0].value = this.value;';
+	var opacityInputAction = 'svg.selected.setAttributeHistory({"opacity": this.value/100}, null, anigenManager.classes.windowColors.ui.recursiveButton.state);this.parentNode.previousElementSibling.children[0].value = this.value;';
 	
 	this.ui.opacitySlider = build.input('range', 0, { 'min': 0, 'max': 100, 'step': 0.01,
 		'onchange': opacityAction,
@@ -94,6 +109,21 @@ windowColors.prototype.seed = function() {
 	]);
 	
 	table.setAttribute('class', 'opacity');
+	
+	/*
+	var recursiveButton =
+		new uiButton([ 'autorenew', 'sync_disabled' ], [
+			null,
+			null ],
+			[
+			'Recursive - changes will apply to all children',
+			'Local - changes apply only to the element itself'
+			]
+		);
+	recursiveButton.style.float = "right";
+	this.ui.recursiveButton = recursiveButton.shepherd;
+	this.footer.appendChild(recursiveButton);
+	*/
 	this.footer.appendChild(table);
 }
 
@@ -110,8 +140,7 @@ windowColors.prototype.refresh = function() {
 		svg.selected instanceof SVGPolygonElement ||
 		svg.selected instanceof SVGTextElement ||
 		svg.selected instanceof SVGTSpanElement ||
-		svg.selected instanceof SVGMarkerElement ||
-		svg.selected instanceof SVGCursorElement
+		svg.selected instanceof SVGMarkerElement
 	) { type = 1; }
 	if(svg.selected instanceof SVGStopElement) {
 		type = 2;
@@ -174,7 +203,7 @@ windowColors.prototype.refreshTab = function(tab, appliesTo, alphaChannel, onlyF
 	
 	tab.removeChildren();
 	
-	var isCSS = target.style.hasOwnProperty(appliesTo);
+	var isCSS = target.style.hasNativeProperty(appliesTo);
 	
 	var targetValue = isCSS ? target.style[appliesTo] : target.getAttribute(appliesTo);
 	var linked = null;
@@ -208,18 +237,18 @@ windowColors.prototype.refreshTab = function(tab, appliesTo, alphaChannel, onlyF
 	
 			
 		var radios = [
-			new uiButton('close', 'svg.selected.setAttributeHistory({"'+appliesTo+'": "none"});anigenManager.classes.windowColors.refresh();', 'No paint', { 'radio': true, 'toggle': true, 'state': radioState == 0 ? 1 : 0 }),
-			new uiButton('brush', 'svg.selected.setAttributeHistory({"'+appliesTo+'": "#000000"});anigenManager.classes.windowColors.refresh();', 'Solid color', { 'radio': true, 'toggle': true, 'state': radioState == 1 ? 1 : 0 }),
-			new uiButton('gradient', "svg.selected.setAttributeHistory({'"+appliesTo+"': 'url(\"#gradient\")'});anigenManager.classes.windowColors.refresh();", 'Gradient', { 'radio': true, 'toggle': true, 'state': radioState == 3 ? 1 : 0 }),
-			new uiButton('texture', "svg.selected.setAttributeHistory({'"+appliesTo+"': 'url(\"#pattern\")'});anigenManager.classes.windowColors.refresh();", 'Pattern', { 'radio': true, 'toggle': true, 'state': radioState == 4 ? 1 : 0 }),
-			new uiButton('link', "svg.selected.setAttributeHistory({'"+appliesTo+"': 'url(\"#link\")'});anigenManager.classes.windowColors.refresh();", 'Generic linked object', { 'radio': true, 'toggle': true, 'state': radioState == 2 ? 1 : 0 }),
-			new uiButton('file_upload', 'svg.selected.setAttributeHistory({"'+appliesTo+'": "inherit"});anigenManager.classes.windowColors.refresh();', 'Inherited', { 'radio': true, 'toggle': true, 'state': radioState == 5 ? 1 : 0 }),
+			new uiButton('close', 'svg.selected.setAttributeHistory({"'+appliesTo+'": "none"}, null, anigenManager.classes.windowColors.ui.recursiveButton.state);anigenManager.classes.windowColors.refresh();', 'No paint', { 'radio': true, 'toggle': true, 'state': radioState == 0 ? 1 : 0 }),
+			new uiButton('brush', 'svg.selected.setAttributeHistory({"'+appliesTo+'": "#000000"}, null, anigenManager.classes.windowColors.ui.recursiveButton.state);anigenManager.classes.windowColors.refresh();', 'Solid color', { 'radio': true, 'toggle': true, 'state': radioState == 1 ? 1 : 0 }),
+			new uiButton('gradient', "svg.selected.setAttributeHistory({'"+appliesTo+"': 'url(\"#gradient\")'}, null, anigenManager.classes.windowColors.ui.recursiveButton.state);anigenManager.classes.windowColors.refresh();", 'Gradient', { 'radio': true, 'toggle': true, 'state': radioState == 3 ? 1 : 0 }),
+			new uiButton('texture', "svg.selected.setAttributeHistory({'"+appliesTo+"': 'url(\"#pattern\")'}, null, anigenManager.classes.windowColors.ui.recursiveButton.state);anigenManager.classes.windowColors.refresh();", 'Pattern', { 'radio': true, 'toggle': true, 'state': radioState == 4 ? 1 : 0 }),
+			new uiButton('link', "svg.selected.setAttributeHistory({'"+appliesTo+"': 'url(\"#link\")'}, null, anigenManager.classes.windowColors.ui.recursiveButton.state);anigenManager.classes.windowColors.refresh();", 'Generic linked object', { 'radio': true, 'toggle': true, 'state': radioState == 2 ? 1 : 0 }),
+			new uiButton('file_upload', 'svg.selected.setAttributeHistory({"'+appliesTo+'": "inherit"}, null, anigenManager.classes.windowColors.ui.recursiveButton.state);anigenManager.classes.windowColors.refresh();', 'Inherited', { 'radio': true, 'toggle': true, 'state': radioState == 5 ? 1 : 0 }),
 		];
 		
 		var fillRuleButton =
 			new uiButton([ 'cloud_circle', 'lens' ], [
-				'svg.selected.setAttributeHistory({"fillRule": "nonzero"});',
-				'svg.selected.setAttributeHistory({"fillRule": "evenodd"});' ],
+				'svg.selected.setAttributeHistory({"fillRule": "nonzero"}, null, anigenManager.classes.windowColors.ui.recursiveButton.state);',
+				'svg.selected.setAttributeHistory({"fillRule": "evenodd"}, null, anigenManager.classes.windowColors.ui.recursiveButton.state);' ],
 				[
 				'Path self-intersections and subpaths create hole in the fill (fill-rule: evenodd)',
 				'Fill is solid unless a subpath is counterdirectional (fill-rule: nonzero'
@@ -269,7 +298,7 @@ windowColors.prototype.refreshTab = function(tab, appliesTo, alphaChannel, onlyF
 					matched[i].getAttribute("id"),
 					matchedType
 				]);
-				attributes.push({ "onclick": "svg.selected.setAttributeHistory({'"+appliesTo+"': 'url(\"#"+matched[i].getAttribute("id")+"\")'});anigenManager.classes.windowColors.refresh();"})
+				attributes.push({ "onclick": "svg.selected.setAttributeHistory({'"+appliesTo+"': 'url(\"#"+matched[i].getAttribute("id")+"\")'}, null, anigenManager.classes.windowColors.ui.recursiveButton.state);anigenManager.classes.windowColors.refresh();"})
 				if(linked && matched[i].id == linked.id) {
 					attributes[attributes.length-1].class = 'selected';
 				}
@@ -286,7 +315,7 @@ windowColors.prototype.refreshTab = function(tab, appliesTo, alphaChannel, onlyF
 				'onkeyup': 'if(document.getElementById(this.value)) { this.setAttribute("class", "green"); } else { this.setAttribute("class", "red"); }'
 			});
 			var linkSubmit = build.button('Link', { 
-				'onclick': "if(this.previousElementSibling.hasClass('green')){var tmp='url(\"#';tmp+=this.previousElementSibling.value;tmp+='\")';console.log(tmp);svg.selected.setAttributeHistory({'"+appliesTo+"': tmp});}"
+				'onclick': "if(this.previousElementSibling.hasClass('green')){var tmp='url(\"#';tmp+=this.previousElementSibling.value;tmp+='\")';svg.selected.setAttributeHistory({'"+appliesTo+"': tmp}, null, anigenManager.classes.windowColors.ui.recursiveButton.state);}"
 			});
 			
 			var cont = document.createElement('div');
@@ -303,11 +332,11 @@ windowColors.prototype.refreshTab = function(tab, appliesTo, alphaChannel, onlyF
 		var array = [];
 		
 		if(alphaChannel) {
-			var isAlphaCSS = target.style.hasOwnProperty(alphaChannel);
+			var isAlphaCSS = target.style.hasNativeProperty(alphaChannel);
 			var alphaValue = isAlphaCSS ? target.style[alphaChannel] : target.getAttribute(alphaChannel);
 			if(alphaValue == null || alphaValue.length == 0) { alphaValue = '1'; }
 			
-			var actionColor = 'svg.selected.setAttributeHistory({"'+appliesTo+'": this.value});';
+			var actionColor = 'svg.selected.setAttributeHistory({"'+appliesTo+'": this.value}, null, anigenManager.classes.windowColors.ui.recursiveButton.state);';
 			actionColor += 'var textHex = this.parentNode.nextElementSibling.nextElementSibling.children[0];textHex.value = this.value.substr(1) + textHex.value.substr(6, 2);';
 				
 			
@@ -317,8 +346,8 @@ windowColors.prototype.refreshTab = function(tab, appliesTo, alphaChannel, onlyF
 			var alphaHex = (alphaValue*255).toString(16);
 				alphaHex = String("00" + alphaHex).slice(-2);
 			
-			var actionSlider = 'svg.selected.setAttributeHistory({"'+alphaChannel+'": this.value/255});';
-			actionSlider += 'var textHex=this.parentNode.nextElementSibling.children[0];textHex.value=textHex.value.substr(0,6)+String("00"+parseInt(this.value).toString(16)).slice(-2);'
+			var actionSlider = 'svg.selected.setAttributeHistory({"'+alphaChannel+'": this.value/255}, null, anigenManager.classes.windowColors.ui.recursiveButton.state);';
+				actionSlider += 'var textHex=this.parentNode.nextElementSibling.children[0];textHex.value=textHex.value.substr(0,6)+String("00"+parseInt(this.value).toString(16)).slice(-2);'
 			
 			array.push(build.input('range', alphaValue*255, { 'min': 0, 'max': 255, 'step': 1,
 				'onmousemove': 'if(window.event.buttons==1){'+actionSlider+'}', 'onchange': actionSlider
@@ -327,8 +356,8 @@ windowColors.prototype.refreshTab = function(tab, appliesTo, alphaChannel, onlyF
 			
 			var actionHex = 'this.value=(this.value+"00000000").substr(0,8);var col = new color("#"+this.value);'
 			
-			actionHex += 'svg.selected.setAttributeHistory({"'+appliesTo+'": col.getHex()});';
-			actionHex += 'svg.selected.setAttributeHistory({"'+alphaChannel+'": col.a/255});';
+			actionHex += 'svg.selected.setAttributeHistory({"'+appliesTo+'": col.getHex()}, null, anigenManager.classes.windowColors.ui.recursiveButton.state);';
+			actionHex += 'svg.selected.setAttributeHistory({"'+alphaChannel+'": col.a/255}, null, anigenManager.classes.windowColors.ui.recursiveButton.state);';
 			actionHex += "this.parentNode.previousElementSibling.previousElementSibling.children[0].value=col.getHex();"
 			
 			array.push(build.input('text', new color(targetValue).toString().substr(1)+alphaHex, {
@@ -337,14 +366,14 @@ windowColors.prototype.refreshTab = function(tab, appliesTo, alphaChannel, onlyF
 				
 			}));
 		} else {
-			var actionColor = 'svg.selected.setAttributeHistory({"'+appliesTo+'": this.value});'
+			var actionColor = 'svg.selected.setAttributeHistory({"'+appliesTo+'": this.value}, null, anigenManager.classes.windowColors.ui.recursiveButton.state);'
 			actionColor += 'this.parentNode.nextElementSibling.children[0].value = this.value.substr(1);';
 			
 			array.push(build.input('color', new color(targetValue), { 'onchange': actionColor }));
 			
 			var actionHex = 'this.value=(this.value+"000000").substr(0,6);var col = new color("#"+this.value);'
 			
-			actionHex += 'svg.selected.setAttributeHistory({"'+appliesTo+'": col.getHex()});';
+			actionHex += 'svg.selected.setAttributeHistory({"'+appliesTo+'": col.getHex()}, null, anigenManager.classes.windowColors.ui.recursiveButton.state);';
 			
 			actionHex += "this.parentNode.previousElementSibling.children[0].value=col.getHex();"
 			

@@ -4,6 +4,8 @@ div.uiSection {
 
 div.uiSection > div:first-child {
 	position: absolute;
+	width: 100%;
+	height: 100%;
 }
 
 /* row 1 */
@@ -62,6 +64,10 @@ div.uiSection > div:first-child {
 	font-style: italic;
 }
 
+.section-top-row2 .uiButton {
+	vertical-align: bottom !important;
+}
+
 /* row 3 */
 .section-top-row3 {
 	font-size: 24px;
@@ -76,8 +82,71 @@ div.uiSection > div:first-child {
 	left: 2px;
 }
 
+/* bottom */
+.section-bottom {
+	border-top: 1px solid gray;
+}
+
+.eventLog {
+	position: absolute;
+	
+	width: 100%;
+	height: 100%;
+	
+	font-size: 14px;
+	box-sizing: border-box;
+	overflow: auto;
+}
+
+.eventLog:hover p {
+	opacity: 1;
+}
+
+.eventLog * {
+	margin: 0px;
+}
+
+@keyframes fadeIn {
+	0% { opacity: 0.1; }
+	40% { opacity: 1; }
+	80% { opacity: 1; }
+	100% { opacity: 0.8; }
+}
+
+.eventLog p {
+	line-height: 24px;
+	opacity: 0.8;
+	animation: fadeIn 0.5s ease-in-out;
+}
+
+.eventLog p.error {
+	color: #e00;
+	background-color: mistyrose;
+}
+
+.eventLog p.warn {
+	line-height: 24px;
+	color: #483505;
+	background-color: lightyellow;
+}
+
+.eventLog .black {
+	color: black;
+}
+
+.eventLog .time {
+	margin-left: 1ex;
+	font-weight: bold;
+	opacity: 0.9;
+}
+
+.eventLog .tab {
+	padding: 0 1ex;
+}
+
+
 /* left and right */
-.section-left, .section-right, .section-top-row3 {
+.section-left, .section-right, .section-top-row3, .section-bottom {
 	background-color: #eee;
 }
 
@@ -109,6 +178,7 @@ div.uiSection > div:first-child {
 .ruler {
 	position: absolute;
 	background-color: #eee;
+	cursor: default !important;
 }
 
 .ruler.vertical {
@@ -132,6 +202,10 @@ div.uiSection > div:first-child {
 
 .uiSection .resizer {
 	position: absolute;
+}
+
+.uiSection .resizer.disabled {
+	display: none;
 }
 
 .uiSection .resizer.disabled:hover {
@@ -178,7 +252,6 @@ div.uiSection > div:first-child {
 	width: 4px;
 	height: 100%;
 }
-
 
 
 

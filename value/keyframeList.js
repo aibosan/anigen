@@ -53,6 +53,12 @@ keyframeList.prototype.push = function(newItem) {
 	return newItem;
 }
 
+keyframeList.prototype.indexOf = function(item) {
+	if(!(item instanceof keyframe)) { return -1; }
+	
+	return this.arr.indexOf(item);
+}
+
 
 keyframeList.prototype.getTimes = function() {
 	var out = [];
@@ -160,7 +166,9 @@ keyframeList.prototype.invertValues = function(index) {
 		if(this.arr[index].value == 'inline') { this.arr[index].value = 'none'; } else
 		if(this.arr[index].value == 'hidden') { this.arr[index].value = 'visible'; } else
 		if(this.arr[index].value == 'visible') { this.arr[index].value = 'hidden'; } else 
-		if(!this.arr[index].value.isInvertible()) { return false; } else {
+		if(typeof this.arr[index].value.isInvertible !== 'function' || !this.arr[index].value.isInvertible()) {
+			return false;
+		} else {
 			this.arr[index].value.invert();
 		}
 	} else {
@@ -171,6 +179,27 @@ keyframeList.prototype.invertValues = function(index) {
 	}
 	return true;
 }
+
+keyframeList.prototype.scaleValues = function(index, factor) {
+	if(index != null) {
+		if(index < 0 || index >= this.arr.length) { throw new DOMException(1); }
+		if(typeof this.arr[index].value.isScalable !== 'function' || !this.arr[index].value.isScalable()) {
+			return false;
+		} else {
+			this.arr[index].value.scale(factor);
+		}
+	} else {
+		for(var i = 0; i < this.arr.length; i++) {
+			if(typeof this.arr[i].value.isScalable !== 'function' || !this.arr[i].value.isScalable()) {
+				return false;
+			} else {
+				this.arr[i].value.scale(factor);
+			}
+		}
+	}
+	return true;
+}
+
 
 keyframeList.prototype.balance = function(index1, index2) {
 	if(index1 == null) { index1 = 0; }
@@ -199,6 +228,7 @@ keyframeList.prototype.pasteTimes = function(otherList) {
 	for(var i = 0; i < this.arr.length; i++) {
 		this.arr[i].spline = otherList.getItem(i).spline ? otherList.getItem(i).spline.clone() : null;
 		this.arr[i].time = otherList.getItem(i).time;
+		//this.arr[i].intensity = otherList.getItem(i).intensity;
 	}
 	this.length = this.arr.length;
 }

@@ -4,10 +4,13 @@
  *  @copyright	GNU GPLv3
  *	@brief		Resizable UI section.
  */
-function uiSection(dimensions, resizable, fills, attributes, manager) {
+function uiSection(dimensions, resizable, fills, attributes, manager, actionResize) {
 	if(resizable == true) {
 		resizable = [ true, true, true, true ];
 	}
+	
+	this.actionResize = actionResize;
+	
 	if(!resizable) {
 		resizable = [ false, false, false, false ];
 	}
@@ -26,6 +29,9 @@ function uiSection(dimensions, resizable, fills, attributes, manager) {
 	this.height = dimensions[3] || 0;
 	
 	this.fills = fills;
+	
+	this.limits = [];
+	this.slacks = [ 0, 0, 0, 0 ];
 	
 	this.beingResized = null;
 	this.lastEvent = null;
@@ -88,19 +94,44 @@ function uiSection(dimensions, resizable, fills, attributes, manager) {
 }
 
 uiSection.prototype.refresh = function() {
-	if(this.fills[0]) {	// top
-		this.setHeight(this.height+this.y);
-		this.setY(0);
+	if(this.fills[0]) {	// stretch up
+		var min = 0;
+		if(this.limits[0] instanceof uiSection && !this.limits[0].isHidden()) { 
+			min = this.limits[0].container.offsetTop + this.limits[0].container.offsetHeight + this.slacks[0];
+		}
+		if(typeof this.limits[0] === 'number') { min = this.limits[0] + this.slacks[0]; }
+		
+		this.setHeight(this.height+this.y-min);
+		this.setY(min);
 	}
-	if(this.fills[1]) { // right
-		this.setWidth(window.innerWidth-this.x);
+	if(this.fills[1]) { // stretch right
+		var max = window.innerWidth;
+		if(this.limits[1] instanceof uiSection && !this.limits[1].isHidden()) {
+			max = this.limits[1].container.offsetLeft - this.slacks[1];
+		}
+		if(typeof this.limits[1] === 'number') { max = this.limits[1] - this.slacks[1]; }
+		
+		this.setWidth(max-this.x);
 	}
-	if(this.fills[2]) { // bottom
-		this.setHeight(window.innerHeight-this.y);
+	if(this.fills[2]) { // stretch down
+		var max = window.innerHeight;
+		if(this.limits[2] instanceof uiSection && !this.limits[2].isHidden()) {
+			max = this.limits[2].container.offsetTop - this.slacks[2];
+		}
+		if(typeof this.limits[2] === 'number') { max = this.limits[2] - this.slacks[2]; }
+		
+		
+		this.setHeight(max-this.y);
 	}
-	if(this.fills[3]) {
-		this.setWidth(this.width+this.x);
-		this.setX(0);
+	if(this.fills[3]) {	// stretch left
+		var min = 0;
+		if(this.limits[3] instanceof uiSection && !this.limits[3].isHidden()) {
+			min = this.limits[3].container.offsetLeft + this.limits[3].container.offsetWidth + this.slacks[3];
+		}
+		if(typeof this.limits[3] === 'number') { min = this.limits[3] + this.slacks[3]; }
+		
+		this.setWidth(this.width+this.x-min);
+		this.setX(min);
 	}
 	
 	if(this.height + this.y > window.innerHeight) { this.setHeight(window.innerHeight-this.y); }
@@ -110,27 +141,88 @@ uiSection.prototype.refresh = function() {
 
 uiSection.prototype.eventResizerAction = function(event) {
 	switch(this.beingResized) {
-		case 1:	// top
-			var delta = this.y - (event.clientY - 2);
+		case 1:	// resizing up
+			var desired = (event.clientY - 2);
+			var available = desired;
+			if(this.limits[0] instanceof uiSection && !this.limits[0].isHidden()) {
+				available = this.limits[0].container.offsetTop+this.limits[0].container.offsetHeight+this.slacks[0];
+			}
+			if(typeof this.limits[0] === 'number') { available = this.limits[0]+this.slacks[0]; }
+			desired = available > desired ? available : desired;
+			if(desired < 6) { desired = 6; }
+			if(desired > window.innerHeight-6) { desired = window.innerHeight-6; }
+			var delta = this.y - desired;
 			if(this.height + delta <= 0) { return; }
-			this.setY(event.clientY - 2);
-			this.setHeight(this.height + delta);
+			this.setY(desired);
+			this.setHeight(this.width + delta);
+			
 			break;
-		case 2:	// right
-			this.setWidth(event.clientX - this.x + 2);
+		case 2:	// resizing right
+			var desired = event.clientX - this.x + 2;
+			var available = desired;
+			if(this.limits[1] instanceof uiSection && !this.limits[1].isHidden()) {
+				available = this.limits[1].container.offsetLeft-this.slacks[1];
+			}
+			if(typeof this.limits[1] === 'number') { available = this.limits[1]-this.slacks[1]; }
+			desired = available < desired ? available : desired;
+			if(desired < 6) { desired = 6; }
+			if(desired-this.x > window.innerWidth-6) { desired = window.innerWidth-6; }
+			this.setWidth(desired);
 			break;
-		case 3:	// bottom
-			this.setHeight(event.clientY - this.y + 2);
+		case 3:	// resizing down
+			var desired = event.clientY - this.y + 2;
+			var available = desired;
+			if(this.limits[2] instanceof uiSection && !this.limits[2].isHidden()) {
+				available = this.limits[2].container.offsetTop-this.slacks[2];
+			}
+			if(typeof this.limits[2] === 'number') { available = this.limits[2]-this.slacks[2]; }
+			desired = available < desired ? available : desired;
+			this.setHeight(desired);
 			break;
-		case 4:	// left
-			var delta = this.x - (event.clientX - 2);
+		case 4:	// resizing left
+			var desired = (event.clientX - 2);
+			var available = desired;
+			if(this.limits[3] instanceof uiSection && !this.limits[3].isHidden()) {
+				available = this.limits[3].container.offsetLeft+this.limits[3].container.offsetWidth+this.slacks[3];
+			}
+			if(typeof this.limits[3] === 'number') { available = this.limits[3]+this.slacks[3]; }
+			desired = available > desired ? available : desired;
+			if(desired < 6) { desired = 6; }
+			if(desired > window.innerWidth-6) { desired = window.innerWidth-6; }
+			
+			var delta = this.x - desired;
 			if(this.width + delta <= 0) { return; }
-			this.setX(event.clientX - 2);
+			this.setX(desired);
 			this.setWidth(this.width + delta);
 			break;
 	}
 	if(anigenManager && anigenManager.classes && anigenManager.classes.rulerV) { anigenManager.classes.rulerV.refresh(); }
 	this.refresh();
+	if(this.actionResize) { eval(this.actionResize); }
+}
+
+uiSection.prototype.setLimits = function(array) {
+	if(array == null) {
+		this.limits = [];
+		return;
+	}
+	if(!Array.isArray(array) || array.length != 4) { return; }
+	
+	for(var i = 0; i < array.length; i++) {
+		if(array[i] != null) { this.limits[i] = array[i]; }
+	}
+}
+
+uiSection.prototype.setSlacks = function(array) {
+	if(array == null) {
+		this.slacks = [ 0, 0, 0, 0];
+		return;
+	}
+	if(!Array.isArray(array) || array.length != 4) { return; }
+	
+	for(var i = 0; i < array.length; i++) {
+		if(array[i] != null) { this.slacks[i] = array[i]; }
+	}
 }
 
 uiSection.prototype.setX = function(value) {
@@ -147,6 +239,7 @@ uiSection.prototype.setY = function(value) {
 
 uiSection.prototype.setWidth = function(value) {
 	if(value == null) { return; }
+	
 	this.width = value;
 	this.container.style.width = this.width+'px';
 }
@@ -184,4 +277,6 @@ uiSection.prototype.toggle = function() {
 uiSection.prototype.isHidden = function() {
 	return this.container.hasClass('hidden');
 }
+
+
 

@@ -17,11 +17,13 @@
     <meta http-equiv="Expires" content="0" />
     <title id="page_title">aniGen</title>
 	
-	<!--
-    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
-	-->
-
-    <link rel="alternate icon" type="image/png" href="_png/favicon.png">
+	<link rel="apple-touch-icon" sizes="180x180" href="_favicon/apple-touch-icon.png">
+	<link rel="icon" type="image/png" href="_favicon/favicon-32x32.png" sizes="32x32">
+	<link rel="icon" type="image/png" href="_favicon/favicon-16x16.png" sizes="16x16">
+	<link rel="manifest" href="_favicon/manifest.json">
+	<link rel="mask-icon" href="_favicon/safari-pinned-tab.svg" color="#008000">
+	<meta name="theme-color" content="#ffffff">
+	
 
     <link rel="stylesheet" type="text/css" href="_css/style.css">
 	<link rel="stylesheet" type="text/css" href="_css/tree.css">
@@ -31,9 +33,6 @@
 	<link rel="stylesheet" type="text/css" href="_css/window.css">
 	<link rel="stylesheet" type="text/css" href="_css/section.css">
 	
-	<!-- jquery up to date
-    <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
-	-->
 	
 	<script type="text/javascript" src="_libs/jszip/jszip.js"></script> 
 	<script type="text/javascript" src="_libs/filesaver/FileSaver.js"></script>
@@ -53,8 +52,18 @@
 
 </body>
 
-<script type="text/javascript" src="formula.js"></script>
-<script type="text/javascript" src="build.js"></script>
+<script type="text/javascript" src="eventLog.js"></script>
+<script type="text/javascript">
+	new eventLog();
+	log.report("Loading scripts;");
+</script>
+
+<script type="text/javascript" src="utility/build.js"></script>
+<script type="text/javascript" src="utility/cookies.js"></script>
+<script type="text/javascript" src="utility/formula.js"></script>
+<script type="text/javascript" src="utility/settings.js"></script>
+
+<script type="text/javascript" src="gui/windowPreview.js"></script>
 
 <script type="text/javascript" src="prototype/HTMLSelectElement.js"></script>
 <script type="text/javascript" src="prototype/HTMLInputElement.js"></script>
@@ -89,6 +98,7 @@
 <script type="text/javascript" src="pathSeg/pathSegList.js"></script>
 
 <script type="text/javascript" src="prototype/general.js"></script>
+<script type="text/javascript" src="prototype/CSSStyleDeclaration.js"></script>
 <script type="text/javascript" src="prototype/Element.js"></script>
 <script type="text/javascript" src="prototype/SVGMatrix.js"></script>
 <script type="text/javascript" src="prototype/SVGElement.js"></script>
@@ -103,16 +113,17 @@
 <script type="text/javascript" src="prototype/SVGLineElement.js"></script>
 <script type="text/javascript" src="prototype/SVGRectElement.js"></script>
 <script type="text/javascript" src="prototype/SVGRect.js"></script>
-<script type="text/javascript" src="prototype/SVGPolygonElement.js"></script>
 <script type="text/javascript" src="prototype/SVGPolylineElement.js"></script>
+<script type="text/javascript" src="prototype/SVGPolygonElement.js"></script>
 <script type="text/javascript" src="prototype/SVGGElement.js"></script>
 <script type="text/javascript" src="prototype/SVGUseElement.js"></script>
 
-<script type="text/javascript" src="selection.js"></script>
+<!-- <script type="text/javascript" src="selection.js"></script> -->
 
 <script type="text/javascript" src="constraints/constraintDistance.js"></script>
 <script type="text/javascript" src="constraints/constraintLinear.js"></script>
 <script type="text/javascript" src="constraints/constraintPosition.js"></script>
+<script type="text/javascript" src="constraints/constraintRectangle.js"></script>
 
 
 <script type="text/javascript" src="shepherd/animationState.js"></script>
@@ -125,7 +136,7 @@
 <script type="text/javascript" src="history/historyGeneric.js"></script>
 <script type="text/javascript" src="history/historyParentage.js"></script>
 
-<script type="text/javascript" src="history.js"></script>
+<script type="text/javascript" src="utility/history.js"></script>
 
 <script type="text/javascript" src="svg/anchor.js"></script>
 <script type="text/javascript" src="svg/anchorAngle.js"></script>
@@ -139,18 +150,17 @@
 <script type="text/javascript" src="svg/pathDouble.js"></script>
 <script type="text/javascript" src="svg/highlight.js"></script>
 <script type="text/javascript" src="svg/selectionBox.js"></script>
-<script type="text/javascript" src="svg/uiSVG.js"></script>
-
-<script type="text/javascript" src="cookies.js"></script>
-<script type="text/javascript" src="settings.js"></script>
+<script type="text/javascript" src="svg/splineEditor.js"></script>
 
 <script type="text/javascript" src="_libs/svgrender/svg-render.js"></script>
 
 <script type="text/javascript" src="root.js"></script>
 <script type="text/javascript" src="anigenActual.js"></script>
+<script type="text/javascript" src="uiManager.js"></script>
 
 
-<script type="text/javascript" src="gui/icon.js"></script>
+<script type="text/javascript" src="gui/uiTimeline.js"></script>
+
 <script type="text/javascript" src="gui/popup.js"></script>
 <script type="text/javascript" src="gui/progressBar.js"></script>
 <script type="text/javascript" src="gui/overlay.js"></script>
@@ -158,16 +168,19 @@
 <script type="text/javascript" src="gui/infoEditor.js"></script>
 <script type="text/javascript" src="gui/infoSelection.js"></script>
 <script type="text/javascript" src="gui/infoContext.js"></script>
+<!--
 <script type="text/javascript" src="gui/timelineObject.js"></script>
 <script type="text/javascript" src="gui/timeline.js"></script>
+-->
 <script type="text/javascript" src="gui/treeNode.js"></script>
 <script type="text/javascript" src="gui/tree.js"></script>
 <script type="text/javascript" src="gui/uiBreak.js"></script>
 <script type="text/javascript" src="gui/uiButton.js"></script>
 <script type="text/javascript" src="gui/uiLink.js"></script>
-<script type="text/javascript" src="gui/uiManager.js"></script>
 <script type="text/javascript" src="gui/uiSection.js"></script>
 <script type="text/javascript" src="gui/uiRuler.js"></script>
+<script type="text/javascript" src="gui/uiSVG.js"></script>
+
 
 
 <script type="text/javascript" src="gui/windowGeneric.js"></script>
@@ -178,8 +191,5 @@
 <script type="text/javascript" src="gui/menu.js"></script>
 
 <script type="text/javascript" src="_ignite.js"></script>
-<!-- 
-<script type="text/javascript" src="gui.js"></script>
--->
 
 </html>

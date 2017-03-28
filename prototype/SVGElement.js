@@ -39,17 +39,44 @@ SVGElement.prototype.setZero = function(x, y, makeHistory) {
 
 SVGElement.prototype.getViableParent = function() {
 	if(!this.parentNode || !(this.parentNode instanceof SVGElement)) { return null; }
-	if(this.parentNode.getAttribute('anigen:lock') == 'skip') { return this.parentNode.getViableParent(); }
+	if(this.parentNode.getAttribute('anigen:lock')) { return this.parentNode.getViableParent(); }
 	return this.parentNode;
 }
 
-SVGElement.prototype.getAnimations = function() {
+SVGElement.prototype.getViablePreviousSibling = function() {
+	var candidate = this.previousElementSibling;
+	while(candidate && candidate.getAttribute('anigen:lock')) { candidate = candidate.previousElementSibling; }
+	return candidate;
+}
+
+SVGElement.prototype.getViableNextSibling = function() {
+	var candidate = this.nextElementSibling;
+	while(candidate && candidate.getAttribute('anigen:lock')) { candidate = candidate.nextElementSibling; }
+	return candidate;
+}
+
+SVGElement.prototype.getViableChildren = function() {
+	var arr = [];
+	for(var i = 0; i < this.children.length; i++) {
+		if(!this.children[i].getAttribute('anigen:lock')) {
+			arr.push(this.children[i]);
+		}
+	}
+	return arr;
+}
+
+SVGElement.prototype.getAnimations = function(onlyViable, attribute) {
 	var candidates = [];
 	for(var i = 0; i < this.children.length; i++) {
+		if(onlyViable && this.children[i].getAttribute('anigen:lock')) { continue; }
 		if(this.children[i] instanceof SVGAnimationElement) {
-			candidates.push(this.children[i]);
+			if(!attribute || (attribute && this.children[i].getAttribute('attributeName') == attribute)) {
+				candidates.push(this.children[i]);
+			}
 		} else if(this.children[i] instanceof SVGGElement && this.children[i].shepherd && this.children[i].shepherd instanceof animationGroup) {
-			candidates.push(this.children[i].shepherd);
+			if(!attribute || (attribute && this.children[i].getAttribute('anigen:type') == attribute)) {
+				candidates.push(this.children[i].shepherd);
+			}
 		}
 	}
 	if(candidates.length == 0) {
@@ -60,14 +87,16 @@ SVGElement.prototype.getAnimations = function() {
 }
 
 SVGElement.prototype.isInsensitive = function() {
-    var node = this;
-    while(node != null && node.parentNode) {
-        if (node.getAttribute('anigen:lock') == 'interface') { return true; }
-        node = node.parentNode;
-        if(!(node instanceof SVGElement)) { return false; }
+    var target = this;
+    while(target != null && target.parentNode) {
+        if (target.getAttribute('anigen:lock') == 'interface') { return true; }
+        target = target.parentNode;
+        if(!(target instanceof SVGElement)) { return false; }
     }
     return false;
 }
+
+SVGElement.prototype.isVisualElement = function() { return false; }
 
 SVGElement.prototype.getTransformBase = function() {
 	var matrix = document.createElementNS("http://www.w3.org/2000/svg", "svg").createSVGMatrix();
@@ -103,12 +132,12 @@ SVGElement.prototype.getTransform = function() {
 	}
 }
 
-SVGElement.prototype.translateBy = function(byX, byY, makeHistory) {
+SVGElement.prototype.translateBy = function(dX, dY, makeHistory) {
 	var matrix = this.getTransformBase();
 	
 	var CTM = this.getCTMBase();
 	var zero = CTM.toViewport(0,0);
-	var adjusted = CTM.toUserspace(zero.x+byX, zero.y+byY);
+	var adjusted = CTM.toUserspace(zero.x+dX, zero.y+dY);
 	
 	var matrix2 = document.createElementNS("http://www.w3.org/2000/svg", "svg").createSVGMatrix();
 	
@@ -118,14 +147,11 @@ SVGElement.prototype.translateBy = function(byX, byY, makeHistory) {
 	matrix = matrix.multiply(matrix2);
 	
 	if(makeHistory) {
-		var oldTransform = this.getTransformBase();
-		svg.history.add(new historyAttribute(this.id, 
-			{ 'transform': oldTransform.toString() },
-			{ 'transform': matrix.toString() },
-		true));
+		this.setAttributeHistory({'transform': matrix.toString()}, true);
+	} else {
+		this.setAttribute('transform', matrix.toString());
 	}
-	
-	this.setAttribute('transform', matrix.toString());
+	this.movePivot(-1*dX, -1*dY, makeHistory);
 }
 
 SVGElement.prototype.getCTMBase = function() {
@@ -136,6 +162,13 @@ SVGElement.prototype.getCTMBase = function() {
 	}
 }
 
+SVGElement.prototype.getCTMAnim = function() {
+	if(this instanceof SVGSVGElement || !this.parentNode) {
+		return this.getTransformAnim();
+	} else {
+		return this.parentNode.getCTMBase().multiply(this.getTransformAnim());
+	}
+}
 
 // returns object with 'numbers' and 'elements'
 // 		- elements represent the chain of elements from parent svg to this element
@@ -233,61 +266,94 @@ SVGElement.prototype.getFingerprint = function(previous) {
 }
 
 
+SVGElement.prototype.getLinkList = function(deep, references) {
+	// references flag should be preceeded by clearing references in the SVG tree to be useful
+	var candidates = [];
+	
+	for(var i = 0; i < this.attributes.length; i++) {
+		if(this.attributes[i].name == 'style') { continue; }
+		var linked;
+		var name = this.attributes[i].name;
+		var val = this.attributes[i].value;
+		if(name == 'xlink:href') {
+			val = val.substring(1);
+		} else if(val.match(/^url\(/)) {
+			val = val.replace(/^url\([^#]*#|[\"]?\)$/g, '');
+		} else {
+			continue;
+		}
+		linked = document.getElementById(val);
+		candidates.push({ 'owner': this, 'attribute': name, 'css': false, 'type': name == 'xlink:href' ? 1 : 2, 'value': val, 'target': linked });
+		
+		if(linked && references) {
+			var no = linked.getAttribute('anigen:references') != null && !isNaN(linked.getAttribute('anigen:references')) ? parseInt(linked.getAttribute('anigen:references')) : 0;
+			no++;
+			linked.setAttribute('anigen:references', no);
+		}
+	}
+	
+	for(var i = 0; i < this.style.length; i++) {
+		var linked;
+		var name = this.style[i];
+		var val = this.style[name];
+		if(name == 'xlink:href') {
+			val = val.substring(1);
+		} else if(val.match(/^url\(/)) {
+			val = val.replace(/^url\([^#]*#|[\"]?\)$/g, '');
+		} else {
+			continue;
+		}
+		linked = document.getElementById(val);
+		candidates.push({ 'owner': this, 'attribute': name, 'css': true, 'type': name == 'xlink:href' ? 1 : 2, 'value': val, 'target': linked });
+		
+		if(linked && references) {
+			var no = linked.getAttribute('anigen:references') != null && !isNaN(linked.getAttribute('anigen:references')) ? parseInt(linked.getAttribute('anigen:references')) : 0;
+			no++;
+			linked.setAttribute('anigen:references', no);
+		}
+	}
+	
+	if(deep) {
+		for(var i = 0; i < this.children.length; i++) {
+			candidates = candidates.concat(this.children[i].getLinkList(deep, references));
+		}
+	}
+	
+	return candidates;
+}
+
+
 
 // ends all animations and restores SVG to its static state
-// THIS METHOD IS DESTRUCTIVE!
-SVGElement.prototype.endAnimations = function(reset) {
-	if(this instanceof SVGAnimateTransformElement && reset) {
-		
-		// TODO: BUG
-		// this is a 'fix' for transformations creating a time 0 value for animation, if said animation 
-		// has fill = 'freeze', begin 0s, and last value != 0; basically, the animation "runs" once and 
-		// is frozen in the last value instead of returning to the initial one
-		var begins = this.getAttribute('begin');
-		if(begins) {
-			begins = begins.split(';');
-			if(parseFloat(begins[0]) == 0) {
-				//begins[0] = '-0.0000000000000000000000000000000000000000000000000000000000000001s';
-				//this.setAttribute('begin', begins.join(';'));
-				this.setAttribute('fill', 'remove');
-			}
-		}
-		
-		
-		
-		// counters time zero transformations
+// strip attribute removes animations from SVG as well
+SVGElement.prototype.endAnimations = function() {
+	if(this instanceof SVGAnimationElement) {
 		var originalFill = this.getAttribute('fill');
 		this.setAttribute('fill', 'remove');
-			
-		var base = this.parentNode.getTransformBase();
-		
-		// calculates value at time 0 and subtract them off the transformation
-		var adjustment = this.getCurrentValueReadable(null, true) || '';
-		
 		this.endElement();
-		
-		this.parentNode.setAttribute('transform', base.toString()+adjustment);
-		
-		this.parentNode.setAttribute('transform', this.parentNode.transform.baseVal.consolidate().matrix);
-		
 		this.setAttribute('fill', originalFill);
-	} if(this instanceof SVGAnimationElement) {
-		if(reset) {
-			// this still doesn't really reset animation of 'd' attribute - the old data might be lost?
-			// so it doesn't realy do much of anything
-			// :I
-			var originalFill = this.getAttribute('fill');
-			this.setAttribute('fill', 'remove');
-			this.endElement();
-			this.setAttribute('fill', originalFill);
-		} else {
-			this.endElement();
-		}
+		return;
 	}
+	
 	for(var i = 0; i < this.children.length; i++) {
-		this.children[i].endAnimations(reset);
+		this.children[i].endAnimations();
 	}
 }
+
+// starts all animations again
+SVGElement.prototype.startAnimations = function() {
+	if(this instanceof SVGAnimationElement) {
+		var clone = this.cloneNode(true);
+		this.parentNode.insertBefore(clone, this);
+		this.parentNode.removeChild(this);
+		return;
+	}
+	
+	for(var i = 0; i < this.children.length; i++) {
+		this.children[i].startAnimations();
+	}
+}
+
 
 SVGElement.prototype.moveUp = function(makeHistory) {
 	if(!this.parentNode) { return this; }
@@ -350,28 +416,25 @@ SVGElement.prototype.moveBottom = function(makeHistory) {
 }
 
 
-SVGElement.prototype.consumeAnimations = function(recursive) {
+SVGElement.prototype.consumeAnimations = function(recursive, zealous) {
 	var candidates = [];
 	
-	if(this instanceof SVGPathElement) {
-		var pData = this.getPathData();
-		
-		this.setAttribute('d', pData.animVal);
-	}
-	
+	var isTransform = false;
 	for(var i = 0; i < this.children.length; i++) {
 		if(this.children[i] instanceof SVGAnimationElement) {
-			if(this.children[i].getAttribute('attributeName') == 'd') {
-				this.removeChild(this.children[i]);
-				i--;
-			} else {
-				candidates.push(this.children[i]);
-			}
+			candidates.push(this.children[i]);
+		}
+		if(!isTransform && (this.children[i] instanceof SVGAnimateTransformElement || this.children[i] instanceof SVGAnimateMotionElement)) {
+			isTransform = true;
 		}
 	}
 	
-	var transform = this.getTransform();
+	if(isTransform) {
+		var transform = this.getTransform();
+		if(transform) { this.setAttribute('transform', transform); }
+	}
 	
+	var gotD = false;
 	for(var i = 0; i < candidates.length; i++) {
 		if(candidates[i] instanceof SVGAnimateTransformElement) {
 			this.removeChild(candidates[i]);
@@ -384,7 +447,17 @@ SVGElement.prototype.consumeAnimations = function(recursive) {
 		if(candidates[i] instanceof SVGAnimateElement) {
 			var attr = candidates[i].getAttribute('attributeName');
 			
+			if(attr == 'd') {
+				if(gotD) { continue; }
+				var pData = this.getPathData();
+				this.setAttribute('d', pData.animVal);
+				gotD = true;
+				this.removeChild(candidates[i]);
+				continue;
+			}
+			
 			var val = candidates[i].getCurrentValue();
+			
 			if(val) {
 				// indicates XML animation
 				this.setAttribute(attr, val);
@@ -401,28 +474,37 @@ SVGElement.prototype.consumeAnimations = function(recursive) {
 		}
 	}
 	
-	if(transform) {
-		this.setAttribute('transform', transform);
+	if(zealous) {
+		if(this.style.display == 'none' || this.getAttribute('display') == 'none' ||
+			this.style.opacity == '0' || this.getAttribute('opacity') == '0') {
+			if(this instanceof SVGSVGElement) {
+				this.removeChildren();
+				return;
+			} else {
+				this.parentNode.removeChild(this);
+				return;
+			}
+		}
 	}
 	
 	if(recursive) {
-		for(var i = 0; i < this.children.length; i++) {
-			if(!(this.children[i] instanceof SVGAnimationElement)) {
-				this.children[i].consumeAnimations(recursive);
-			}
+		var children = this.children;
+		for(var i = 0; i < children.length; i++) {
+			if(children[i] instanceof SVGAnimationElement) { continue; }
+			children[i].consumeAnimations(recursive, zealous);
 		}
 	}
 }
 
 
-SVGElement.prototype.setAttributeHistory = function(values, noCSS) {
+SVGElement.prototype.setAttributeHistory = function(values, noCSS, recursive) {
 	if(!svg || !svg.history) { return; }
 	
 	var oldAttributes = {};
 	var newAttributes = {};
 	
 	for(var i in values) {
-		if(this.style.hasOwnProperty(i) && !noCSS) {
+		if(this.style.hasNativeProperty(i) && !noCSS) {
 			if(!oldAttributes.style) {	
 				oldAttributes.style = this.getAttribute('style');
 			}
@@ -436,6 +518,12 @@ SVGElement.prototype.setAttributeHistory = function(values, noCSS) {
 	}
 	
 	svg.history.add(new historyAttribute(this.getAttribute('id'), oldAttributes, newAttributes, true));
+	
+	if(recursive) {
+		for(var i = 0; i < this.children.length; i++) {
+			this.children[i].setAttributeHistory(values, noCSS, recursive);
+		}
+	}
 }
 
 /* Calculates blur - from filter's standard deviations - as inkscape's percentage;
@@ -465,6 +553,7 @@ SVGElement.prototype.getBlur = function(value) {
 	
 	if(typeof this.getCenter !== 'function') { return 0; }
 	var center = this.getCenter(false);
+	if(!center) { return 0; }
 	var sizeX = center.right-center.left;
 	var sizeY = center.top-center.bottom;
 	var hundred = (Math.abs(sizeX)+Math.abs(sizeY))/4 || 1;
@@ -572,6 +661,65 @@ SVGElement.prototype.setBlur = function(value) {
 	}
 }
 
+
+
+SVGElement.prototype.setPivot = function(x, y, isAbsolute, makeHistory) {
+	if(isAbsolute) {
+		var center = this.getPivot(true);
+		x -= center.x;
+		y -= center.y;
+	}
+	
+	if(makeHistory) {
+		if(x == 0) { x = null; }
+		if(y == 0) { y = null; }
+		this.setAttributeHistory({'inkscape:transform-center-x': x, 'inkscape:transform-center-y': y});
+	} else {
+		if(x && !isNaN(x)) { this.setAttribute('inkscape:transform-center-x', x); } else { this.removeAttribute('inkscape:transform-center-x'); }
+		if(y && !isNaN(y)) { this.setAttribute('inkscape:transform-center-y', y); } else { this.removeAttribute('inkscape:transform-center-y'); }
+	}
+}
+
+SVGElement.prototype.movePivot = function(dX, dY, makeHistory) {
+	var x = parseFloat(this.getAttribute('inkscape:transform-center-x') || 0);
+	var y = parseFloat(this.getAttribute('inkscape:transform-center-y') || 0);
+	x += dX;
+	y += dY;
+	
+	if(makeHistory) {
+		if(x == 0) { x = null; }
+		if(y == 0) { y = null; }
+		this.setAttributeHistory({'inkscape:transform-center-x': x, 'inkscape:transform-center-y': y});
+	} else {
+		if(x && !isNaN(x)) { this.setAttribute('inkscape:transform-center-x', x); } else { this.removeAttribute('inkscape:transform-center-x'); }
+		if(y && !isNaN(y)) { this.setAttribute('inkscape:transform-center-y', y); } else { this.removeAttribute('inkscape:transform-center-y'); }
+	}
+}
+
+SVGElement.prototype.getPivot = function(justCenter) {
+	var x, y;
+	if(justCenter) {
+		x = 0;
+		y = 0;
+	} else {
+		x = parseFloat(this.getAttribute('inkscape:transform-center-x') || 0);
+		y = parseFloat(this.getAttribute('inkscape:transform-center-y') || 0);
+	}
+	
+	if(svg) {
+		var area = this.getBBox();
+		var center = this.getCTM().toViewport(area.x+area.width/2, area.y+area.height/2);
+		center.x = center.x/svg.zoom+svg.viewBox.x;
+		center.y = center.y/svg.zoom+svg.viewBox.y;
+		x += center.x;	
+		y += center.y;
+	}
+	return { 'x': x, 'y': y };
+}
+
+SVGElement.prototype.getCenter = function() {
+	return null;
+}
 
 
 

@@ -5,6 +5,7 @@
  *	@brief		SVG arrow
  */
 function arrow(posAbsolute, element, shape, quadrant, origin, actions, constraint) {
+	
 	this.container = null;
 	this.x = posAbsolute.x;
 	this.y = posAbsolute.y;
@@ -27,13 +28,18 @@ function arrow(posAbsolute, element, shape, quadrant, origin, actions, constrain
 arrow.prototype.seed = function() {
 	this.container = document.createElementNS(svgNS, "g");
 	this.container.setAttribute("anigen:lock", "anchor");
+	this.container.setAttribute('shape-rendering', 'geometricPrecision');
 	this.container.shepherd = this;
 	
 	this.container2 = document.createElementNS(svgNS, 'g');
 	this.container.appendChild(this.container2);
 	this.container2.shepherd = this;
 	
-	if(!this.size) { this.size = 20; }
+	if(!this.size) {
+		this.size = 14;
+	}
+	this.size /= 32;	 // base size of SVG is 32x32 px
+	
 	if(!this.shape) { this.shape = 'rotateTL'; }
 	if(!this.colors) { this.colors = {"fill": new color("#000000"), "stroke": new color("#ffffff"), "hover": new color("#008000"), "active": new color("#00a000")}; }
 	
@@ -42,44 +48,44 @@ arrow.prototype.seed = function() {
 	this.path1.setAttribute('anigen:lock', 'anchor');
 	
 	switch(this.shape) {
-		case 'rotate':
-			this.path1.setAttribute('d', 'm -0.277715,-0.22225424 0,0.10134575 c 0.22014392,2.76e-6 0.39859712,0.17847902 0.39857404,0.39862284 l 0.10139466,0 L -3.074397e-5,0.499999 -0.22236408,0.27771435 l 0.10139441,0 c 0,-0.086568 -0.0701773,-0.15674524 -0.15674533,-0.15674524 l 0,0.10139468 L -0.49999942,3.0193965e-5 Z');
+		case 'rotate':	// arched, turning arrow
+			this.path1.setAttribute('d', "m -12,-10 -10,10 10,10 0,-6 c 4.418278,0 8,3.581722 8,8 L -10,12 0,22 10,12 4,12 C 4,3.163444 -3.163444,-4 -12,-4 Z");
 			break;
-		case 'scaleH':
-			this.path1.setAttribute('d', 'M -0.1355594,-0.21704735 -0.35258461,2.1145939e-5 -0.1355594,0.21704636 l 0,-0.0992066 0.2711188,0 0,0.0992066 L 0.35258461,-2.2135154e-5 0.1355594,-0.21704735 l 0,0.09912 -0.2711188,0 z');
+		case 'scaleH':	// left-to-right arrow
+			this.path1.setAttribute('d', "M 15,0 4,11 4,5 l -8,0 0,6 -11,-11 11,-11 0,6 8,0 0,-6 z");
 			break;
-		case 'scaleV':
-			this.path1.setAttribute('d', 'M 0.21704685,-0.1355599 -2.164094e-5,-0.35258511 -0.21704686,-0.1355599 l 0.0992066,0 0,0.2711188 -0.0992066,0 L 2.1640153e-5,0.35258411 0.21704685,0.1355589 l -0.09912,0 0,-0.2711188 z');
+		case 'scaleV':	// up-to-down arrow
+			this.path1.setAttribute('d', "M 0,-15 11,-4 5,-4 5,4 11,4 0,15 -11,4 l 6,0 0,-8 -6,0 z");
 			break;
-		case 'scaleD':
-			this.path1.setAttribute('d', 'm -0.0478855,-0.30468741 0.35257247,3.516e-5 0,0.35253731 -0.0805761,-0.08057594 -0.25680127,0.25680134 0.08057596,0.0805761 -0.35257258,-3.516e-5 0,-0.35253742 0.0805056,0.08050565 L 0.03262,-0.22418166 Z');
+		case 'scaleD':	// corner-to-corner arrow
+			this.path1.setAttribute('d', "M 8,-8 8,8 4,4 l -8,8 4,4 -16,0 0,-16 4,4 8,-8 -4,-4 z");
 			break;
 	}
 	
 	switch(this.quadrant) {
 		case 1:
-			this.path1.setAttribute('transform', 'translate(0.5 -0.5)');
+			this.path1.setAttribute('transform', 'translate(16 -16)');
 			break;
 		case 2:
-			this.path1.setAttribute('transform', 'translate(-0.5 -0.5) rotate(-90)');
+			this.path1.setAttribute('transform', 'translate(-16 -16) scale(-1,1)');
 			break;
 		case 3:
-			this.path1.setAttribute('transform', 'translate(-0.5 0.5) rotate(180)');
+			this.path1.setAttribute('transform', 'translate(-16 16) scale(-1,-1)');
 			break;
 		case 4:
-			this.path1.setAttribute('transform', 'translate(0.5 0.5) rotate(90)');
+			this.path1.setAttribute('transform', 'translate(16 16) scale(1,-1)');
 			break;
 		case 1.5:	// "between 1 and 2"
-			this.path1.setAttribute('transform', 'translate(0 -0.5)');
+			this.path1.setAttribute('transform', 'translate(0 -16)');
 			break;
 		case 2.5:
-			this.path1.setAttribute('transform', 'translate(-0.5 0) rotate(-90)');
+			this.path1.setAttribute('transform', 'translate(-16 0) scale(-1, 1)');
 			break;
 		case 3.5:
-			this.path1.setAttribute('transform', 'translate(0 0.5) rotate(180)');
+			this.path1.setAttribute('transform', 'translate(0 16) scale(-1,-1)');
 			break;
 		case 4.5:
-			this.path1.setAttribute('transform', 'translate(0.5 0) rotate(90)');
+			this.path1.setAttribute('transform', 'translate(16 0) scale(1,-1)');
 			break;
 	}
 	
@@ -108,6 +114,12 @@ arrow.prototype.adjustZoom = function() {
 
 arrow.prototype.moveTo = function(inX, inY, keys) {
 	
+	if(this.constraint) {
+		var tmp = this.constraint.resolve(inX, inY, keys);
+		inX = tmp.x;
+		inY = tmp.y;
+	}
+	
 	var CTMcontainer = this.container.getCTMBase();
 	var lastAbsolute = CTMcontainer.toViewport(0,0);
 	var offset = { 'x': lastAbsolute.x-this.x, 'y': lastAbsolute.y-this.y };
@@ -132,10 +144,14 @@ arrow.prototype.moveTo = function(inX, inY, keys) {
 	
 	this.refreshPosition();
 	
-	this.evaluate(absolute, dAbsolute, ratio, angle);
+	this.evaluate(absolute, dAbsolute, ratio, angle, keys);
 }
 
-arrow.prototype.evaluate = function(absolute, dAbsolute, ratio, angle) {
+arrow.prototype.moveBy = function(dX, dY, keys) {
+	this.moveTo(this.x+dX, this.y+dY, keys);
+}
+
+arrow.prototype.evaluate = function(absolute, dAbsolute, ratio, angle, keys) {
 	if(this.actions != null && this.actions.move) {
 		var bound = this.bound;
 		eval(this.actions.move);
@@ -145,5 +161,17 @@ arrow.prototype.evaluate = function(absolute, dAbsolute, ratio, angle) {
 	}
 }
 
+arrow.prototype.mouseUp = function() {
+	if(this.actions != null && this.actions.mouseup) {
+		var bound = this.bound;
+		eval(this.actions.mouseup);
+		
+		svg.gotoTime();
+		if(svg.ui.path) { svg.ui.path.commit(); }
+	}
+}
 
+arrow.prototype.getAbsolute = function() {
+	return { 'x': this.x, 'y': this.y };
+}
 

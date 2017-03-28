@@ -25,6 +25,7 @@ function color(input) {
 			this.b = parseInt(result[2]);
 			this.a = result[3] ? parseInt(result[3]) : 255;
 		} else {		// name values not supported right now
+			this.invalid = true;
 			return;
 		}
 	} else if(input instanceof color) {
@@ -33,6 +34,7 @@ function color(input) {
 		this.b = input.b;
 		this.a = input.a;
 	} else {
+		this.invalid = true;
 		return;
 	}
 }

@@ -50,22 +50,19 @@ SVGRectElement.prototype.setRY = function(value) {
 	this.setAttribute('ry', value);
 }
 
-SVGRectElement.prototype.translateBy = function(byX, byY, makeHistory) {
+SVGRectElement.prototype.translateBy = function(dX, dY, makeHistory) {
 	var oldX = this.x.baseVal.value;
 	var oldY = this.y.baseVal.value;
 	
 	var CTM = this.getCTMBase();
 	var zero = CTM.toViewport(0,0);
-	var adjusted = CTM.toUserspace(zero.x+byX, zero.y+byY);
-	
-	this.setAttribute('x', oldX+adjusted.x);
-	this.setAttribute('y', oldY+adjusted.y);
+	var adjusted = CTM.toUserspace(zero.x+dX, zero.y+dY);
 	
 	if(makeHistory) {
-		svg.history.add(new historyAttribute(this.id, 
-			{ 'x': oldX, 'y': oldY },
-			{ 'x': oldX+adjusted.x, 'y': oldY+adjusted.y },
-		true));
+		this.setAttributeHistory({ 'x': oldX+adjusted.x, 'y': oldY+adjusted.y }, true);
+	} else {
+		this.setAttribute('x', oldX+adjusted.x);
+		this.setAttribute('y', oldY+adjusted.y);
 	}
 }
 
@@ -76,83 +73,152 @@ SVGRectElement.prototype.setTopleft = function(x, y, makeHistory) {
 	if(this.width.baseVal.value - dX < 0) { dX = this.width.baseVal.value; x = dX + this.x.baseVal.value; }
 	if(this.height.baseVal.value - dY < 0) { dY = this.height.baseVal.value; y = dY + this.y.baseVal.value; }
 	
-	if(makeHistory && svg && history) {
-		svg.history.add(new historyAttribute(this.id,
-			{ 'x': this.x.baseVal.value, 'y': this.y.baseVal.value, 'width': this.width.baseVal.value, 'height': this.height.baseVal.value },
-			{ 'x': x, 'y': y, 'width': (this.width.baseVal.value - dX), 'height': (this.height.baseVal.value - dY) },
-			true
-		));
+	if(makeHistory) {
+		this.setAttributeHistory({ 'x': x, 'y': y, 'width': (this.width.baseVal.value - dX), 'height': (this.height.baseVal.value - dY) }, true);
+	} else {
+		this.setAttribute('x', x);
+		this.setAttribute('y', y);
+		this.setAttribute('width', (this.width.baseVal.value - dX));
+		this.setAttribute('height', (this.height.baseVal.value - dY));
 	}
-	
-	this.setX(x);
-	this.setY(y);
-	
-	this.setWidth(this.width.baseVal.value - dX);
-	this.setHeight(this.height.baseVal.value - dY);
 }
-	
-SVGRectElement.prototype.setBotright = function(x, y, makeHistory) {
-	var width = x - this.x.baseVal.value;
-	var height = y - this.y.baseVal.value;
-	
-	if(width < 0) { width = 0; }
-	if(height < 0) { height = 0; }
-	
-	if(makeHistory && svg && history) {
-		svg.history.add(new historyAttribute(this.id,
-			{ 'width': this.width.baseVal.value, 'height': this.height.baseVal.value },
-			{ 'width': width, 'height': height },
-			true
-		));
+
+SVGRectElement.prototype.setBotright = function(x, y, makeHistory, fromMiddle) {
+	if(fromMiddle) {
+		var newWidth = x - this.x.baseVal.value;
+		var newHeight = y - this.y.baseVal.value;
+		
+		var dW = newWidth - this.width.baseVal.value;
+		var dH = newHeight - this.height.baseVal.value;
+		
+		var oldX = this.x.baseVal.value;
+		var oldY = this.y.baseVal.value;
+		
+		oldX -= dW;
+		oldY -= dH;
+		
+		newWidth = x - oldX;
+		newHeight = y - oldY;
+
+		if(newWidth < 0) {
+			newWidth = 0;
+			oldX = x;
+		}
+		
+		if(newHeight < 0) {
+			newHeight = 0;
+			oldY = y;
+		}
+		
+		if(makeHistory) {
+			this.setAttributeHistory({ 'x': oldX, 'y': oldY, 'width': newWidth, 'height': newHeight }, true);
+		} else {
+			this.setAttribute('x', oldX);
+			this.setAttribute('y', oldY);
+			this.setAttribute('width', newWidth);
+			this.setAttribute('height', newHeight);
+		}
+	} else {
+		var width = x - this.x.baseVal.value;
+		var height = y - this.y.baseVal.value;
+		
+		if(width < 0) { width = 0; }
+		if(height < 0) { height = 0; }
+		
+		if(makeHistory) {
+			this.setAttributeHistory({ 'width': width, 'height': height }, true);
+		} else {
+			this.setAttribute('width', width);
+			this.setAttribute('height', height);
+		}
 	}
-	
-	this.setWidth(width);
-	this.setHeight(height);
 }
-	
-SVGRectElement.prototype.generateAnchors = function() {
+
+
+
+SVGRectElement.prototype.generateAnchors = function(alternativeNodes) {
 	var CTM = this.getCTMBase();
+	
+	var mouseUpAction = "svg.select();";
+	
+	var anchors = [];
 	
 	var adjustedXY = CTM.toViewport(this.x.baseVal.value, this.y.baseVal.value);
 	var adjustedWH = CTM.toViewport(this.x.baseVal.value+this.width.baseVal.value, this.y.baseVal.value+this.height.baseVal.value);
 	
-	var mouseUpAction = "svg.select();";
+	if(alternativeNodes) {		// used for camera
+		var adjustedMiddle = CTM.toViewport(this.x.baseVal.value+(this.width.baseVal.value)/2, this.y.baseVal.value+(this.height.baseVal.value)/2);
 		
-	var anchTopleft = new anchor(adjustedXY, this, 'rectangle', {
+		
+		var anchorMiddle = new anchor(adjustedMiddle, this, 'circle', {
+			'move': "this.element.translateBy(dRelative.x, dRelative.y, true);",
+			'mouseup': mouseUpAction
+		});
+		anchors.push(anchorMiddle);
+		
+		var anchorBotRight = new anchor(adjustedWH, this, 'diamond', {
+				'move': "this.element.setBotright(relative.x, relative.y, true, true);",
+				'mouseup': mouseUpAction
+				}, new constraintLinear(anchorMiddle, adjustedWH, { 'hardMin': true, 'optional': true })
+			);
+		anchors.push(anchorBotRight);
+		
+		anchorMiddle.addChild(anchorBotRight);
+		
+		
+		
+	} else {
+		var anchorTopLeft = new anchor(adjustedXY, this, 'rectangle', {
 			'move': "this.element.setTopleft(relative.x, relative.y, true);",
 			'mouseup': mouseUpAction
-			}, new constraintLinear(adjustedXY, adjustedWH, false, true)
+			}, new constraintLinear(adjustedXY, adjustedWH, { 'optional': true })
 		);
-	
-	var anchBotright = new anchor(adjustedWH, this, 'rectangle', {
-			'move': "this.element.setBotright(relative.x, relative.y, true);",
-			'mouseup': mouseUpAction
-			}, new constraintLinear(adjustedWH, adjustedXY, false, true)
-		);
+		anchors.push(anchorTopLeft);
 		
-	return { 'anchors': [ [ anchTopleft, anchBotright ] ] };
+		var anchorBotRight = new anchor(adjustedWH, this, 'rectangle', {
+				'move': "this.element.setBotright(relative.x, relative.y, true);",
+				'mouseup': mouseUpAction
+				}, new constraintLinear(adjustedWH, adjustedXY, { 'optional': true })
+			);
+		anchors.push(anchorBotRight);
+	}
+	
+	return { 'anchors': [ anchors ] };
 }
 
 // returns element's center as top-left (x,y attributes) plus half of height and width respectively
 // if viewport is true, value given is adjusted to current viewport
 SVGRectElement.prototype.getCenter = function(viewport) {
-	var CTM = this.getCTMBase();
-	var topLeft = CTM.toViewport(this.x.baseVal.value, this.y.baseVal.value);
-	var botRight = CTM.toViewport(this.x.baseVal.value+this.width.baseVal.value, this.y.baseVal.value+this.height.baseVal.value);
+	topLeft = { 'x': this.x.baseVal.value, 'y': this.y.baseVal.value };
+	botRight = { 'x': this.x.baseVal.value+this.width.baseVal.value, 'y': this.y.baseVal.value+this.height.baseVal.value };
+	topLeftAnim = { 'x': this.x.animVal.value, 'y': this.y.animVal.value };
+	botRightAnim = { 'x': this.x.animVal.value+this.width.animVal.value, 'y': this.y.animVal.value+this.height.animVal.value };
 	
 	if(viewport) {
+		var CTM = this.getCTMBase();
+		var CTMAnim = this.getCTMAnim();
+		
+		topLeft = CTM.toViewport(this.x.baseVal.value, this.y.baseVal.value);
+		botRight = CTM.toViewport(this.x.baseVal.value+this.width.baseVal.value, this.y.baseVal.value+this.height.baseVal.value);
+		topLeftAnim = CTMAnim.toViewport(this.x.animVal.value, this.y.animVal.value);
+		botRightAnim = CTMAnim.toViewport(this.x.animVal.value+this.width.animVal.value, this.y.animVal.value+this.height.animVal.value);
+		
 		var adjusted = CTM.toViewport(this.x.baseVal.value+this.width.baseVal.value/2, this.y.baseVal.value+this.height.baseVal.value/2);
-		var adjustedAnim = CTM.toViewport(this.x.animVal.value+this.width.animVal.value/2, this.y.animVal.value+this.height.animVal.value/2);
+		var adjustedAnim = CTMAnim.toViewport(this.x.animVal.value+this.width.animVal.value/2, this.y.animVal.value+this.height.animVal.value/2);
 		
 		return { 'x': adjusted.x, 'y': adjusted.y, 'x_anim': adjustedAnim.x, 'y_anim': adjustedAnim.y,
 			'left': Math.min(topLeft.x, botRight.x), 'right': Math.max(topLeft.x, botRight.x),
-			'top': Math.min(topLeft.y, botRight.y), 'bottom': Math.max(topLeft.y, botRight.y)
+			'top': Math.min(topLeft.y, botRight.y), 'bottom': Math.max(topLeft.y, botRight.y),
+			'left_anim': Math.min(topLeftAnim.x, botRightAnim.x), 'right_anim': Math.max(topLeftAnim.x, botRightAnim.x),
+			'top_anim': Math.min(topLeftAnim.y, botRightAnim.y), 'bottom_anim': Math.max(topLeftAnim.y, botRightAnim.y)
 		};
 	}
 	return { 'x': this.x.baseVal.value+this.width.baseVal.value/2, 'y': this.y.baseVal.value+this.height.baseVal.value/2,
 			'x_anim': this.x.animVal.value+this.width.animVal.value/2, 'y_anim': this.y.animVal.value+this.height.animVal.value/2,
 			'left': Math.min(topLeft.x, botRight.x), 'right': Math.max(topLeft.x, botRight.x),
-			'top': Math.min(topLeft.y, botRight.y), 'bottom': Math.max(topLeft.y, botRight.y)
+			'top': Math.min(topLeft.y, botRight.y), 'bottom': Math.max(topLeft.y, botRight.y),
+			'left_anim': Math.min(topLeftAnim.x, botRightAnim.x), 'right_anim': Math.max(topLeftAnim.x, botRightAnim.x),
+			'top_anim': Math.min(topLeftAnim.y, botRightAnim.y), 'bottom_anim': Math.max(topLeftAnim.y, botRightAnim.y)
 	};
 }
 
@@ -205,4 +271,4 @@ SVGRectElement.prototype.toPath = function() {
 	return path;
 }
 
-
+SVGRectElement.prototype.isVisualElement = function() { return true; }

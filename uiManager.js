@@ -16,9 +16,7 @@ function uiManager() {
 	window.addEventListener("mousedown", this.eventMouseDown, false);
 	window.addEventListener("mouseup", this.eventMouseUp, false);
 	window.addEventListener("mousemove", this.eventMouseMove, false);
-	
 	window.addEventListener("resize", this.eventResize, false);
-	window.addEventListener("resizing", this.eventResize, false);
 	
 	window.anigenManager = this;
 }
@@ -33,40 +31,61 @@ uiManager.prototype.seedAnigen = function() {
 	document.body.appendChild(svgArea);
 	
 	// svg
-	document.body.appendChild(new uiSection([0,0,0,0],false,true,{'class': 'section-svg'},this).container);
-	this.named.svg = this.sections[this.sections.length-1];
+	this.named.svg = new uiSection([0,0,0,0],false,true,{'class': 'section-svg'},this);
+	
+	// left
+	this.named.left = new uiSection([0,109,window.innerWidth/3,35],[false, true, false, false],[true, false, true, true],{'class': 'section-left'},this,'anigenActual.settings.set("treeWidth", this.width);');
+	// right
+	this.named.right = new uiSection([2*window.innerWidth/3,109,100,35],[false, false, false, true],[true, true, true, false],{'class': 'section-right'},this,'anigenActual.settings.set("windowsWidth", this.width);');
+	
+	// bottom portion
+	var bottomAction = '';
+		bottomAction += 'var desired=Math.round((this.height)/24)*24;';
+		bottomAction += 'this.setY(window.innerHeight-(desired == 0 ? 6 : desired));';
+		bottomAction += 'this.refresh();';
+		bottomAction += 'anigenManager.refresh();';
+		bottomAction += 'anigenActual.settings.set("bottomHeight", this.height);';
+	
+	this.named.bottom = new uiSection([0,window.innerHeight-24,100,24],[true, false, false, false],[false, true, true, true],{'class': 'section-bottom'},this,bottomAction);
+	
+	
+	// top portion
+	// selection info
+	this.named.selection = new uiSection([0,34,100,42],false,[false, true, false, true],{'class': 'section-top-row2'},this);
+	// editor info & menu
+	this.named.info = new uiSection([0,0,100,36],false,[true, true, false, true],{'class': 'section-top-row1'},this);
+	// context menu	
+	this.named.context = new uiSection([0,76,100,32],false,[false, true, false, true],{'class': 'section-top-row3'},this);
+	
+	// timeline
+	this.named.timeline = new uiSection([0,74,100,0],false,[false, true, false, true],null,this);
+	
+	
+	this.named.left.setLimits([this.named.context, this.named.right, this.named.bottom, null]);
+	this.named.right.setLimits([this.named.context, null, this.named.bottom, this.named.left]);
+	
+	this.named.left.setSlacks([-1, 64, 0, 0]);
+	this.named.right.setSlacks([-1, 0, 0, 64]);
+	
+	this.named.bottom.setLimits([this.named.context, null, null, null]);
+	this.named.bottom.setSlacks([64, 0, 0, 0]);
 	
 	// listeners
 	//window.anigenActual.connectSVG(this.named.svg.content);
 	anigenManager.named.svg.container.addEventListener("mousemove", anigenActual.eventMouseMove, false);
     anigenManager.named.svg.container.addEventListener("mousedown", anigenActual.eventMouseDown, false);
-    anigenManager.named.svg.container.addEventListener("mouseup", anigenActual.eventMouseUp, false);
-    anigenManager.named.svg.container.addEventListener("click", anigenActual.eventClick, false);
-    anigenManager.named.svg.container.addEventListener("dblclick", anigenActual.eventDblClick, false);
-    anigenManager.named.svg.container.addEventListener("mousewheel", anigenActual.eventScroll, false);
+    //anigenManager.named.svg.container.addEventListener("mouseup", anigenActual.eventMouseUp, false);
     anigenManager.named.svg.container.addEventListener("wheel", anigenActual.eventScroll, false);
 	anigenManager.named.svg.container.addEventListener('mouseover', anigenActual.eventMouseOver, false);
 	
-	// left
-	document.body.appendChild(new uiSection([0,109,window.innerWidth/3,35],[false, true, false, false],[false, false, true, true],{'class': 'section-left'},this).container);
-	this.named.left = this.sections[this.sections.length-1];
-	// right
-	document.body.appendChild(new uiSection([2*window.innerWidth/3,109,100,35],[false, false, false, true],[false, true, true, false],{'class': 'section-right'},this).container);
-	this.named.right = this.sections[this.sections.length-1];
+	for(var i in this.named) {
+		document.body.appendChild(this.named[i].container);
+	}
 	
 	
-	// selection info
-	document.body.appendChild(new uiSection([0,34,100,42],false,[false, true, false, true],{'class': 'section-top-row2'},this).container);
-	this.named.selection = this.sections[this.sections.length-1];
-	// editor info & menu
-	document.body.appendChild(new uiSection([0,0,100,36],false,[true, true, false, true],{'class': 'section-top-row1'},this).container);
-	this.named.info = this.sections[this.sections.length-1];
-	// context menu	
-	document.body.appendChild(new uiSection([0,76,100,32],false,[false, true, false, true],{'class': 'section-top-row3'},this).container);
-	this.named.context = this.sections[this.sections.length-1];
+	this.classes.timeline = new uiTimeline();
 	
-	
-	this.classes.editor = new infoEditor();
+	this.classes.editor = new infoEditor(this.classes.timeline);
 	this.classes.menu = new menu();
 	this.classes.selection = new infoSelection();
 	this.classes.context = new infoContext();
@@ -83,6 +102,7 @@ uiManager.prototype.seedAnigen = function() {
 	this.named.svg.container.appendChild(this.classes.rulerH.container);
 	
 	
+	this.named.timeline.content.appendChild(this.classes.timeline.container);
 	this.named.info.content.appendChild(this.classes.editor.container);
 	this.named.info.content.appendChild(this.classes.menu.container);
 	this.named.selection.content.appendChild(this.classes.selection.container);
@@ -91,11 +111,11 @@ uiManager.prototype.seedAnigen = function() {
 	this.named.right.content.appendChild(this.classes.windowColors.container);
 	this.named.right.content.appendChild(this.classes.windowLayers.container);
 	this.named.left.content.appendChild(this.classes.tree.container);
+	this.named.bottom.content.appendChild(log.container);
 	
 	// overlay and popup
 	window.popup = new popup();
 	window.popup.hide();
-	
 	window.overlay = new overlay();
 	
 	// confirmation dialogue
@@ -110,11 +130,8 @@ uiManager.prototype.seedAnigen = function() {
 	// load settings
 	anigenActual.settings.loadData();
 	anigenActual.settings.apply();
-}
-
-uiManager.prototype.init = function() {
 	
-	return this;
+	log.report('UI built.');
 }
 
 uiManager.prototype.register = function(target) {
@@ -141,6 +158,7 @@ uiManager.prototype.unregister = function(target) {
 }
 
 uiManager.prototype.eventMouseDown = function(event) {
+	anigenManager.downEvent = event;
 	if(event.target.hasClass('resizer') && !event.target.hasClass('disabled')) {
 		var owner = event.target.parentNode.shepherd;
 		if(!owner) { return; }
@@ -157,10 +175,26 @@ uiManager.prototype.eventMouseDown = function(event) {
 }
 
 uiManager.prototype.eventMouseUp = function(event) {
-	window.anigenManager.activeSection = null;
+	anigenManager.downEvent = null;
+	anigenManager.activeSection = null;
+	anigenManager.classes.timeline.downEvent = null;
+	if(!event.target.isChildOf(anigenManager.classes.windowAnimation.tab1) && 
+		!event.target.isChildOf(popup.container)
+	) {
+		anigenManager.classes.windowAnimation.lastClicked = null;
+	}
 }
 
 uiManager.prototype.eventMouseMove = function(event) {
+	if(anigenManager.classes.timeline.downEvent) {
+		anigenManager.classes.timeline.eventMouseMove(event);
+	}
+	if(popup.lastEvent) {
+		popup.moveBy(event.clientX-popup.lastEvent.clientX, event.clientY-popup.lastEvent.clientY);
+		popup.lastPosition.x = popup.x;
+		popup.lastPosition.y = popup.y;
+		popup.lastEvent = event;
+	}
 	if(window.anigenManager.activeSection) {
 		window.anigenManager.activeSection.eventResizerAction(event);
 	}
@@ -168,7 +202,23 @@ uiManager.prototype.eventMouseMove = function(event) {
 
 uiManager.prototype.refresh = 
 uiManager.prototype.eventResize = function(event) {
+	window.anigenManager.named['right'].setX(window.innerWidth-window.anigenManager.named['right'].width);
+	window.anigenManager.named['bottom'].setY(window.innerHeight-window.anigenManager.named['bottom'].height);
+	
 	for(var i = 0; i < window.anigenManager.sections.length; i++) {
 		window.anigenManager.sections[i].refresh();
 	}
 }
+
+uiManager.prototype.setCursor = function(cursorName) {
+	if(!this.named || !this.named['svg'] || !this.named['svg'].container) { return; }
+	
+	if(!cursorName) {
+		cursorName = 'default';
+	} else {
+		cursorName += ',default';
+	}
+	
+	this.named['svg'].container.style.cursor = cursorName;
+}
+

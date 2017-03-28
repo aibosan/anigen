@@ -17,15 +17,33 @@ function coordinates() {
 		if(typeof arguments[0] === 'number') { this.x = arguments[0]; }
 		if(typeof arguments[1] === 'number') { this.y = arguments[1]; }
 	}
+	if((this.x == null && this.y == null) ||
+		isNaN(this.x) || isNaN(this.y)) {
+		this.invalid = true;
+	}
 }
 
 coordinates.prototype.isInvertible = function() {
 	return true;
 }
 
+coordinates.prototype.isScalable = function() {
+	return true;
+}
+
 coordinates.prototype.invert = function() {
 	this.x *= -1;
 	this.y *= -1;
+}
+
+coordinates.prototype.scale = function(factor) {
+	if(typeof factor === 'number') {
+		this.x *= factor;
+		this.y *= factor;
+	} else {
+		if(this.x != null) { this.x *= factor.x; }
+		if(this.y != null) { this.y *= factor.y; }
+	}
 }
 
 coordinates.prototype.toString = function() {

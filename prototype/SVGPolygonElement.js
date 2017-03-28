@@ -41,4 +41,5 @@ SVGPolygonElement.prototype.toPath = function() {
 	return path;
 }
 
+SVGPolygonElement.prototype.isVisualElement = function() { return true; }
 

@@ -184,18 +184,14 @@ table.gradients tr:not(:first-child):hover {
 	background-color: dimgray;
 }
 
-
-/*
-// distracting, plus doesn't account for non-spline calcMode (different selector?)
-table.keyframes td:last-child {
-	position: relative;
-	transform: translateY(-50%);
-}
-*/
-
 .splineInput {
 	height: 100%;
 	white-space:nowrap;
+	display: inline-block !important;
+}
+
+.splineInput.hidden {
+	display: none !important;
 }
 
 .splineInput input {
@@ -207,8 +203,10 @@ table.keyframes td:last-child {
 
 table.keyframes select {
 	width: inherit;
+	vertical-align: 1px;
 }
 
-table.keyframes select.small {
-	width: 1.5em;
+select.small {
+	width: 1.5em !important;
+	min-width: 1.5em !important;
 }

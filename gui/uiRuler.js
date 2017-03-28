@@ -17,12 +17,17 @@ function uiRuler(vertical, tied) {
 	this.container.style.top = '0px';
 	this.container.style.left = '0px';
 	
+	this.arrow = document.createElementNS(svgNS, 'polygon');
+	this.arrow.style.fill = 'black';
+	
 	if(this.vertical) {
 		this.container.style.height = "100%";
 		this.container.style.width = this.girth+"px";
+		this.arrow.setAttribute('points',  this.girth*0.8 + ',' + (-0.2*this.girth) + ' ' + this.girth*0.8 + ',' + 0.2*this.girth + ' ' + this.girth + ',0');
 	} else {
 		this.container.style.height = this.girth+"px";
 		this.container.style.width = "100%";
+		this.arrow.setAttribute('points', (-0.2*this.girth) + ',' + this.girth*0.8 + ' ' + 0.2*this.girth + ',' + this.girth*0.8 + ' 0,' + this.girth);
 	}
 	
 	this.svg = document.createElementNS(svgNS, 'svg');
@@ -87,7 +92,6 @@ uiRuler.prototype.refresh = function() {
 	
 	var nFrom = (this.vertical ? svg.viewBox.y : svg.viewBox.x);
 	var nSize = dSize/svg.zoom;
-	
 	
 	var dSegmentSize = 100;
 	var nSegmentSize = parseFloat(Number(dSegmentSize/svg.zoom).toPrecision(1));
@@ -185,10 +189,19 @@ uiRuler.prototype.refresh = function() {
 			
 		}
 	}
+	
+	this.svg.appendChild(this.arrow);
 
 }
 
-
+uiRuler.prototype.setArrow = function(value) {
+	if(this.vertical) {
+		this.arrow.setAttribute('transform', 'translate(0, '+(value-svg.viewBox.y)*svg.zoom+')');
+	} else {
+		this.arrow.setAttribute('transform', 'translate('+(value-svg.viewBox.x)*svg.zoom+', 0)');
+	}
+	
+}
 
 
 

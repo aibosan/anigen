@@ -75,7 +75,7 @@ SVGPolylineElement.prototype.generateAnchors = function() {
 		var adjusted = CTM.toViewport(this.values[i].x, this.values[i].y);
 		var constraint = null;
 		if(i > 0) {
-			constraint = new constraintLinear({'x': this.values[i-1].x, 'y': this.values[i-1].y}, {'x': this.values[i].x, 'y': this.values[i].y}, false, true);
+			constraint = new constraintLinear({'x': this.values[i-1].x, 'y': this.values[i-1].y}, {'x': this.values[i].x, 'y': this.values[i].y}, { 'optional': true });
 		}
 		var anch = new anchor(adjusted, this, 'rectangle', {
 			'move': 'this.element.setValue('+i+', absolute.x, absolute.y, true);',
@@ -89,36 +89,48 @@ SVGPolylineElement.prototype.generateAnchors = function() {
 // returns element's center as top-left (x,y attributes) plus half of height and width respectively
 // if viewport is true, value given is adjusted to current viewport
 SVGPolylineElement.prototype.getCenter = function(viewport) {
-	var CTM = this.getCTMBase();
-	
-	this.getValues();
-	
 	var xMax, yMax, xMin, yMin;
+	var xMaxAnim, yMaxAnim, xMinAnim, yMinAnim;
 	
-	for(var i = 0; i < this.values.length; i++) {
-		if(viewport) {
-			var adjusted = CTM.toViewport(this.values[i].x, this.values[i].y);
-			if(xMin == null || adjusted.x < xMin) { xMin = adjusted.x; }
-			if(xMax == null || adjusted.x > xMax) { xMax = adjusted.x; }
-			if(yMin == null || adjusted.y < yMin) { yMin = adjusted.y; }
-			if(yMax == null || adjusted.y > yMax) { yMax = adjusted.y; }
-		} else {
-			if(xMin == null || this.values[i].x < xMin) { xMin = this.values[i].x; }
-			if(xMax == null || this.values[i].x > xMax) { xMax = this.values[i].x; }
-			if(yMin == null || this.values[i].y < yMin) { yMin = this.values[i].y; }
-			if(yMax == null || this.values[i].y > yMax) { yMax = this.values[i].y; }
-		}
+	if(this.points.length == 0) {
+		return null;
 	}
 	
-	var center = {
+	var CTM = this.getCTMBase();
+	var CTMAnim = this.getCTMAnim();
+	
+	for(var i = 0; i < this.points.length; i++) {
+		var adjusted;
+		var adjustedAnim;
+		
+		if(viewport) {
+			adjusted = CTM.toViewport(this.points[i].x, this.points[i].y);
+			adjustedAnim = CTMAnim.toViewport(this.animatedPoints[i].x, this.animatedPoints[i].y);
+		} else {
+			adjusted = this.points[i];
+			adjustedAnim = this.animatedPoints[i];
+		}
+		if(xMin == null || adjusted.x < xMin) { xMin = adjusted.x; }
+		if(xMax == null || adjusted.x > xMax) { xMax = adjusted.x; }
+		if(yMin == null || adjusted.y < yMin) { yMin = adjusted.y; }
+		if(yMax == null || adjusted.y > yMax) { yMax = adjusted.y; }
+		
+		if(xMinAnim == null || adjustedAnim.x < xMinAnim) { xMinAnim = adjustedAnim.x; }
+		if(xMaxAnim == null || adjustedAnim.x > xMaxAnim) { xMaxAnim = adjustedAnim.x; }
+		if(yMinAnim == null || adjustedAnim.y < yMinAnim) { yMinAnim = adjustedAnim.y; }
+		if(yMaxAnim == null || adjustedAnim.y > yMaxAnim) { yMaxAnim = adjustedAnim.y; }
+	}
+	
+	return {
 		'x': xMin + (xMax-xMin)/2,
 		'y': yMin + (yMax-yMin)/2,
-	}
-	
-	return { 'x': center.x, 'y': center.y,
+		'x_anim': xMinAnim + (xMaxAnim-xMinAnim)/2,
+		'y_anim': yMinAnim + (yMaxAnim-yMinAnim)/2,
 		'left': xMin, 'right': xMax,
-		'top': yMin, 'bottom': yMax
-	};
+		'top': yMin, 'bottom': yMax,
+		'left_anim': xMinAnim, 'right_anim': xMaxAnim,
+		'top_anim': yMinAnim, 'bottom_anim': yMaxAnim
+	}
 }
 
 SVGPolylineElement.prototype.toPath = function() {
@@ -149,4 +161,4 @@ SVGPolylineElement.prototype.toPath = function() {
 	return path;
 }
 
-
+SVGPolylineElement.prototype.isVisualElement = function() { return true; }

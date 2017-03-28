@@ -38,7 +38,7 @@ SVGLineElement.prototype.generateAnchors = function() {
 	var adjusted1 = CTM.toViewport(this.x1.baseVal.value, this.y1.baseVal.value);
 	var adjusted2 = CTM.toViewport(this.x2.baseVal.value, this.y2.baseVal.value);
 	
-	var constraint = new constraintLinear({'x': this.x1.baseVal.value, 'y': this.y1.baseVal.value}, {'x': this.x2.baseVal.value, 'y': this.y1.baseVal.value}, false, true);
+	var constraint = new constraintLinear({'x': this.x1.baseVal.value, 'y': this.y1.baseVal.value}, {'x': this.x2.baseVal.value, 'y': this.y1.baseVal.value}, { 'optional': true });
 	
 	var anchors = [];
 	
@@ -60,6 +60,8 @@ SVGLineElement.prototype.generateAnchors = function() {
 // if viewport is true, value given is adjusted to current viewport
 SVGLineElement.prototype.getCenter = function(viewport) {
 	var CTM = this.getCTMBase();
+	var CTMAnim = this.getCTMAnim();
+	
 	var adjusted1 = CTM.toViewport(this.x1.baseVal.value, this.y1.baseVal.value);
 	var adjusted2 = CTM.toViewport(this.x2.baseVal.value, this.y2.baseVal.value);
 	
@@ -69,8 +71,8 @@ SVGLineElement.prototype.getCenter = function(viewport) {
 	var cX = this.x1.baseVal.value + (this.x2.baseVal.value-this.x1.baseVal.value)/2;
 	var cY = this.y1.baseVal.value + (this.y2.baseVal.value-this.y1.baseVal.value)/2;
 	
-	var adjusted1Anim = CTM.toViewport(this.x1.animVal.value, this.y1.animVal.value);
-	var adjusted2Anim = CTM.toViewport(this.x2.animVal.value, this.y2.animVal.value);
+	var adjusted1Anim = CTMAnim.toViewport(this.x1.animVal.value, this.y1.animVal.value);
+	var adjusted2Anim = CTMAnim.toViewport(this.x2.animVal.value, this.y2.animVal.value);
 	
 	var adjCXAnim = adjusted1Anim.x + (adjusted2Anim.x-adjusted1Anim.x)/2;
 	var adjCYAnim = adjusted1Anim.y + (adjusted2Anim.y-adjusted1Anim.y)/2;
@@ -81,12 +83,16 @@ SVGLineElement.prototype.getCenter = function(viewport) {
 	if(viewport) {
 		return { 'x': adjCX, 'y': adjCY, 'x_anim': adjCXAnim, 'y_anim': adjCYAnim,
 			'left': Math.min(adjusted1.x, adjusted2.x), 'right': Math.max(adjusted1.x, adjusted2.x),
-			'top': Math.min(adjusted1.y, adjusted2.y), 'bottom': Math.max(adjusted1.y, adjusted2.y)
+			'top': Math.min(adjusted1.y, adjusted2.y), 'bottom': Math.max(adjusted1.y, adjusted2.y),
+			'left_anim': Math.min(adjusted1Anim.x, adjusted2Anim.x), 'right_anim': Math.max(adjusted1Anim.x, adjusted2Anim.x),
+			'top_anim': Math.min(adjusted1Anim.y, adjusted2Anim.y), 'bottom_anim': Math.max(adjusted1Anim.y, adjusted2Anim.y)
 		};
 	}
 	return { 'x': cX, 'y': cY, 'x_anim': cXAnim, 'y_anim': cYAnim,
 			'left': Math.min(this.x1.baseVal.value, this.x2.baseVal.value), 'right': Math.max(this.x1.baseVal.value, this.x2.baseVal.value),
-			'top': Math.min(this.y1.baseVal.value, this.y2.baseVal.value), 'bottom': Math.max(this.y1.baseVal.value, this.y2.baseVal.value)
+			'top': Math.min(this.y1.baseVal.value, this.y2.baseVal.value), 'bottom': Math.max(this.y1.baseVal.value, this.y2.baseVal.value),
+			'left_anim': Math.min(adjusted1Anim.x, adjusted2Anim.x), 'right_anim': Math.max(adjusted1Anim.x, adjusted2Anim.x),
+			'top_anim': Math.min(adjusted1Anim.y, adjusted2Anim.y), 'bottom_anim': Math.max(adjusted1Anim.y, adjusted2Anim.y)
 	};
 }
 
@@ -113,4 +119,4 @@ SVGLineElement.prototype.toPath = function() {
 	return path;
 }
 
-
+SVGLineElement.prototype.isVisualElement = function() { return true; }

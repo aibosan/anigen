@@ -20,6 +20,9 @@ SVGAnimateMotionElement.prototype.getPath = function() {
 	
 	if(!this.getAttribute('path')) { return null; }
 	this.path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+	if(this.getAttribute('sodipodi:nodetypes')) {
+		this.path.setAttribute('sodipodi:nodetypes', this.getAttribute('sodipodi:nodetypes'));
+	}
 	this.path.setD(this.getAttribute('path'));
 	var center = this.getCenter(true);
 	
@@ -30,9 +33,13 @@ SVGAnimateMotionElement.prototype.getPath = function() {
 	return this.path;
 }
 
-SVGAnimateMotionElement.prototype.setPathData = function(data) {
+SVGAnimateMotionElement.prototype.setPathData = function(data, makeHistory) {
 	this.path = null;
-	this.setAttribute('path', data);
+	if(makeHistory) {
+		this.setAttributeHistory({'path': data}, true);
+	} else {
+		this.setAttribute('path', data);
+	}
 }
 
 SVGAnimateMotionElement.prototype.setPath = function(target, absolute) {
@@ -53,7 +60,7 @@ SVGAnimateMotionElement.prototype.setPath = function(target, absolute) {
 		// doesn't take CTM of target path into account?
 		path.moveAllBy(origin.x-center.x, origin.y-center.y );
 	}
-	this.setAttribute('path', path.getAttribute('d'));
+	this.setAttributeHistory({'path': path.getAttribute('d')}, true);
 		
 	svg.select();
 	svg.gotoTime();
@@ -222,8 +229,12 @@ SVGAnimateMotionElement.prototype.generateAnchors = function() {
 	var generated = this.path.generateAnchors();
 	if(!this.xlink) {
 		for(var i = 0; i < generated.anchors[0].length; i++) {
-			generated.anchors[0][i].bound = { 'animation': this };
-			generated.anchors[0][i].actions.move += 'this.bound.animation.setPathData(this.element.pathData.baseVal.toString());';
+			generated.anchors[0][i].animation = this;
+			generated.anchors[0][i].actions.move += 'this.animation.setPathData(this.element.pathData.baseVal.toString(), true);';
+			if(generated.anchors[0][i].actions.click) {
+				generated.anchors[0][i].actions.click += 'if(this.element.getAttribute("sodipodi:nodetypes") != null) { this.animation.setAttributeHistory({"sodipodi:nodetypes": this.element.getAttribute("sodipodi:nodetypes")}); }'
+				generated.anchors[0][i].actions.click += 'this.animation.setPathData(this.element.pathData.baseVal.toString(), true);';
+			}
 		}
 		this.path.style.stroke = '#aa0000';
 		this.path.style.fill = 'none';

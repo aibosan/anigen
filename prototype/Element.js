@@ -14,6 +14,7 @@ Element.prototype.removeChildren = function() {
 
 Element.prototype.getElementsByTagName = function(tag, deep, lenient) {
     var response = new Array();
+	tag = tag || '';
     var children = this.children;
     for(var i = 0; i < children.length; i++) {
         if(!lenient && children[i].tagName.toLowerCase() == tag.toLowerCase() || lenient && children[i].tagName.toLowerCase().match(tag) != null) {
@@ -36,12 +37,20 @@ Element.prototype.getChildren = function(deep) {
     return response;
 }
 
-Element.prototype.getElementsByAttribute = function(attribute, value, deep) {
+Element.prototype.getElementsByAttribute = function(attribute, value, deep, lenient) {
     var response = new Array();
     var children = this.children;
     for(var i = 0; i < children.length; i++) {
+		if(!attribute) {
+			for(var j in children[i].attributes) {
+				if((children[i].attributes[j].name && children[i].attributes[j].value) && ((lenient && children[i].attributes[j].value.match(value)) || children[i].attributes[j].value == value)) {
+					response[response.length] = children[i];
+					break;
+				}
+			}
+		}
         if(children[i].getAttribute(attribute) != null) {
-            if((value != null && children[i].getAttribute(attribute) == value) || value == null) {
+            if((lenient && children[i].getAttribute(attribute)) || (value != null && children[i].getAttribute(attribute) == value) || value == null) {
                 response[response.length] = children[i];
             }
         }
@@ -89,18 +98,16 @@ Element.prototype.stripId = function(deep) {
 }
 
 Element.prototype.isAnimation = function() {
-    if( this.nodeName.toLowerCase() == 'animate' ||
-        this.nodeName.toLowerCase() == 'animatetransform' ||
-        this.nodeName.toLowerCase() == 'animatemotion' ||
-        this.nodeName.toLowerCase() == 'animateColor') { return true; } else { return false; }
+	return this instanceof SVGAnimationElement;
 }
 
-Element.prototype.hasAnimation = function() {
-    if (this.getElementsByTagName('animate', false, true).length > 0) {
-        return true;
-    } else {
-        return false;
-    }
+Element.prototype.hasAnimation = function(onlyViable) {
+	for(var i = 0; i < this.children.length; i++) {
+		if(this.children[i] instanceof SVGAnimationElement &&
+			(!onlyViable || (onlyViable && !this.children[i].getAttribute('anigen:lock')))
+		) { return true;}
+	}
+	return false;
 }
 
 Element.prototype.isChildOf = function(element) {
@@ -137,5 +144,4 @@ Element.prototype.hasClass = function(name) {
 	}
 	return false;
 }
-
 

@@ -5,9 +5,10 @@
  *	@brief		History element (representing a single step) for changing element's attributes
  */
 function historyAttribute(targetId, attributesFrom, attributesTo, collapsible) {
+	if(targetId == null || targetId.length == 0) { return null; }
+	
 	this.timestamp = Date.now();
 	this.collapsible = collapsible || false;
-	
 	this.targetId = targetId;
 	this.attributesFrom = attributesFrom || [];
 	this.attributesTo = attributesTo || [];
@@ -15,8 +16,13 @@ function historyAttribute(targetId, attributesFrom, attributesTo, collapsible) {
 	
 	this.undo = function() {
 		var el = document.getElementById(this.targetId);
-		if(!el) { return false; }
+		if(!el) { 
+			log.error('<span class="tab"></span><span class="tab"></span>Target element <strong>'+this.targetId+'</strong> for attribute change is missing!', 1);
+			return false;
+		}
+		var allNames = [];
 		for(var i in this.attributesFrom) {
+			allNames.push(i);
 			if(this.attributesFrom[i] == null) {
 				el.removeAttribute(i);
 			} else {
@@ -27,13 +33,20 @@ function historyAttribute(targetId, attributesFrom, attributesTo, collapsible) {
 		if(el.shepherd && el.shepherd instanceof SVGAnimationElement) {
 			el.shepherd.commit(true);
 		}
+		log.report('<span class="tab"></span><strong>'+this.targetId+'</strong> attributes <em>'+allNames.join(',')+'</em> reverted.', 1);
+		
 		return true;
 	};
 	
 	this.redo = function() {
 		var el = document.getElementById(this.targetId);
-		if(!el) { return false; }
+		if(!el) {
+			log.report('<span class="tab"></span><span class="tab"></span>Target element <strong>'+this.targetId+'</strong> for attribute change is missing!</span>', 1);
+			return false;
+		}
+		var allNames = [];
 		for(var i in this.attributesTo) {
+			allNames.push(i);
 			if(this.attributesTo[i] == null) {
 				el.removeAttribute(i);
 			} else {
@@ -44,6 +57,8 @@ function historyAttribute(targetId, attributesFrom, attributesTo, collapsible) {
 		if(el.shepherd && el.shepherd instanceof SVGAnimationElement) {
 			el.shepherd.commit(true);
 		}
+		log.report('<span class="tab"></span><strong>'+this.targetId+'</strong> attributes <em>'+allNames.join(',')+'</em> remade.', 1);
+		
 		return true;
 	};
 	

@@ -45,7 +45,11 @@ SVGAnimateElement.prototype.generateAnchors = function() {
 				if(nodeTypes != null) {
 					lastPath.setAttribute('sodipodi:nodetypes', nodeTypes);
 				}
-				lastPath.setAttribute('style', 'fill:none;stroke:#aa0000;stroke-width:'+2/(ratio*svg.zoom)+'px');
+				lastPath.setAttribute('style', 'fill:none;stroke:#0f0;stroke-width:'+2/(ratio*svg.zoom)+'px');
+				lastPath.ratio = ratio;
+				lastPath.adjustZoom = function() {
+					this.style.strokeWidth = 2/(this.ratio*svg.zoom)+'px';
+				}
 				currentAnchors = lastPath.generateAnchors();
 				
 				if(firstAnchors == null) { firstAnchors = currentAnchors; }

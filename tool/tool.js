@@ -38,9 +38,18 @@ tool.prototype.mouseMove = function(event) {
 tool.prototype.mouseContextMenu = function(event) {
 	if(!svg || !(svg instanceof root)) { return; }
 	
-	if(!event.target.isChildOf(anigenManager.classes.windowAnimation.container)) {
+	if(!event.target.isChildOf(anigenManager.named.left.container) && 
+		!event.target.isChildOf(anigenManager.named.right.container)) {
 		popup.macroContextMenu({ 'target': event.target, 'x': event.clientX, 'y': event.clientY });
 	}
 	event.preventDefault ? event.preventDefault() : event.returnValue = false;
 	return false;
+}
+
+tool.prototype.keyDown = function(event) {
+	return true;
+}
+
+tool.prototype.keyUp = function(event) {
+	return true;
 }

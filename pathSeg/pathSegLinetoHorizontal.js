@@ -61,3 +61,15 @@ pathSegLinetoHorizontal.prototype.inbetween = function(other, ratio) {
 pathSegLinetoHorizontal.prototype.clone = function() {
 	return new pathSegLinetoHorizontal(this.x);
 }
+
+pathSegLinetoHorizontal.prototype.getMin = function(begin) {
+	if(!begin || begin.x == null || begin.y == null) { return; }
+	
+	return { 'x': Math.min(begin.x, this.x), 'y': begin.y };
+}
+
+pathSegLinetoHorizontal.prototype.getMax = function(begin) {
+	if(!begin || begin.x == null || begin.y == null) { return; }
+	
+	return { 'x': Math.max(begin.x, this.x), 'y': begin.y };
+}

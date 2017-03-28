@@ -93,10 +93,13 @@ build.select = function(options, attributes) {
 build.button = function(text, attributes) {
 	var butt = document.createElement('button');
 	butt.appendChild(document.createTextNode(text));
-		
+	
+	butt.setAttribute('onfocus', 'document.activeElement.blur();');
+	
 	for(var i in attributes) {
 		butt.setAttribute(i, attributes[i]);
 	}
+	
 	return butt;	// kek
 }
 
@@ -104,17 +107,38 @@ build.input = function(type, value, attributes) {
 	var inp = document.createElement('input');
 		inp.setAttribute('type', type);
 	
+		inp.setAttribute('spellcheck', 'false');
+		inp.setAttribute('autocomplete', 'off');
+		inp.setAttribute('autocorrect', 'off');
+		inp.setAttribute('autocapitalize', 'off');
+	
+	attributes = attributes || {};
+	
+	if(type == 'number' && !attributes.insensitive) {
+		if(attributes.onchange) {
+			attributes.onchange = 'if(isNaN(this.value)||this.value==null||this.value.length==0){return;}'+attributes.onchange;
+		} else {
+			attributes.onchange = 'if(isNaN(this.value)||this.value==null||this.value.length==0){return;}';
+		}
+	}
+	
+	for(var i in attributes) {
+		if(i == 'label' || i == 'insensitive') { continue; }
+		inp.setAttribute(i, attributes[i]);
+	}
+	
 	if(value != null) {
 		if(type == 'checkbox' && value != false) {
 			inp.setAttribute('checked', 'checked');
 		} else {
 			inp.setAttribute('value', value);
+			if(type == 'number') {
+				inp.value = parseFloat(value);
+			} else {
+				inp.value = value;
+			}
+			
 		}
-	}
-	
-	for(var i in attributes) {
-		if(i == 'label') { continue; }
-		inp.setAttribute(i, attributes[i]);
 	}
 	
 	if(type == 'checkbox' && attributes && attributes.label) {
@@ -153,7 +177,10 @@ build.img = function(src, alt, attributes) {
 build.p = function(input) {
 	var p = document.createElement('p');
 	if(typeof input === 'string') {
-		p.appendChild(document.createTextNode(input));
+		//p.appendChild(document.createTextNode(input));
+		
+		p.innerHTML = input;
+		
 	} else if(Array.isArray(input)) {
 		for(var i = 0; i < input.length; i++) {
 			if(typeof input[i] === 'string') {
@@ -212,13 +239,27 @@ build.icon = function(picture, inClass) {
 
 build.slider = function(value, attributes, numericInput, soft) {
 	if(numericInput) {
-		var attrInput = { 'onchange': 'this.previousElementSibling.value = this.value;' };
-		if(attributes.onchange) { attrInput.onchange += attributes.onchange; }			
-		if(attributes && attributes.min && !soft) { attrInput.min = attributes.min; }
-		if(attributes && attributes.max && !soft) { attrInput.max = attributes.max; }
-		if(attributes && attributes.step) { attrInput.step = attributes.step; }
+		var attrField = {};
+		var ratio = 1;
 		
-		var field = build.input('number', value, attrInput);
+		for(var i in attributes) {
+			if(i == 'ratio') {
+				ratio = attributes[i];
+				continue;
+			}
+			if((i == 'min' || i == 'max') && soft) { continue; }
+			attrField[i] = attributes[i];
+		}
+		
+		if(attrField.onchange) {
+			attrField.onchange = 'this.previousElementSibling.value = this.value;' + attrField.onchange;
+		} else {
+			attrField.onchange = 'this.previousElementSibling.value = this.value;';
+		}
+		
+		var field = build.input('number', value, attrField);
+		
+		
 		
 		if(attributes.onchange) {
 			attributes.onchange = 'this.nextElementSibling.value = this.value;' + attributes.onchange;
@@ -226,13 +267,13 @@ build.slider = function(value, attributes, numericInput, soft) {
 			attributes.onchange = 'this.nextElementSibling.value = this.value;';
 		}
 		if(attributes.onmousemove) {
-			attributes.onmousemove = 'if(!event.buttons){return;};this.nextElementSibling.value = this.value;' + attributes.onmousemove;
+			attributes.onmousemove = 'if(!event.buttons||!anigenManager.downEvent||anigenManager.downEvent.target!=this){return;};this.nextElementSibling.value = this.value;' + attributes.onmousemove;
 		} else {
-			attributes.onmousemove = 'if(!event.buttons){return;};this.nextElementSibling.value = this.value;';
+			attributes.onmousemove = 'if(!event.buttons||!anigenManager.downEvent||anigenManager.downEvent.target!=this){return;};this.nextElementSibling.value = this.value;';
 		}
 		
 		var slider = build.input('range', value, attributes);
-		
+		//slider.value = parseFloat(value);
 		
 		var container = document.createElement('span');
 		container.setAttribute('class', 'slider');

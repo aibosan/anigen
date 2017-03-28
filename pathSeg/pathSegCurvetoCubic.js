@@ -103,4 +103,3 @@ pathSegCurvetoCubic.prototype.clone = function() {
 }
 
 
-

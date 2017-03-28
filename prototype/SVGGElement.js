@@ -6,25 +6,22 @@
  */
 
 SVGGElement.prototype.ungroup = function(makeHistory) {
-	var transform = this.getAttribute("transform");
+	var transform = this.getTransform();
+	
 	var children = this.children;
     for(var i = 0; i < children.length; i++) {
-        var childTransform = children[i].getAttribute('transform');
-		var toTransform;
-        if(childTransform != null) {
-			toTransform = children[i].getAttribute('transform') + " " + transform;
-        } else if(transform != null) {
-			toTransform = transform;
-        }
-		if(toTransform) { children[i].setAttribute('transform', toTransform); }
-		if(makeHistory && svg && svg.history) {
-			svg.history.add(new historyAttribute(children[i].id,
-				{ 'transform': childTransform },
-				{ 'transform': toTransform }, true));
+	
+		var childTransform = children[i].getTransform();
+		var toTransform = transform.multiply(childTransform);
+		
+		if(makeHistory) {
+			children[i].setAttributeHistory({'transform': toTransform.toString()}, true);
 			svg.history.add(new historyParentage(children[i].id,
 				[ this.id, this.parentNode.id ],
 				[ children[i].nextElementSibling ? children[i].nextElementSibling.id : null, this.id ],
 				true));
+		} else {
+			children[i].setAttribute('transform', toTransform);
 		}
         this.parentNode.insertBefore(children[i].cloneNode(true), this);
     }
@@ -60,20 +57,16 @@ SVGGElement.prototype.getCenter = function(viewport) {
 	for(var i = 0; i < this.children.length; i++) {
 		if(this.children[i] instanceof SVGAnimationElement || typeof this.children[i].getCenter !== 'function' ||
 			this.children[i].style.display == 'none' || this.children[i].getAttribute('display') == 'none') { continue; }
-			// TODO: get better solution for invisible USEs in animationGroup
 	
 		var coords = this.children[i].getCenter(viewport);
-		
 		if(!coords) { continue; }
-		if(coords.x != null && (xMax == null || xMax < coords.x)) { xMax = coords.x; }
-		if(coords.x != null && (xMin == null || xMin > coords.x)) { xMin = coords.x; }
-		if(coords.y != null && (yMax == null || yMax < coords.y)) { yMax = coords.y; }
-		if(coords.y != null && (yMin == null || yMin > coords.y)) { yMin = coords.y; }
 		
-		if(coords.x_anim != null && (xMax_anim == null || xMax_anim < coords.x_anim)) { xMax_anim = coords.x_anim; }
-		if(coords.x_anim != null && (xMin_anim == null || xMin_anim > coords.x_anim)) { xMin_anim = coords.x_anim; }
-		if(coords.y_anim != null && (yMax_anim == null || yMax_anim < coords.y_anim)) { yMax_anim = coords.y_anim; }
-		if(coords.y_anim != null && (yMin_anim == null || yMin_anim > coords.y_anim)) { yMin_anim = coords.y_anim; }
+		if(coords.right != null && (xMax == null || xMax < coords.right)) { xMax = coords.right; }
+		if(coords.left != null && (xMin == null || xMin > coords.left)) { xMin = coords.left; }
+		if(coords.bottom != null && (yMax == null || yMax < coords.bottom)) { yMax = coords.bottom; }
+		if(coords.top != null && (yMin == null || yMin > coords.top)) { yMin = coords.top; }
+		
+		
 	}
 	
 	if(xMax == null || xMin == null || yMax == null || yMin == null) { return; }
@@ -210,11 +203,21 @@ SVGGElement.prototype.moveBottom = function(makeHistory) {
 }
 
 SVGGElement.prototype.toPath = function(recursive) {
-	if(!recursive) { return; }
+	if(!recursive) { return this; }
 	for(var i = 0; i < this.children.length; i++) {
 		if(typeof this.children[i].toPath === 'function') {
 			this.children[i].toPath(recursive);
 		}
 	}
+	return this;
 }
+
+SVGGElement.prototype.isVisualElement = function() { return true; }
+
+/*
+SVGGElement.prototype.isAnimation = function() {
+	if(this.getAttribute('anigen:type') == 'animationGroup' || this.getAttribute('anigen:type') == 'animatedViewbox') { return true; }
+	return false;
+}
+*/
 

@@ -17,7 +17,7 @@ function keyframe(time, inSpline, value, intensity) {
 	} else {
 		this.value = value;
 	}
-	this.intensity = intensity || 1;
+	this.intensity = intensity != null ? intensity : 1;
 }
 
 keyframe.prototype.inbetween = function(other, ratio) {
@@ -25,11 +25,14 @@ keyframe.prototype.inbetween = function(other, ratio) {
 		!(typeof this.value.inbetween === 'function' && typeof other.value.inbetween === 'function'))
 			{ throw new DOMException(9); }
 	
-	var newSpline = (this.spline && other.spline) ? this.spline.inbetween(other.spline, ratio) : null;
+	var newSpline;
+	if(this.spline && other.spline) {
+		newSpline = this.spline.inbetween(other.spline, ratio);
+	} else if(other.spline) {
+		newSpline = other.spline.clone();
+	}
 	
 	var newValue = typeof this.value === 'number' ? this.value+ratio*(other.value-this.value) : this.value.inbetween(other.value, ratio);
-	
-	console.log(this.time, other.time, ratio, (other.time-this.time));
 	
 	return new keyframe(
 		this.time + ratio*(other.time-this.time),

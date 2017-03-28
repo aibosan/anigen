@@ -4,7 +4,7 @@
  *  @copyright	GNU GPLv3
  *	@brief		Anchor (UI node) class
  */
-function anchor(posAbsolute, element, shape, actions, constraint) {
+function anchor(posAbsolute, element, shape, actions, constraint, dimensions) {
 	this.container = null;
 	this.x = posAbsolute.x;
 	this.y = posAbsolute.y;
@@ -24,6 +24,117 @@ function anchor(posAbsolute, element, shape, actions, constraint) {
 	this.seed();
 	this.refreshPosition();
 	this.adjustZoom();
+}
+
+anchor.prototype.seed = function() {
+	this.container = document.createElementNS(svgNS, "g");
+	this.container.setAttribute("anigen:lock", "anchor");
+	
+	//this.container.setAttribute("shape-rendering", "crispEdges");
+	
+	this.container.shepherd = this;
+	this.container.setAttribute('transform', 'translate('+this.offset.x+' '+this.offset.y+')');
+	
+	this.containerInner = document.createElementNS(svgNS, "g");
+	this.containerInner.setAttribute("anigen:lock", "anchor");
+	this.containerInner.shepherd = this;
+	
+	if(!this.size) { this.size = 8; }
+	if(!this.shape) { this.shape = 'rectangle'; }
+	if(!this.colors) {
+	this.colors = {
+		"fill": new color("#ffffff"),
+		"stroke": new color("#000000"),
+		"hover": new color("#ffd700"),
+		"active": new color("#00ff00")
+		};
+	}
+	
+	this.rectangle1 = document.createElementNS(svgNS, "rect");
+	this.rectangle2 = document.createElementNS(svgNS, "rect");
+	
+	this.rectangle1.setAttribute('anigen:lock', 'anchor');
+	this.rectangle2.setAttribute('anigen:lock', 'anchor');
+	
+	if(this.shape == 'circle') {
+		this.rectangle1.setAttribute("rx", "50%");
+		this.rectangle1.setAttribute("ry", "50%");
+		this.rectangle2.setAttribute("rx", "50%");
+		this.rectangle2.setAttribute("ry", "50%");
+	} else {
+		// not worth the slight shadow generated for nodes around 1/2 pixels
+		// this.container.setAttribute("shape-rendering", "crispEdges");
+	}
+	
+	if(this.shape == 'cross') {
+		this.rectangle1 = document.createElementNS(svgNS, 'path');
+		this.rectangle2 = document.createElementNS(svgNS, 'path');
+		
+		var d1 = '';
+			d1 += 'M 1 0 H '+this.size;
+			d1 += ' M -1 0 H -'+this.size;
+			d1 += ' M 0 1 V '+this.size;
+			d1 += ' M 0 -1 V -'+this.size;
+			
+		var d2 = '';
+			d2 += 'M -'+(this.size+1)+' 0 H '+(this.size+1);
+			d2 += ' M 0 -'+(this.size+1)+' V '+(this.size+1);
+		
+		this.rectangle1.setAttribute('d', d2);
+		this.rectangle2.setAttribute('d', d1);
+		this.rectangle1.setAttribute('anigen:lock', 'anchor');
+		this.rectangle2.setAttribute('anigen:lock', 'anchor');
+		
+		this.rectangle2.style.stroke = "inherit";
+		this.rectangle1.style.strokeWidth = "4px";
+		this.rectangle2.style.strokeWidth = "2px";
+		
+		this.containerInner.style.stroke = this.colors["fill"].getHex();
+		
+	} else {
+		
+		this.rectangle1.setAttribute("x", -1*this.size/2);
+		this.rectangle1.setAttribute("y", -1*this.size/2);
+		this.rectangle1.setAttribute("width", this.size);
+		this.rectangle1.setAttribute("height", this.size);
+		this.rectangle1.setAttribute("stroke-width", "2px");
+		
+		this.rectangle2.setAttribute("x", -1*this.size/2);
+		this.rectangle2.setAttribute("y", -1*this.size/2);
+		this.rectangle2.setAttribute("width", this.size);
+		this.rectangle2.setAttribute("height", this.size);
+		this.rectangle2.setAttribute("stroke-width", "0px");
+		
+		this.rectangle2.style.fill = "inherit";
+	}
+	
+	this.rectangle1.style.stroke = this.colors["stroke"].getHex();
+	
+	this.containerInner.setAttribute("onmouseover", "this.style.stroke = this.style.fill = '"+this.colors["hover"].getHex()+"';");
+	this.containerInner.setAttribute("onmouseout", "this.style.stroke = this.style.fill = this.parentNode.shepherd.selected ? '"+this.colors["active"].getHex()+"' : '"+this.colors["fill"].getHex()+"';");
+	
+	this.containerInner.appendChild(this.rectangle1);
+	this.containerInner.appendChild(this.rectangle2);
+	
+	this.container.appendChild(this.containerInner);
+	
+	if(this.selected) {
+		this.containerInner.style.fill = this.colors["active"].getHex() || "#0f0";
+		this.containerInner.style.stroke = this.colors["active"].getHex() || "#0f0";
+	} else {
+		this.containerInner.style.fill = this.colors["fill"].getHex() || "#000";
+		this.containerInner.style.stroke = this.colors["fill"].getHex() || "#000";
+	}
+	
+	return this.container;
+}
+
+anchor.prototype.show = function() {
+	this.container.style.display = null;
+}
+
+anchor.prototype.hide = function() {
+	this.container.style.display = 'none';
 }
 
 anchor.prototype.setAngle = function(angle) {
@@ -90,10 +201,11 @@ anchor.prototype.select = function(value) {
 			this.selected = false;
 		}
 	}
+	
 	if(this.selected) {
-		this.rectangle2.style.fill = this.colors["active"].getHex() || "#00ff00";
+		this.containerInner.style.fill = this.colors["active"].getHex() || "#0f0";
 	} else {
-		this.rectangle2.style.fill = this.colors["fill"].getHex() || "#ffffff";
+		this.containerInner.style.fill = this.colors["fill"].getHex() || "#000";
 	}
 }
 
@@ -109,60 +221,36 @@ anchor.prototype.adjustZoom = function() {
 	if(!this.rectangle1 || !this.rectangle2) { return; }
 	this.rectangle1.setAttribute("transform", "scale("+(1/svg.zoom)+")");
 	this.rectangle2.setAttribute("transform", "scale("+(1/svg.zoom)+")");
-	
+
 	if(this.shape == 'diamond') {
 		this.rectangle1.setAttribute("transform", "scale("+(0.9/svg.zoom)+") rotate(45)");
 		this.rectangle2.setAttribute("transform", "scale("+(0.9/svg.zoom)+") rotate(45)");
 	}
 }
 
-anchor.prototype.seed = function() {
-	this.container = document.createElementNS(svgNS, "g");
-	this.container.setAttribute("anigen:lock", "anchor");
-	this.container.shepherd = this;
-	this.container.setAttribute('transform', 'translate('+this.offset.x+' '+this.offset.y+')');
+anchor.prototype.setSize = function(value) {
+	if(!value || isNaN(value) || value <= 0) { return; }
+	var ratio = value/8;
+	this.size = value;
 	
-	this.containerInner = document.createElementNS(svgNS, "g");
-	this.containerInner.setAttribute("anigen:lock", "anchor");
-	this.containerInner.shepherd = this;
-	
-	if(!this.size) { this.size = 8; }
-	if(!this.shape) { this.shape = 'rectangle'; }
-	if(!this.colors) { this.colors = {"fill": new color("#ffffff"), "stroke": new color("#000000"), "hover": new color("#ffd700"), "active": new color("#00ff00")}; }
-	
-	this.rectangle1 = document.createElementNS(svgNS, "rect");
-	this.rectangle2 = document.createElementNS(svgNS, "rect");
-	
-	this.rectangle1.setAttribute('anigen:lock', 'anchor');
-	this.rectangle1.setAttribute("width", this.size);
-    this.rectangle1.setAttribute("height", this.size);
-    this.rectangle1.setAttribute("x", -1*this.size/2);
-    this.rectangle1.setAttribute("y", -1*this.size/2);
-	this.rectangle1.setAttribute("stroke-width", "2px");
-	this.rectangle1.style.stroke = this.colors["stroke"].getHex();
-	
-	this.rectangle2.setAttribute('anigen:lock', 'anchor');
-	this.rectangle2.setAttribute("width", this.size);
-    this.rectangle2.setAttribute("height", this.size);
-    this.rectangle2.setAttribute("x", -1*this.size/2);
-    this.rectangle2.setAttribute("y", -1*this.size/2);
-	this.rectangle2.setAttribute("stroke-width", "1.5px");
-	this.rectangle2.style.fill = this.colors["fill"].getHex();
-	this.rectangle2.setAttribute("onmouseover", "this.style.fill = '"+this.colors["hover"].getHex()+"';");
-    this.rectangle2.setAttribute("onmouseout", "this.style.fill = this.parentNode.shepherd.selected ? '"+this.colors["active"].getHex()+"' : '"+this.colors["fill"].getHex()+"';");
-	
-	if(this.shape == 'circle') {
-		this.rectangle1.setAttribute("rx", "50%");
-		this.rectangle1.setAttribute("ry", "50%");
-		this.rectangle2.setAttribute("rx", "50%");
-		this.rectangle2.setAttribute("ry", "50%");
+	if(this.shape == 'cross') {
+		this.rectangle1.setAttribute("stroke-width", (4*ratio)+"px");
+		this.rectangle2.setAttribute("stroke-width", (2*ratio)+"px");
+	} else {
+		this.rectangle1.setAttribute("width", this.size);
+		this.rectangle1.setAttribute("height", this.size);
+		this.rectangle1.setAttribute("x", -1*this.size/2);
+		this.rectangle1.setAttribute("y", -1*this.size/2);
+		this.rectangle1.setAttribute("stroke-width", (2*ratio)+"px");
+		
+		this.rectangle2.setAttribute("width", this.size);
+		this.rectangle2.setAttribute("height", this.size);
+		this.rectangle2.setAttribute("x", -1*this.size/2);
+		this.rectangle2.setAttribute("y", -1*this.size/2);
 	}
 	
-	this.containerInner.appendChild(this.rectangle1);
-	this.containerInner.appendChild(this.rectangle2);
-	
-	this.container.appendChild(this.containerInner);
-	return this.container;
+	this.rectangle1.removeAttribute("transform");
+	this.rectangle2.removeAttribute("transform");
 }
 
 anchor.prototype.addChild = function(other) {
@@ -225,8 +313,10 @@ anchor.prototype.evaluate = function(absolute, dAbsolute, relative, dRelative) {
 	if(this.actions != null && this.actions.move) {
 		var bound = this.bound;
 		eval(this.actions.move);
-		svg.gotoTime();
-		if(svg.ui.path) { svg.ui.path.commit(); }
+		try {
+			svg.gotoTime();
+			if(svg.ui.path) { svg.ui.path.commit(); }
+		} catch(err) { }
 	}
 }
 
@@ -234,14 +324,21 @@ anchor.prototype.evaluateLocal = function(absolute, dAbsolute, relative, dRelati
 	if(this.actions != null && this.actions.moveLocal) {
 		var bound = this.bound;
 		eval(this.actions.moveLocal);
-		svg.gotoTime();
-		if(svg.ui.path) { svg.ui.path.commit(); }
+		try {
+			svg.gotoTime();
+			if(svg.ui.path) { svg.ui.path.commit(); }
+		} catch(err) { }
 	}
 }
 
 anchor.prototype.click = function(keys) {
 	if(this.actions && this.actions.click) {
-		eval(this.actions.click);
+		try {
+			eval(this.actions.click);
+		} catch(err) {
+			console.error(this.actions.click);
+			console.error(err);
+		}
 	}
 }
 
@@ -265,6 +362,8 @@ anchor.prototype.mouseUp = function(keys) {
 		*/
 	}
 }
+
+
 
 
 anchor.prototype.getAbsolute = function() {

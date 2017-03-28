@@ -32,6 +32,7 @@ function animationGroup(target, numeric, flags, attributes) {
 		this.element.shepherd = this;
 		
 		this.link = document.createElementNS(svgNS, 'use');
+			this.link.setAttribute('anigen:lock', 'skip');
 			this.link.generateId();
 			this.link.setAttribute('height', '100%');
 			this.link.setAttribute('width', '100%');
@@ -39,7 +40,8 @@ function animationGroup(target, numeric, flags, attributes) {
 			this.link.setAttribute('y', '0');
 			this.link.setAttribute('xlink:href', '#'+this.group.id);
 			this.link.setAttribute('style', 'display:none');
-			this.link.appendChild(document.createComment("This exists to prevent inkscape's cleanup from removing the partent from defs."));
+			// comments kinda break inkscape
+			//this.link.appendChild(document.createComment("This exists to prevent inkscape's cleanup from removing the partent from defs."));
 			
 		
 		this.childElements = this.element.getChildren(true);
@@ -76,12 +78,14 @@ function animationGroup(target, numeric, flags, attributes) {
 		
 		if(attributes) {
 			for(var i = 0; i < attributes.length; i++) {
-				this.animate(attributes[i]);
+				this.animate(attributes[i], true);
 			}
+			
+			this.commit(true);
 		}
 		
 	} else {
-		// instancing from actual element
+		// instancing from existing element
 		this.element = target;
 		this.element.shepherd = this;
 		if(this.element.getAttribute('anigen:type') != 'animationGroup') { return; }
@@ -96,17 +100,25 @@ function animationGroup(target, numeric, flags, attributes) {
 		for(var i = 0; i < childrenCandidates.length; i++) {
 			if(childrenCandidates[i] instanceof SVGUseElement && childrenCandidates[i].getAttribute('xlink:href') == '#'+this.group.id) {
 				this.link = childrenCandidates[i];
+				this.link.setAttribute('anigen:lock', 'skip');
 				continue;
 			}
 			if(!childrenCandidates[i].isAnimation()) {
 				this.childElements.push(childrenCandidates[i])
 			} else {
-				var attr = childrenCandidates[i].getAttribute('attributeName');
-				if(!attr) { continue; }
-				if(!this.animations[attr]) { this.animations[attr] = []; }
-				this.animations[attr].push(childrenCandidates[i]);
+				if(childrenCandidates[i] instanceof SVGAnimateElement &&
+					childrenCandidates[i].getAttribute('anigen:childindex')) {
+					var attr = childrenCandidates[i].getAttribute('attributeName');
+					if(!attr) { continue; }
+					if(!this.animations[attr]) { this.animations[attr] = []; }
+					this.animations[attr].push(childrenCandidates[i]);
+					childrenCandidates[i].setAttribute('anigen:lock', 'skip');
+				}
 			}
 		}
+		try {
+			anigenManager.classes.tree.seed();
+		} catch(e) { }
 	}
 }
 
@@ -123,7 +135,7 @@ animationGroup.prototype.setIntensity = function(index, value) {
 }
 
 
-animationGroup.prototype.animate = function(attribute) {
+animationGroup.prototype.animate = function(attribute, noCommit) {
 	if(this.animations[attribute] != null) { return; }
 	
 	this.animations[attribute] = [];
@@ -132,22 +144,27 @@ animationGroup.prototype.animate = function(attribute) {
 		var isCSS = false;
 		var val = this.childElements[i].getAttribute(attribute);
 		if(!val) {
-			val = this.childElements[i].style[attribute] || window.getComputedStyle(this.childElements[i])[attribute];
+			val = this.childElements[i].style.hasNativeProperty(attribute) ? (this.childElements[i].style[attribute] || window.getComputedStyle(this.childElements[i])[attribute]) : null;
 			isCSS = true;
 		}
+		
 		if(!val) { continue; }
 		var anim = document.createElementNS(svgNS, 'animate');
 		anim.setAttribute('attributeType', isCSS ? "CSS" : "XML");
 		anim.setAttribute('attributeName', attribute);
 		anim.setAttribute('anigen:childindex', i);
+		anim.setAttribute('anigen:lock', 'skip');
 		anim.generateId();
 		this.childElements[i].appendChild(anim);
 		this.animations[attribute].push(anim);
 	}
 	
-	this.commit(true);
-	anigenManager.classes.tree.seed();
-	svg.select();
+	if(!noCommit) {
+		this.commit(true);
+		// no longer necessary, since the animations are hidden anyway
+		//anigenManager.classes.tree.seed();
+		//svg.select();
+	}
 }
 
 animationGroup.prototype.unanimate = function(attribute) {
@@ -262,8 +279,8 @@ animationGroup.prototype.commit = function(noHistory, noWipe) {
 						continue;
 					}
 					lastChange = k;
-				
-					var newValue = grp[this.keyframes.getItem(k).value].children[childIndex].getAttribute(i) || window.getComputedStyle(grp[this.keyframes.getItem(k).value].children[childIndex])[i];
+					
+					var newValue = grp[this.keyframes.getItem(k).value] ? (grp[this.keyframes.getItem(k).value].children[childIndex].getAttribute(i) || window.getComputedStyle(grp[this.keyframes.getItem(k).value].children[childIndex])[i]) : grp[0];
 					
 					if(i != 'd' || this.keyframes.getItem(k).intensity == 1) {
 						newValues[k] = newValue;
@@ -389,9 +406,12 @@ animationGroup.prototype.commit = function(noHistory, noWipe) {
 			}
 		}
 		
+		// not necessary since animations are hidden, and the actual element doesn't get pulled out and reinserted
+		/*
 		anigenManager.classes.tree.seed();
 		anigenManager.classes.tree.select(svg.selected);
 		svg.select();
+		*/
 		
 		count++;
 	}
@@ -403,7 +423,6 @@ animationGroup.prototype.commit = function(noHistory, noWipe) {
 	svg.gotoTime();
 	return out;
 }
-
 
 animationGroup.prototype.setAttribute = function(attributeName, attributeValue) {
 	this.element.setAttribute(attributeName, attributeValue);
@@ -432,6 +451,17 @@ animationGroup.prototype.isInvertible = function() {
 	return false;
 }
 
+animationGroup.prototype.isScalable = function() {
+	return true;
+}
+
+animationGroup.prototype.scaleValues = function(factor) {
+	this.getKeyframes();
+	for(var i = 0; i < this.keyframes.length; i++) {
+		this.keyframes.getItem(i).intensity *= factor;
+	}
+}
+
 animationGroup.prototype.demo = function() {
 	this.setCalcMode('spline');
 	this.setFill('remove');
@@ -453,5 +483,26 @@ animationGroup.prototype.demo = function() {
 	this.commit(true, true);
 }
 
+animationGroup.prototype.inbetween = function(one, two, ratio) {
+	this.getKeyframes();
+	try {
+		var keyframeTwo = this.keyframes.getItem(two);
+		var newKeyframe = this.keyframes.inbetween(one, two, ratio);
+			newKeyframe.value = keyframeTwo.value;
+			
+			newKeyframe.intensity = 0.5*keyframeTwo.intensity;
+			//keyframeTwo.intensity = 0.5 + keyframeTwo.intensity/2;
+			//keyframeTwo.intensity -= (1-keyframeTwo.intensity)*(2/3);
+			
+			if(newKeyframe.intensity == 1) {
+				keyframeTwo.intensity = 0;
+			} else {
+				keyframeTwo.intensity = 1-(1-keyframeTwo.intensity)/(1-newKeyframe.intensity);
+			}
+			
+	} catch(err) {
+		throw err;
+	}
+}
 
 

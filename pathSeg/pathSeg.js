@@ -24,3 +24,21 @@ pathSeg.prototype.sum = function(other) {
 	if(this.x2 != null && other.x2 != null) { this.x2 += other.x2; }
 	if(this.y2 != null && other.y2 != null) { this.y2 += other.y2; }
 }
+
+pathSeg.prototype.getMin = function(begin) {
+	if(!begin || begin.x == null || begin.y == null) { return; }
+	
+	return {
+		'x': Math.min(begin.x, this.x, this.x1, this.x2),
+		'y': Math.min(begin.y, this.y, this.y1, this.y2)
+	}
+}
+
+pathSeg.prototype.getMax = function(begin) {
+	if(!begin || begin.x == null || begin.y == null) { return; }
+	
+	return {
+		'x': Math.max(begin.x, this.x, this.x1, this.x2),
+		'y': Math.max(begin.y, this.y, this.y1, this.y2)
+	}
+}

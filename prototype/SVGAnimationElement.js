@@ -45,7 +45,7 @@ SVGAnimationElement.prototype.getKeyframes = function() {
 			new keyframe(parseFloat(timesArray[i]),
 				(splineArray[i-1] ? new spline(splineArray[i-1]) : null),
 				newValue,
-				(intensityArray && intensityArray[i] ? parseFloat(intensityArray[i]) : null)
+				(intensityArray && intensityArray[i] != null ? parseFloat(intensityArray[i]) : null)
 			)
 		);
 	}
@@ -124,10 +124,15 @@ SVGAnimationElement.prototype.setDur = function(value, keepTimes, adjustBegins) 
 	
 	if(keepTimes) {
 		this.getKeyframes();
+		var lastOne = this.keyframes.getItem(this.keyframes.length-1).time == 1;
 		
 		for(var i = 0; i < this.keyframes.arr.length; i++) {
 			this.keyframes.getItem(i).time *= ratio;
 			if(this.keyframes.getItem(i).time > 1) { this.keyframes.getItem(i).time = 1; }
+		}
+		
+		if(lastOne) {
+			this.keyframes.getItem(this.keyframes.length-1).time = 1;
 		}
 	}
 	
@@ -449,168 +454,215 @@ SVGAnimationElement.prototype.setSpline = function(index, value) {
 }
 
 
-// returns the begin time of current loop
-//		if animation is no longer running, returns last viable loop begin time
-//		if animation is not yet running, returns null
-SVGAnimationElement.prototype.getCurrentLoopBeginTime = function() {
-	var time = this.getCurrentTime();
+
+
+
+SVGAnimationElement.prototype.getProgress = function(time) {
+	time = time != null ? time : this.getCurrentTime();
 	
-	var targetTime = null;
+	var closestBegin = null;
+	var currentLoop = null;
+	var currentLoopBeginTime = null;
+	var currentProgress = null;
+	var running = true;
 	
-	this.getDur();
+	
 	this.getBeginList();
-	var repeatCount = this.getRepeatCount();
-	
 	for(var i = 0; i < this.beginList.length; i++) {
 		if(this.beginList[i].special) { continue; }
-		if(time < this.beginList[i].seconds) { continue; }
-		if(targetTime == null || targetTime < this.beginList[i].seconds) { targetTime = this.beginList[i].seconds; }
+		if(time >= this.beginList[i].seconds &&
+			(closestBegin == null || (closestBegin != null && closestBegin < this.beginList[i].seconds))) {		// OFFER SLACK?
+				closestBegin = this.beginList[i].seconds;
+		}
 	}
-	// targetTime is now last begin
-	if(targetTime > time) { return null; }	// animation didn't start yet
-	
-	var loopNumber = Math.floor((time-targetTime)/this.dur.seconds);
-	if(repeatCount != 'indefinite' && repeatCount < loopNumber) { loopNumber = repeatCount; }
-	targetTime = targetTime + (loopNumber*this.dur.seconds);
-	return targetTime;
-}
-
-// returns the number of current loop; 0 for first loop, null if animation is not running
-SVGAnimationElement.prototype.getCurrentLoop = function() {
-	var time = this.getCurrentTime();
-	
-	var targetTime = null;
+	if(closestBegin == null) {		// animation hasn't started yet
+		for(var i = 0; i < this.beginList.length; i++) {
+			if(this.beginList[i].special) { continue; }
+			if(time < this.beginList[i].seconds &&
+				(closestBegin == null || (closestBegin != null && closestBegin > this.beginList[i].seconds))) {		// OFFER SLACK?
+					closestBegin = this.beginList[i].seconds;
+			}
+		}
+		
+		if(closestBegin != null) {
+			currentProgress = (time-closestBegin)/this.getDur().seconds;
+		}
+		
+		running = false;
+		return {	'begin': closestBegin,
+					'loop': currentLoop,
+					'loopBeginTime': currentLoopBeginTime,
+					'progress': currentProgress,
+					'running': running
+				};
+	}
 	
 	this.getDur();
-	this.getBeginList();
-	var repeatCount = this.getRepeatCount();
+	currentLoop = Math.floor((time-closestBegin)/this.dur.seconds);
+	currentProgress = (time-currentLoopBeginTime)/this.dur.seconds;
 	
-	for(var i = 0; i < this.beginList.length; i++) {
-		if(this.beginList[i].special) { continue; }
-		if(time < this.beginList[i].seconds) { continue; }
-		if(targetTime == null || targetTime < this.beginList[i].seconds) { targetTime = this.beginList[i].seconds; }
+	if(currentProgress == 1) {		// exactly at the end of the loop
+		currentLoop--;
 	}
-	// targetTime is now last begin
 	
-	if(targetTime == null) { return null; }
+	this.getRepeatCount();
+	if(typeof this.repeatCount === 'number' && currentLoop > this.repeatCount) {	// animation has ended already
+		currentLoop = this.repeatCount;
+		currentLoopBeginTime = closestBegin+currentLoop*this.dur.seconds;
+		currentProgress = (time-currentLoopBeginTime)/this.dur.seconds;
+		
+		running = false;
+		
+		return {	'begin': closestBegin,
+					'loop': currentLoop,
+					'loopBeginTime': currentLoopBeginTime,
+					'progress': currentProgress,
+					'running': running
+				};
+	}
 	
-	var loopNumber = Math.floor((time-targetTime)/this.dur.seconds);
-	return loopNumber;
+	currentLoopBeginTime = closestBegin+currentLoop*this.dur.seconds;
+	currentProgress = (time-currentLoopBeginTime)/this.dur.seconds;
+	
+	return {	'begin': closestBegin,
+				'loop': currentLoop,
+				'loopBeginTime': currentLoopBeginTime,
+				'progress': currentProgress,
+				'running': running
+			};
 }
 
-// returns current progress of animation as <0;1> value;
-//		this includes multiple begin values and, repetition
-SVGAnimationElement.prototype.getCurrentProgress = function(time) {
-	var time = time || this.getCurrentTime();
-	
-	this.getDur();
-	this.getBeginList();
-	
-	var repeatCount = this.getRepeatCount();
-	var progress = null;
-	var currentBeginTime = this.getCurrentLoopBeginTime();
-	if(currentBeginTime == null) { return null; }
-	
-	var progress = (time-currentBeginTime)/this.dur.seconds;
-	if(progress > 1) { return 1; }
-	return progress;
-}
-
-// returns index of previous keyTime, or null if animation is not running
-SVGAnimationElement.prototype.getPreviousFrame = function(inclusive) {
-	var progress = this.getCurrentProgress();
-	if(progress == null) { return null; }
+SVGAnimationElement.prototype.getClosestFrames = function(inclusive, time) {
+	var progress = this.getProgress(time);
 	this.getKeyframes();
 	
-	var last = null;
+	var next = null;
+	var previous = null;
+	var closest = null;
+	
+	var reply = {	'previous': {	'frame': null,
+									'index': null },
+					'next': 	{	'frame': null,
+									'index': null },
+					'closest': 	{	'frame': null,
+									'index': null },
+					'begin': progress.begin,
+					'loop': progress.loop,
+					'loopBeginTime': progress.loopBeginTime,
+					'progress': progress.progress,
+					'running': progress.running,
+					'undeflow': false,
+					'perfect': false
+				};
+	
+	if(!reply.running) {
+		if(reply.loopBeginTime == null) {	// didn't start yet
+			reply.closest.frame = reply.next.frame = this.keyframes.getItem(0);
+			reply.closest.index = reply.next.index = 0;
+		} else {	// ended already
+			if(reply.progress == 1) {
+				reply.closest.index = reply.previous.index = this.keyframes.length-2;
+			} else {
+				reply.closest.index = reply.previous.index = this.keyframes.length-1;
+			}
+			reply.closest.frame = reply.previous.frame = this.keyframes.getItem(reply.closest.index);
+		}
+		return reply;
+	}
+	
 	for(var i = 0; i < this.keyframes.length; i++) {
 		if(inclusive) {
-			if((this.keyframes.getItem(i).time-progress) <= 0) { last = i; } else { break; }
+			if(reply.next.frame == null && reply.progress <= this.keyframes.getItem(i).time) {
+				reply.next.frame = this.keyframes.getItem(i);
+				reply.next.index = i;
+			}
+			if(reply.progress >= this.keyframes.getItem(i).time) {
+				reply.previous.frame = this.keyframes.getItem(i);
+				reply.previous.index = i;
+			}
 		} else {
-			if((this.keyframes.getItem(i).time-progress) < -0.0001) { last = i; } else { break; }
-		}
-	}
-	return last;
-}
-
-// returns absolute time of the previous keyFrame (factoring in begin times, duration, and repeatCount)
-SVGAnimationElement.prototype.getPreviousTime = function(inclusive) {
-	var previousFrame = this.getPreviousFrame(inclusive);
-	
-	var currentLoop = this.getCurrentLoop();
-	var currentBegin = this.getCurrentLoopBeginTime();
-	if(currentBegin == null) { return null; }
-	
-	if(previousFrame == null) {
-		if(currentLoop == 0 || this.keyframes.length <= 1) { return null; } else {
-			currentBegin -= this.dur.seconds;
-			previousFrame = this.keyframes.length-2;
+			if(reply.next.frame == null && (reply.progress - this.keyframes.getItem(i).time) < -0.0001) {	// SLACK
+				reply.next.frame = this.keyframes.getItem(i);
+				reply.next.index = i;
+			}
+			if((reply.progress - this.keyframes.getItem(i).time) > 0.0001) {	// SLACK
+				reply.previous.frame = this.keyframes.getItem(i);
+				reply.previous.index = i;
+			}
 		}
 	}
 	
-	return currentBegin + this.keyframes.getItem(previousFrame).time*this.dur.seconds;
+	if(!reply.next.frame) { 
+		reply.closest.frame = reply.previous.frame;
+		reply.closest.index = reply.previous.index;
+	}
+	
+	if(!reply.previous.frame) {
+		if(reply.loop > 0) {	// underflow
+			reply.underflow = true;
+			reply.previous.index = this.keyframes.length-1;
+			reply.previous.frame = this.keyframes.getItem(reply.previous.index);
+		} else {
+			reply.closest.frame = reply.next.frame;
+			reply.closest.index = reply.next.index;
+		}
+	}
+	
+	if(reply.next.frame && reply.previous.frame) {
+		if(Math.abs(reply.next.frame.time-reply.progress) < Math.abs(reply.underflow ? reply.progress : (reply.previous.frame.time-reply.progress))) {
+			reply.closest.frame = reply.next.frame;
+			reply.closest.index = reply.next.index;
+		} else {
+			reply.closest.frame = reply.previous.frame;
+			reply.closest.index = reply.previous.index;
+		}
+	}
+	
+	// SLACK
+	if(Math.abs(reply.closest.frame.time-reply.progress) < 0.00001) {
+		reply.progress = reply.closest.frame.time;
+		reply.perfect = true;
+	}
+	
+	return reply;
 }
 
-// returns index of next keyTime, or null if no future time exists
-SVGAnimationElement.prototype.getNextFrame = function(inclusive) {
-	var progress = this.getCurrentProgress();
-	if(progress == null) { return null; }
+SVGAnimationElement.prototype.getClosest = function(inclusive, time) {
+	var data = this.getClosestFrames(inclusive, time);
 	
 	var next = null;
-	for(var i = this.keyframes.length-1; i >= 0; i--) {
-		if(inclusive) {
-			if((this.keyframes.getItem(i).time-progress) >= 0) { next = i; } else { break; }
-		} else {
-			if((this.keyframes.getItem(i).time-progress) > 0.0001) { next = i; } else { break; }
+	var previous = null;
+	var closest = null;
+	
+	if(!data.running) {
+		if(data.loopBeginTime == null) {		// not started yet
+			if(data.begin) {
+				if(data.next) {	closest = next = data.begin; }
+			}
+		} else {	// ended already
+			if(data.previous.frame) {
+				closest = previous = data.loopBeginTime+data.previous.frame.time*this.getDur().seconds;
+			}
 		}
+		data.previous.time = previous;
+		data.next.time = next;
+		data.closest.time = closest;
+		return data;
 	}
-	return next;
-}
-
-// returns absolute time of the previous keyFrame (factoring in begin times, duration, and repeatCount)
-SVGAnimationElement.prototype.getNextTime = function(inclusive) {
-	var nextFrame = this.getNextFrame(inclusive);
-	if(nextFrame == null) { return null; }
 	
-	var currentBegin = this.getCurrentLoopBeginTime();
-	if(currentBegin == null) { return null; }
-	return currentBegin + this.keyframes.getItem(nextFrame).time*this.dur.seconds;
-}
-
-// returns index of closest keyTime
-SVGAnimationElement.prototype.getClosestFrame = function(inclusive) {
-	var progress = this.getCurrentProgress();
-	if(progress == null) { return null; }
-	
-	var previous = this.getPreviousFrame(inclusive);
-	var next = this.getNextFrame(inclusive);
-	
-	if(previous == null) { return next; }
-	if(next == null) { return previous; }
-	if(Math.abs(progress - this.keyframes.getItem(previous).time) < Math.abs(progress - this.keyframes.getItem(next).time)) {
-		return previous;
-	} else {
-		return next;
+	if(data.loopBeginTime != null) {
+		// on underflow, has to offer SLACK, otherwise the first and last keyframes will overlap (and the method defaults to "next")
+		if(data.previous.frame) {	previous = data.underflow ? -0.00001+(data.loopBeginTime-this.getDur().seconds)+data.previous.frame.time*this.getDur().seconds : data.loopBeginTime+data.previous.frame.time*this.getDur().seconds; }
+		if(data.next.frame) {	next = data.loopBeginTime+data.next.frame.time*this.getDur().seconds; }
+		if(data.closest.frame) {	closest = data.closest.index == data.next.index ? next : previous; }
 	}
-}
-
-// returns index of closest keyTime
-SVGAnimationElement.prototype.getClosestTime = function(inclusive) {
-	var progress = this.getCurrentProgress();
-	if(progress == null) { return null; }
 	
-	var previous = this.getPreviousTime(inclusive);
-	var next = this.getNextTime(inclusive);
+	data.previous.time = previous;
+	data.next.time = next;
+	data.closest.time = closest;
 	
-	if(previous == null) { return next; }
-	if(next == null) { return previous; }
-	if(Math.abs(progress - previous) < Math.abs(progress - next)) {
-		return previous;
-	} else {
-		return next;
-	}
+	return data;
 }
-
 
 
 // moves value and (if applicable) its spline to given targetIndex
@@ -623,10 +675,10 @@ SVGAnimationElement.prototype.moveValue = function(movedIndex, targetIndex) {
 	}
 }
 
-SVGAnimationElement.prototype.addValue = function(value, time, spline) {
+SVGAnimationElement.prototype.addValue = function(value, time, spline, intensity) {
 	this.getKeyframes();
 	
-	var newKeyframe = new keyframe(time, spline, value);
+	var newKeyframe = new keyframe(time, spline, value, intensity);
 	this.keyframes.push(newKeyframe);
 	this.keyframes.sort();
 }
@@ -676,12 +728,32 @@ SVGAnimationElement.prototype.isInvertible = function() {
 	}
 }
 
+SVGAnimationElement.prototype.isScalable = function() {
+	if(this.getAttribute('attributeName') == 'display' || this.getAttribute('attributeName') == 'visibility') { return true; }
+	
+	this.getKeyframes();
+	try {
+		return this.keyframes.getItem(0).isScalable();
+	} catch(err) {
+		return false;
+	}
+}
+
 // inverts all values (if .isInvertible() is true)
 // this should be overriden by SVGAnimateTransform and SVGAnimateMotion implementations
 SVGAnimationElement.prototype.invertValues = function(index) {
 	this.getKeyframes();
 	try { 
 		return this.keyframes.invertValues(index);
+	} catch(err) {
+		throw err;
+	}
+}
+
+SVGAnimationElement.prototype.scaleValues = function(index, factor) {
+	this.getKeyframes();
+	try { 
+		return this.keyframes.scaleValues(index, factor);
 	} catch(err) {
 		throw err;
 	}
@@ -734,78 +806,93 @@ SVGAnimationElement.prototype.pasteTiming = function(donor) {
 // returns null if no such attribute exist (e.g. CSS attributes)
 SVGAnimationElement.prototype.getCurrentValue = function(time) {
 	if(this.getAttribute('attributeName') == 'd') {
-		var progress = this.getCurrentProgress(time);
-		if(progress == null) {		// animation not running and/or duration = 0s
-			var temp = document.createElementNS("http://www.w3.org/2000/svg", "path");
-				temp.setAttribute('d', this.parentNode.getAttribute('d'));
-			return temp.getPathData().baseVal;
-		}
-		this.getKeyframes();
+		var closest = this.getClosest(true, time);
 		
-		var timeBefore, timeAfter;
-		var before, after;
-		
-		if(progress == null) {
-			return null;
-		}
-		
-		for(var i = 0; i < this.keyframes.length; i++) {
-			if(this.keyframes.getItem(i).time == progress) {
-				timeBefore = progress;
-				before = i;
-				break;
-			} else if(this.keyframes.getItem(i).time < progress) {
-				timeBefore = this.keyframes.getItem(i).time;
-				before = i;
-			} else if(timeAfter == null) {
-				timeAfter = this.keyframes.getItem(i).time;
-				after = i;
-				break;
-			}
-		}
-		
-		
-		if(timeBefore == progress) {
-			var temp = document.createElementNS("http://www.w3.org/2000/svg", "path");
-				temp.setAttribute('d', this.keyframes.getItem(before).value);
-			return temp.getPathData().baseVal;
-		}
-		
-		if(after == null) {
-			if(this.getAttribute('fill') == 'freeze') {
+		if(!closest.running || !closest.next.frame) {
+			if(!closest.previous.frame || this.getAttribute('fill') != 'freeze') {		// hasn't started
 				var temp = document.createElementNS("http://www.w3.org/2000/svg", "path");
-					temp.setAttribute('d', this.keyframes.getItem(before).value);
-				return temp.getPathData().baseVal;
-			} else {
-				return null;
+					temp.setAttribute('d', this.parentNode.getAttribute('d'));
+					return temp.getPathData().baseVal;
+			} else {	// ended already
+				var temp = document.createElementNS("http://www.w3.org/2000/svg", "path");
+					temp.setAttribute('d', closest.previous.frame.value);
+					return;
 			}
-			
 		}
 		
-		var ratio = (progress-timeBefore)/(timeAfter-timeBefore);
+		if(closest.closest.frame.time == closest.progress) {
+			var temp = document.createElementNS("http://www.w3.org/2000/svg", "path");
+				temp.setAttribute('d', closest.previous.frame.value);
+				return;
+		}
 		
+		var ratio = (closest.progress-closest.previous.frame.time)/(closest.next.frame.time-closest.previous.frame.time);
 		
 		var pathBefore = document.createElementNS("http://www.w3.org/2000/svg", "path");
 		var pathAfter = document.createElementNS("http://www.w3.org/2000/svg", "path");
 		
-		pathBefore.setAttribute('d', this.keyframes.getItem(before).value);
-		pathAfter.setAttribute('d', this.keyframes.getItem(after).value);
+		pathBefore.setAttribute('d', closest.previous.frame.value);
+		pathAfter.setAttribute('d', closest.next.frame.value);
 		
-		if(this.keyframes.getItem(after).spline) {
-			// used to be "before", now it's not (splines have been moved one up - first keyframe now has NULL spline)
-			ratio = this.keyframes.getItem(after).spline.getValue(ratio);
+		if(closest.next.frame.spline) {
+			ratio = closest.next.frame.spline.getValue(ratio);
 		}
 		
 		return pathBefore.inbetween(pathAfter, ratio);
 		
 	} else {
-		try {
-			return this.parentNode[this.getAttribute('attributeName')].animVal.value || this.parentNode[this.getAttribute('attributeName')].animVal.toString();
-		} catch(e) {
-			return null;
+		if(this.parentNode[this.getAttribute('attributeName')] && this.parentNode[this.getAttribute('attributeName')].animVal && this.parentNode[this.getAttribute('attributeName')].animVal.value) {
+			return this.parentNode[this.getAttribute('attributeName')].animVal.value;
 		}
+		if(this.parentNode[this.getAttribute('attributeName')] && this.parentNode[this.getAttribute('attributeName')].animVal && this.parentNode[this.getAttribute('attributeName')].animVal.toString()) {
+			return this.parentNode[this.getAttribute('attributeName')].animVal.toString();
+		}
+		if(this.parentNode.getAttribute(this.getAttribute('attributeName'))) {
+			return this.parentNode.getAttribute(this.getAttribute('attributeName'));
+		}
+		return null;
 	}
 }
+
+
+
+
+SVGAnimationElement.prototype.stretchTo = function(time, override) {
+	time = time != null ? time : this.getCurrentTime();
+	
+	var closest = this.getClosest(true);
+	
+	if(closest.progress >= 0 && closest.progress <= 1) { return; }	// no stretching needed
+	
+	if(!override && (this.getRepeatCount() != 0 || this.getBeginList.length > 1)) { return; }		// can't stretch, would break loops
+	
+	if(closest.progress < 0) {
+		var stretchBy = closest.progress*this.getDur().seconds;
+		var moveBy = (-1*closest.progress*this.getDur().seconds)/(this.getDur().seconds-stretchBy);
+		
+		this.setDur(this.getDur().seconds-stretchBy, true);
+		this.setBegin(0, time);
+		
+		for(var i = 0; i < this.keyframes.length; i++) {
+			this.keyframes.getItem(i).time += moveBy;
+		}
+		
+		this.setTime(this.keyframes.length-1, 1);
+		var newValue = this.duplicateValue(0);
+		newValue.time = 0;
+	}
+	if(closest.progress > 1) {
+		var stretchBy = (closest.progress)*this.getDur().seconds;
+		var moveBy = (-1*closest.progress*this.getDur().seconds)/(this.getDur().seconds-stretchBy);
+		
+		this.setDur(stretchBy, true);
+		this.duplicateValue(this.keyframes.length-1);
+		this.setTime(this.keyframes.length-1, 1);
+		newValue = this.keyframes.getItem(this.keyframes.length-1, 1);
+	}
+	return newValue;
+}
+
 
 
 
@@ -821,6 +908,7 @@ SVGAnimationElement.prototype.getCenter = function(viewport) {
 }
 
 SVGAnimationElement.prototype.getFarCorner = function(reference) {
+	if(!this.getViableParent()) { return {'x':0,'y':0}; }
 	return this.getViableParent().getFarCorner(reference);
 }
 
@@ -839,6 +927,7 @@ SVGAnimationElement.prototype.getCTM = function() {
 		return null;
 	}
 }
+
 
 
 

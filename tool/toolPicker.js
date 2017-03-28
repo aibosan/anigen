@@ -11,23 +11,40 @@ function toolPicker() {
 toolPicker.prototype = Object.create(tool.prototype);
 
 toolPicker.prototype.mouseClick = function(event) {
-	if(!svg || !(svg instanceof root)) { return; }
+	if(!svg || !(svg instanceof root) || event.button == 2) { return; }
+	
+	if(event.target == svg.svgElement || svg.selected == svg.svgElement) { return; }
 	
 	if(event.target.original) { event.target = event.target.original; }
 	
-	if(svg.selected instanceof SVGAnimationElement && event.shiftKey && event.target.hasAnimation() && event.getAnimations()[0]) {
-		svg.selected.pasteTiming(event.getAnimations()[0]);
+	if(svg.selected instanceof SVGAnimationElement && event.shiftKey && event.target.hasAnimation() && event.target.getAnimations()[0]) {
+		svg.selected.pasteTiming(event.target.getAnimations()[0]);
+		svg.select(svg.selected.commit());
 		return;
 	}
 	
-	
-	if(svg.selected instanceof SVGAnimateMotionElement) {
+	if(svg.selected instanceof SVGAnimateMotionElement && event.target instanceof SVGPathElement) {
 		// motion gets a new path if the target is a path
-		if(event.target instanceof SVGPathElement) {
-			svg.selected.setPath(event.target, true);
-		}
+		svg.selected.setPath(event.target, event.shiftKey || event.ctrlKey);
+		svg.selected.commit();
 		return;
-	} else if(svg.selected instanceof SVGAnimateElement) {
+	}
+	
+	if((svg.selected.shepherd instanceof animationGroup || svg.selected instanceof SVGAnimationElement) &&
+		(event.target.shepherd instanceof animationGroup || event.target.hasAnimation()) &&
+		!(svg.selected instanceof SVGAnimateElement) || (svg.selected instanceof SVGAnimateElement && anigenManager.classes.windowAnimation.selected.length == 0)) {
+		
+		var fr, to;
+		to = svg.selected.shepherd || svg.selected;
+		fr = event.target.shepherd || event.target.getAnimations()[0];
+		
+		to.pasteTiming(fr, true)
+		svg.select(to.commit());
+		
+		return;
+	}
+	
+	if(svg.selected instanceof SVGAnimateElement) {
 		// attribute animation gets new values for selected animation keyframes (if applicable)
 		if(anigenManager.classes.windowAnimation.selected.length == 0) { return; }
 		var val = event.target.style[svg.selected.getAttribute('attributeName')] || event.target.getAttribute(svg.selected.getAttribute('attributeName'));
@@ -38,23 +55,87 @@ toolPicker.prototype.mouseClick = function(event) {
 		for(var i = 0; i < anigenManager.classes.windowAnimation.selected.length; i++) {
 			svg.selected.setValue(anigenManager.classes.windowAnimation.selected[i], val, true);
 		}
+		svg.selected.commit();
 		anigenManager.classes.windowAnimation.refreshKeyframes();
 		svg.ui.edit(svg.selected);
 		return;
 	}
 	
+	var tFillColor = event.target.style.fill;
+	var tFillOpacity = event.target.style.fillOpacity || 1;
 	
-	var oldStyle = svg.selected.getAttribute('style');
-	if(event.shiftKey) {
-		svg.selected.style.stroke = event.target.style.fill;
-		svg.selected.style.strokeOpacity = event.target.style.fillOpacity || 1;
-	} else {
-		svg.selected.style.fill = event.target.style.fill || 'none';
-		svg.selected.style.fillOpacity = event.target.style.fillOpacity || 1;
+	var trg = event.target;
+	while((tFillColor == 'inherit' || tFillColor == null) && trg.parentNode && !(trg.parentNode instanceof SVGSVGElement)) {
+		trg = trg.parentNode;
+		tFillColor = trg.style.fill;
 	}
-	svg.history.add(new historyAttribute(svg.selected.id,
-		{ 'style': oldStyle }, { 'style': svg.selected.getAttribute('style') }, true));
+	trg = event.target;
+	while(tFillOpacity == 'inherit' && trg.parentNode && !(trg.parentNode instanceof SVGSVGElement)) {
+		trg = trg.parentNode;
+		tFillOpacity = trg.style.fillOpacity;
+	}
 	
+	if(event.shiftKey) {
+		svg.selected.setAttributeHistory({'stroke': tFillColor, 'strokeOpacity': tFillOpacity || 1 });
+	} else {
+		svg.selected.setAttributeHistory({'fill': tFillColor, 'fillOpacity': tFillOpacity || 1 });
+	}
+	
+	anigenManager.classes.windowColors.refresh();
+	
+}
+
+toolPicker.prototype.mouseMove = function(event) {
+	if(!svg || !(svg instanceof root)) { return; }
+	
+	this.lastEvent = event;
+	
+	if(event.target == svg.svgElement || svg.selected == svg.svgElement) {
+		anigenManager.setCursor('url(_cursors/picker.png) 5 5');
+	} else if(svg.selected instanceof SVGAnimateMotionElement && event.target instanceof SVGPathElement) {
+		anigenManager.setCursor('url(_cursors/picker_path.png) 5 5');
+	} else if((svg.selected.shepherd instanceof animationGroup || svg.selected instanceof SVGAnimationElement) &&
+		(event.target.shepherd instanceof animationGroup || event.target.hasAnimation()) &&
+		!(svg.selected instanceof SVGAnimateElement) || (svg.selected instanceof SVGAnimateElement && anigenManager.classes.windowAnimation.selected.length == 0)) {
+		anigenManager.setCursor('url(_cursors/picker_time.png) 5 5');
+	} else {
+		if(event.shiftKey) {
+			anigenManager.setCursor('url(_cursors/picker_stroke.png) 5 5');
+		} else {
+			anigenManager.setCursor('url(_cursors/picker_fill.png) 5 5');
+		}
+		
+	}
+	
+	if((event.button == 1 || event.buttons == 4) && this.lastEvent) {
+		var dX = Math.round((this.lastEvent.clientX - event.clientX)/svg.zoom);
+		var dY = Math.round((this.lastEvent.clientY - event.clientY)/svg.zoom);
+		this.lastEvent = event;
+		svg.moveView(dX, dY);
+		return;
+	}
+}
+
+toolPicker.prototype.keyDown = function(event) {
+	if(!svg) { return; }
+	if(svg.selected instanceof SVGAnimateElement || svg.selected.shepherd instanceof SVGAnimateElement || !this.lastEvent || (this.lastEvent && this.lastEvent.target == svg.svgElement) || svg.selected == svg.svgElement) {
+		return true;
+	}
+	if(event.shiftKey) {
+		anigenManager.setCursor('url(_cursors/picker_stroke.png) 5 5');
+	} else {
+		anigenManager.setCursor('url(_cursors/picker_fill.png) 5 5');
+	}
+	return true;
+}
+
+toolPicker.prototype.keyUp = function(event) {
+	if(event.shiftKey) {
+		anigenManager.setCursor('url(_cursors/picker_stroke.png) 5 5');
+	} else {
+		anigenManager.setCursor('url(_cursors/picker_fill.png) 5 5');
+	}
+	return true;
 }
 
 

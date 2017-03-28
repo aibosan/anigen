@@ -60,3 +60,7 @@ pathSegMoveto.prototype.inbetween = function(other, ratio) {
 pathSegMoveto.prototype.clone = function() {
 	return new pathSegMoveto(this.x, this.y);
 }
+
+pathSegMoveto.prototype.getMin = pathSegMoveto.prototype.getMax = function() {
+	return { 'x': this.x, 'y': this.y };
+}

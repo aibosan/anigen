@@ -233,6 +233,21 @@ div.logo img {
 	display: inline-block;
 }
 
+
+span.key {
+	display: inline-block;
+	padding: 0.5ex 1ex;
+	margin: 0px 2px;
+	border: 1px solid gray;
+	border-radius: 5px;
+	background-color: #ddd;
+	
+	-moz-box-shadow:    0px 2px 1px #444;
+	-webkit-box-shadow: 0px 2px 1px #444;
+	box-shadow:         0px 2px 1px #444;
+}
+
+
 table {
 	border-collapse: collapse;
 	border: 1px solid gray;
@@ -251,6 +266,25 @@ th {
 	color: white;
 	border-bottom: 2px solid gray;
 }
+
+
+table.keyboard, table.keyboard tr, table.keyboard td, table.keyboard th {
+	border: none;
+}
+
+table.keyboard tr:hover {
+	background-color: #eee;
+}
+
+table.keyboard tr td:first-child {
+	text-align: right;
+}
+
+table.keyboard tr td:last-child {
+	text-align: left;
+}
+
+
 
 code {
 	border: 1px solid gray;
@@ -274,6 +308,11 @@ code .g {		/* attribute values */
 
 code .b {		/* tag names */
 	color: #00a;
+}
+
+.help {
+	border-bottom: 1px dotted #008000;
+	cursor: help;
 }
 
 a {

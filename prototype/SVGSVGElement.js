@@ -12,3 +12,5 @@ SVGSVGElement.prototype.consumeTransform = function() {
 }
 
 SVGSVGElement.prototype.translateBy = function() {}
+
+SVGSVGElement.prototype.isVisualElement = function() { return true; }

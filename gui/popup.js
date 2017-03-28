@@ -12,6 +12,12 @@ function popup() {
 
     this.container.appendChild(this.content);
 	
+	this.buttonOk = null;
+	this.buttonCancel = null;
+	this.draggable = false;
+	
+	this.closeOnSeek = false;
+	
 	document.body.appendChild(this.container);
 	
 	this.container.addEventListener("click", function(event) { 
@@ -19,9 +25,35 @@ function popup() {
 		event.stopPropagation ? event.stopPropagation() : window.event.cancelBubble = true;
 	}, false);
 	
+	this.container.addEventListener("mousedown", this.eventMouseDown, false);
+	this.container.addEventListener("mouseup", this.eventMouseUp, false);
+	
 	this.hidden = true;
 	this.event = null;
+	
+	this.lastPosition = { 'x': null, 'y': null };
+	
+	this.lastEvent = null;
+	
+	document.activeElement.blur();
 }
+
+popup.prototype.eventMouseDown = function(event) {
+	if(!popup.draggable) {
+		popup.lastEvent = null;
+		return;
+	}
+	if(event.target != popup.container && event.target != popup.content) { return; }
+	
+	popup.lastEvent = event;
+}
+
+popup.prototype.eventMouseUp = function(event) {
+	popup.lastEvent = null;
+	
+}
+
+
 
 popup.prototype.hide = function() {
 	if(anigenManager.classes.context && anigenManager.classes.context.buttons) {
@@ -29,10 +61,18 @@ popup.prototype.hide = function() {
 		anigenManager.classes.context.buttons.animate.setState(0);
 	}
 	
+	this.buttonOk = null;
+	this.buttonCancel = null;
+	
 	this.container.style.display = 'none';
 	this.container.style.opacity = '0';
 	this.hidden = true;
+	
 	this.event = null;
+	this.lastEvent = null;
+	
+	this.closeOnSeek = false;
+	
 	document.body.focus();
 }
 
@@ -51,6 +91,9 @@ popup.prototype.show = function(target) {
 	var height = (size.bottom);
 	
 	if(target) {
+		this.draggable = false;
+		this.container.removeClass('draggable');
+		
 		if(target.x != null && target.y != null) {
 			toX = target.x;
 			toY = target.y;
@@ -61,21 +104,37 @@ popup.prototype.show = function(target) {
 			toY = Math.round(rect.bottom + 2);
 		}
 	} else {
-		toX = window.innerWidth/2 - width/2;
-		toY = window.innerHeight/2 - height/2;
-	}
-	
-	
-	if((toX + width) > window.innerWidth) {
-		if(toX2 != null) {
-			toX = toX2 - width;
-		} else {
-			toX = toX - width - 2;
+		this.draggable = true;
+		this.container.addClass('draggable');
+		
+		toX = this.lastPosition.x != null ? this.lastPosition.x : window.innerWidth/2 - width/2;
+		try {
+			toY = this.lastPosition.y != null ? this.lastPosition.y : anigenManager.named.context.y+anigenManager.named.context.height - height/2;
+		} catch(e) {
+			toY = this.lastPosition.y != null ? this.lastPosition.y : window.innerHeight/2 - height/2;
 		}
 	}
 	
+	this.moveTo(toX2 != null && (toX + width) > window.innerWidth ? toX2 : toX, toY);
 	
-	if((toY + height) > window.innerHeight) { toY = toY - height - 2; }
+	this.container.style.opacity = '1';
+	this.hidden = false;
+}
+
+popup.prototype.moveTo = function(toX, toY) {
+	var size = this.container.getBoundingClientRect();
+	var width = (size.right-size.left);
+	var height = (size.bottom-size.top);
+	
+	if((toX + width + 2) > window.innerWidth) {
+		toX = window.innerWidth - width - 2;
+	}
+	
+	if((toY + height + 2) > window.innerHeight) {
+		toY = window.innerHeight - height - 2;
+	}
+	
+	if(toX < 2) { toX = 2; }
 	if(toY < 2) { toY = 2; }
 	
 	toX = Math.round(toX);
@@ -83,9 +142,16 @@ popup.prototype.show = function(target) {
 	
 	this.container.style.top = toY + 'px';
 	this.container.style.left = toX + 'px';
-	this.container.style.opacity = '1';
-	this.hidden = false;
+	
+	this.x = toX;
+	this.y = toY;
 }
+
+popup.prototype.moveBy = function(dX, dY) {
+	this.moveTo(this.x+dX, this.y+dY);
+}
+
+
 
 popup.prototype.isHidden = function() {
 	return this.hidden;
@@ -93,6 +159,8 @@ popup.prototype.isHidden = function() {
 
 popup.prototype.reset = function() {
 	this.hide();
+	this.buttonOk = null;
+	this.buttonCancel = null;
 	this.content.removeChildren();
 }
 
@@ -102,7 +170,7 @@ popup.prototype.add = function(element) {
 }
 
 popup.prototype.addButton = function(button) {
-	this.content.appendChild(element);
+	this.content.appendChild(button);
 }
 popup.prototype.addButtonOk = function(action) {
 	if(!action) { action = ""; }
@@ -110,6 +178,7 @@ popup.prototype.addButtonOk = function(action) {
 	button.setAttribute("class", "black");
 	button.setAttribute("onclick", "popup.hide();"+action);
 	button.appendChild(document.createTextNode("Ok"));
+	this.buttonOk = button;
 	this.content.appendChild(button);
 }
 popup.prototype.addButtonCancel = function(action) {
@@ -117,6 +186,7 @@ popup.prototype.addButtonCancel = function(action) {
 	var button = document.createElement("button");
 	button.setAttribute("onclick", "popup.hide();"+action);
 	button.appendChild(document.createTextNode("Cancel"));
+	this.buttonCancel = button;
 	this.content.appendChild(button);
 }
 
@@ -180,11 +250,14 @@ popup.prototype.macroClock = function(target) {
 	this.show(target);
 }
 
+
 popup.prototype.macroAnimationContextMenu = function(event, index) {
 	this.reset();
 	
 	var tArray = [];
 	var rAttributes = [];
+	
+	var attribute = svg.selected.getAttribute('attributeName');
 	
 	var canInbetween = false;
 	for(var i = 0; i < anigenManager.classes.windowAnimation.selected.length-1; i++) {
@@ -201,33 +274,70 @@ popup.prototype.macroAnimationContextMenu = function(event, index) {
 	tArray.push([ build.icon("arrow_downward"), "Move down" ]);
 	tArray.push([ "", "" ]);
 	tArray.push([ build.icon("add_circle_outline"), "Create inbetween" ]);
-	tArray.push([ build.icon("timer"), "Balance " + (canInbetween ? 'selected' : 'keyframes') ]);
-	tArray.push([ build.icon("flip"), "Invert " + (anigenManager.classes.windowAnimation.selected.length > 1 ? 'selected' : 'keyframe') ]);
-	tArray.push([ build.icon("delete"), "Remove " + (anigenManager.classes.windowAnimation.selected.length > 1 ? 'selected' : 'keyframe') ]);
+	tArray.push([ build.icon("timer"), "Balance " + (canInbetween ? 'selected' : 'all') ]);
+	tArray.push([ build.icon("replay"), "Reverse "+ (canInbetween ? 'selected' : 'all') ]);
+	if(attribute == 'display' || attribute == 'visibility') {
+		tArray.push([ build.icon("flip"), "Invert " + (anigenManager.classes.windowAnimation.selected.length > 1 ? 'selected' : 'keyframe') ]);
+	} else {
+		tArray.push([ build.icon("zoom_out_map"), "Scale " + (anigenManager.classes.windowAnimation.selected.length > 1 ? 'selected...' : 'all...') ]);
+	}
+	tArray.push([ build.icon("delete"), "Remove " + (anigenManager.classes.windowAnimation.selected.length > 1 ? 'selected' : 'this keyframe') ]);
 	
-	rAttributes.push({ 'onclick': 'popup.hide();anigenManager.classes.windowAnimation.contextMenuEvaluate("up", '+index+');' });
-	rAttributes.push({ 'onclick': 'popup.hide();anigenManager.classes.windowAnimation.contextMenuEvaluate("duplicate", '+index+');' });
-	rAttributes.push({ 'onclick': 'popup.hide();anigenManager.classes.windowAnimation.contextMenuEvaluate("down", '+index+');' });
+	if(!canInbetween && index == 0) {
+		rAttributes.push({ 'class': 'disabled' });
+	} else {
+		rAttributes.push({ 'onclick': 'popup.hide();anigenManager.classes.windowAnimation.contextMenuEvaluate("up", '+index+');',
+			'title': 'Moves ' + (canInbetween ? 'selected keyframes' : 'this keyframe') + ' up, moving values and splines.'
+		});
+	}
+	rAttributes.push({ 'onclick': 'popup.hide();anigenManager.classes.windowAnimation.contextMenuEvaluate("duplicate", '+index+');',
+		'title': 'Duplicates ' + (canInbetween ? 'selected keyframes' : 'this keyframe') + ', creating an identical copy ' + (canInbetween ? 'for every selected keyframe' : 'of it') + '.'
+	});
+	if(!canInbetween && index == anigenManager.classes.windowAnimation.animation.keyframes.length-1) {
+		rAttributes.push({ 'class': 'disabled' });
+	} else {
+		rAttributes.push({ 'onclick': 'popup.hide();anigenManager.classes.windowAnimation.contextMenuEvaluate("down", '+index+');',
+			'title': 'Moves ' + (canInbetween ? 'selected keyframes' : 'this keyframe') + ' down, moving values and splines.'
+		});
+	}
 	rAttributes.push({ 'class': 'hr' });
 
 	if(canInbetween) {
-		rAttributes.push({ 'onclick': 'popup.hide();anigenManager.classes.windowAnimation.contextMenuEvaluate("inbetween", '+index+');' });
+		rAttributes.push({ 'onclick': 'popup.hide();anigenManager.classes.windowAnimation.contextMenuEvaluate("inbetween", '+index+');',
+			'title': 'Creates new keyframes between all neighbouring selected keyframes; the new value half way between that of the original keyframes.'
+		});
 	} else {
 		rAttributes.push({ 'class': 'disabled' });
 	}
 	
 	if(canInbetween || anigenManager.classes.windowAnimation.selected.length == 0) {
-		rAttributes.push({ 'onclick': 'popup.hide();anigenManager.classes.windowAnimation.contextMenuEvaluate("balance", '+index+');' });
+		rAttributes.push({ 'onclick': 'popup.hide();anigenManager.classes.windowAnimation.contextMenuEvaluate("balance", '+index+');',
+			'title': 'Sets the times of ' + (canInbetween ? 'selected' : 'all') + ' keyframes to be spread evenly across ' + (canInbetween ? 'selected intervals' : 'the animation') + '.'
+		});
+		rAttributes.push({ 'onclick': 'popup.hide();anigenManager.classes.windowAnimation.contextMenuEvaluate("reverse", '+index+');',
+			'title': 'Reverses animation ' + (canInbetween ? 'for selected keyframes' : '') + ' by flipping values around ' + (canInbetween ? 'for each selected intervals' : '') + '.'
+		});
 	} else {
+		rAttributes.push({ 'class': 'disabled' });
 		rAttributes.push({ 'class': 'disabled' });
 	}
 	
-	if(anigenManager.classes.windowAnimation.animation.isInvertible()) {
-		rAttributes.push({ 'onclick': 'popup.hide();anigenManager.classes.windowAnimation.contextMenuEvaluate("invert", '+index+');' });
+	if(attribute == 'display' || attribute == 'visibility') {
+		rAttributes.push({ 'onclick': 'popup.hide();anigenManager.classes.windowAnimation.contextMenuEvaluate("invert", '+index+');',
+			'title': 'Inverts values of ' + (canInbetween ? 'selected keyframes' : 'this keyframe') + '.'
+		});
 	} else {
-		rAttributes.push({ 'class': 'disabled' });
+		if(anigenManager.classes.windowAnimation.animation.isScalable()) {
+			rAttributes.push({ 'onclick': 'popup.macroScaleKeyframe(null, '+index+');',
+				'title': 'Scales values of ' + (canInbetween ? 'selected' : 'all') + ' keyframes by given factor.'
+			});
+		} else {
+			rAttributes.push({ 'class': 'disabled' });
+		}
 	}
-	rAttributes.push({ 'onclick': 'popup.hide();anigenManager.classes.windowAnimation.contextMenuEvaluate("delete", '+index+');' });
+	rAttributes.push({ 'onclick': 'popup.hide();anigenManager.classes.windowAnimation.contextMenuEvaluate("delete", '+index+');',
+		'title': 'Removes  ' + (canInbetween ? 'selected keyframes' : 'this keyframe') + '.'
+	});
 	
 	this.add(build.table(tArray, null, rAttributes)).setAttribute('class', 'popup-menu');
 	
@@ -275,14 +385,14 @@ popup.prototype.macroContextMenu = function(target) {
 	
 	var selText = anigenManager.classes.windowAnimation.selected.length > 0 ? "selected" : "keyframes";
 	
-	tArray.push([ build.icon("undo"), "Undo" ]);
+	tArray.push([ build.icon("undo"), "Undo", "Ctrl+Z" ]);
 		if(svg.history.index >= 0) {
 			rAttributes.push({ 'onclick': 'event.stopPropagation();popup.hide();svg.history.undo();' });
 		} else {
 			rAttributes.push({ 'class': 'disabled' });
 		}
 	
-	tArray.push([ build.icon("redo"), "Redo" ]);
+	tArray.push([ build.icon("redo"), "Redo", "Ctrl+Y" ]);
 		if(svg.history.index < svg.history.histArray.length-1) {
 			rAttributes.push({ 'onclick': 'event.stopPropagation();popup.hide();svg.history.redo();' });
 		} else {
@@ -290,41 +400,41 @@ popup.prototype.macroContextMenu = function(target) {
 		}
 	
 	if(svg.selected instanceof SVGAnimationElement || (svg.selected.shepherd && svg.selected.shepherd instanceof animationGroup)) {
-		tArray.push([ "", "" ]);
+		tArray.push([ "", "", "" ]);
 			rAttributes.push({ 'class': 'hr' });
-		tArray.push([ build.icon("tune"), "Set value..." ]);
-			rAttributes.push({ 'onclick': 'event.stopPropagation();popup.hide();popup.macroAddValue();' });
+		tArray.push([ build.icon("tune"), "Set value...", "Ctrl+R" ]);
+			rAttributes.push({ 'onclick': 'event.stopPropagation();popup.hide();popup.macroSetCurrentValue();' });
 			
 		if(svg.selected.shepherd && svg.selected.shepherd instanceof animationGroup) {
-			tArray.push([ build.icon("settings"), "Create new state..." ]);
+			tArray.push([ build.icon("settings"), "Create new state...", "" ]);
 				rAttributes.push({ 'onclick': 'event.stopPropagation();popup.hide();popup.macroAddState();' });
 		}
 	} else if(svg.selected.getAttribute('anigen:type') != 'animationGroup' && !svg.selected.hasAnimation()) {
 		if(svg.selected instanceof SVGSVGElement) {
-			tArray.push([ "", "" ]);
+			tArray.push([ "", "", "" ]);
 				rAttributes.push({ 'class': 'hr' });
 		} else {
-			tArray.push([ "", "" ]);
+			tArray.push([ "", "", "" ]);
 				rAttributes.push({ 'class': 'hr' });
-			tArray.push([ build.icon("fingerprint"), "To animation state..." ]);
+			tArray.push([ build.icon("fingerprint"), "To animation state...", "" ]);
 				rAttributes.push({ 'onclick': 'event.stopPropagation();popup.hide();popup.macroToAnimationState(null, svg.selected);' });
 		}
-		tArray.push([ build.icon("power_settings_new", "turn-90"), "Create animated group..." ]);
+		tArray.push([ build.icon("power_settings_new", "turn-90"), "Create animated group...", "" ]);
 			rAttributes.push({ 'onclick': 'event.stopPropagation();popup.hide();popup.macroNewAnimationGroup();' });
 	}
 	
-	tArray.push([ "", "" ]);
+	tArray.push([ "", "", "" ]);
 		rAttributes.push({ 'class': 'hr' });
 		
 		
-	tArray.push([ build.icon("content_cut"), "Cut" ]);
+	tArray.push([ build.icon("content_cut"), "Cut", "Ctrl+X" ]);
 		if(svg.selected != svg.svgElement) {
 			rAttributes.push({ 'onclick': 'event.stopPropagation();popup.hide();svg.cut(svg.selected);' });
 		} else {
 			rAttributes.push({ 'class': 'disabled' });
 		}
 		
-	tArray.push([ build.icon("content_paste"), "Paste" ]);
+	tArray.push([ build.icon("content_paste"), "Paste", "Ctrl+V" ]);
 		if(svg.elementTemp) {
 			if(svg.selected.getAttribute('inkscape:groupmode') == 'layer' || svg.selected == svg.svgElement || svg.elementTemp.isAnimation()) {
 				rAttributes.push({ 'onclick': 'event.stopPropagation();popup.hide();svg.paste({ "x": '+evaluated.x+', "y": '+evaluated.y+' }, svg.selected);'});
@@ -335,11 +445,11 @@ popup.prototype.macroContextMenu = function(target) {
 			rAttributes.push({ 'class': 'disabled' });
 		}
 	
-	tArray.push([ build.icon("content_copy"), "Copy" ]);
-	tArray.push([ "", "" ]);
-	tArray.push([ build.icon("storage"), "Duplicate" ]);
-	tArray.push([ build.icon("link"), "Create link" ]);
-	tArray.push([ build.icon("delete"), "Delete" ]);
+	tArray.push([ build.icon("content_copy"), "Copy", "Ctrl+C" ]);
+	tArray.push([ "", "", "" ]);
+	tArray.push([ build.icon("storage"), "Duplicate", "Ctrl+D" ]);
+	tArray.push([ build.icon("link"), "Create link", "Alt+L" ]);
+	tArray.push([ build.icon("delete"), "Delete", "Delete" ]);
 		if(svg.selected != svg.svgElement) {
 			rAttributes.push({ 'onclick': 'event.stopPropagation();popup.hide();svg.copy(svg.selected);' });
 			rAttributes.push({ 'class': 'hr' });
@@ -354,22 +464,129 @@ popup.prototype.macroContextMenu = function(target) {
 			rAttributes.push({ 'class': 'disabled' });
 		}
 		
-	tArray.push([ "", "" ]);
+	tArray.push([ "", "", "" ]);
 		rAttributes.push({ 'class': 'hr' });
 		
-	tArray.push([ build.icon("change_history"), "Select parent" ]);
+	tArray.push([ build.icon("change_history"), "Select parent", "Alt+Up" ]);
 		if(svg.selected != svg.svgElement) {
-			rAttributes.push({ 'onclick': 'event.stopPropagation();popup.hide();svg.select(svg.selected.parentNode);' });
+			rAttributes.push({ 'onclick': 'event.stopPropagation();popup.hide();svg.select(svg.selected.getViableParent());' });
 		} else {
 			rAttributes.push({ 'class': 'disabled' });
 		}
 	
-	tArray.push([ build.icon("details"), "Select first child" ]);
+	tArray.push([ build.icon("details"), "Select first child", "Alt+Down" ]);
 		if(svg.selected.children.length > 0) {
 			rAttributes.push({ 'onclick': 'event.stopPropagation();popup.hide();svg.select(svg.selected.children[0]);' });
 		} else {
 			rAttributes.push({ 'class': 'disabled' });
 		}
+	
+	
+	if(anigenActual.tool == 4 && svg.selected != svg.svgElement) {	// picker
+		tArray.push([ "", "", "" ]);
+			rAttributes.push({ 'class': 'hr' });
+		
+		if(!(svg.selected instanceof SVGAnimationElement) && !(svg.selected.shepherd instanceof SVGAnimationElement) &&
+			svg.selected.isVisualElement() && !svg.selected.isChildOf(svg.defs)) {
+			// regular element selected
+			tArray.push([ build.icon("format_paint"), "Target fill → Selection fill", "" ]);
+				rAttributes.push({ 'onclick': 'event.stopPropagation();popup.hide();var trg=document.getElementById("'+target.target.getAttribute('id')+'");svg.selected.setAttributeHistory({"fill": trg.style.fill, "fillOpacity": trg.style.fillOpacity || 1});'});
+				
+			tArray.push([ "", "Target stroke → Selection fill", "" ]);
+				rAttributes.push({ 'onclick': 'event.stopPropagation();popup.hide();var trg=document.getElementById("'+target.target.getAttribute('id')+'");svg.selected.setAttributeHistory({"fill": trg.style.stroke, "fillOpacity": trg.style.strokeOpacity || 1});'});
+			
+			tArray.push([ build.icon("brush"), "Target fill → Selection stroke", "" ]);
+				rAttributes.push({ 'onclick': 'event.stopPropagation();popup.hide();var trg=document.getElementById("'+target.target.getAttribute('id')+'");svg.selected.setAttributeHistory({"stroke": trg.style.fill, "strokeOpacity": trg.style.fillOpacity || 1});'});
+				
+			tArray.push([ "", "Target stroke → Selection stroke", "" ]);
+				rAttributes.push({ 'onclick': 'event.stopPropagation();popup.hide();var trg=document.getElementById("'+target.target.getAttribute('id')+'");svg.selected.setAttributeHistory({"stroke": trg.style.stroke, "strokeOpacity": trg.style.strokeOpacity || 1});'});
+				
+		} else {
+			// animation selected
+			var isContent = false;
+			
+			if(svg.selected instanceof SVGAnimateMotionElement) {
+				isContent = true;
+				
+				if(target.target instanceof SVGPathElement) {
+					
+					tArray.push([ build.icon("swap_calls"), "Copy path to animation (absolute)", "" ]);
+					rAttributes.push({ 'onclick': 'event.stopPropagation();popup.hide();var trg=document.getElementById("'+target.target.getAttribute('id')+'");svg.selected.setPath(trg, true);svg.selected.commit();svg.select();'});
+				
+					tArray.push([ "", "Copy path to animation (relative)", "" ]);
+					rAttributes.push({ 'onclick': 'event.stopPropagation();popup.hide();var trg=document.getElementById("'+target.target.getAttribute('id')+'");svg.selected.setPath(trg, false);svg.selected.commit();svg.select();'});
+				
+				} else {
+					tArray.push([ build.icon("swap_calls"), "Copy path to animation", "" ]);
+					rAttributes.push({ 'class': 'disabled', 'title': 'Target is not a path.' });
+				}
+			}
+			
+			if(svg.selected instanceof SVGAnimateElement && anigenManager.classes.windowAnimation.selected.length > 0) {
+				isContent = true;
+				
+				tArray.push([ build.icon("format_color_text"), "Copy attribute to animation", "" ]);
+					var val = event.target.style[svg.selected.getAttribute('attributeName')] || event.target.getAttribute(svg.selected.getAttribute('attributeName'));
+					
+					if(val) {
+						rAttributes.push({ 'onclick': 'event.stopPropagation();popup.hide();for(var i = 0; i < anigenManager.classes.windowAnimation.selected.length; i++) { svg.selected.setValue(anigenManager.classes.windowAnimation.selected[i], "'+val+'", true); } svg.selected.commit();svg.select();',
+							'title': 'Value: '+val});
+					} else {
+						rAttributes.push({ 'class': 'disabled', 'title': 'No corresponding attribute in target.' });
+					}
+			}
+			
+			var anim = typeof target.target.getAnimations === 'function' ? target.target.getAnimations() : null;
+			
+			if(anim && isContent) {
+				tArray.push([ "", "", "" ]);
+				rAttributes.push({ 'class': 'hr' });
+			}
+				
+			if(anim) {
+				
+				for(var i = 0; i < anim.length; i++) {
+					var animIcon = "";
+					var descr = "Copy timing from "+anim[i].getAttribute('id');
+					
+					if(anim[i] instanceof SVGAnimateMotionElement) {
+						animIcon = build.icon("swap_calls");
+					} else if(anim[i] instanceof SVGAnimateTransformElement) {
+						switch(anim[i].getAttribute('type')) {
+							case 'translate': animIcon = build.icon("trending_up"); break;
+							case 'rotate': animIcon = build.icon("refresh"); break;
+							case 'scale': animIcon = build.icon("zoom_out_map"); break;
+							case 'skewX': animIcon = build.icon("swap_horiz"); break;
+							case 'skewY': animIcon = build.icon("swap_vert"); break;
+						}
+					} else if(anim[i].shepherd) {
+						if(anim[i].shepherd instanceof animationGroup) {
+							animIcon = build.icon("power_settings_new", "turn-90");
+							if(anim[i].getAttribute('anigen:group')) {
+								descr += " ("+anim[i].getAttribute('anigen:group')+")";
+							}
+						} else if(anim[i].shepherd instanceof animatedViewport) {
+							animIcon = build.icon("videocam");
+						}
+					} else {
+						animIcon = build.icon("text_format");
+						descr += " ("+anim[i].getAttribute('attributeName')+")";
+					}
+					
+					tArray.push([ animIcon, descr, "" ]);
+						if(svg.selected.shepherd instanceof animationGroup) {
+							rAttributes.push({ 'onclick': 'event.stopPropagation();popup.hide();var trg=document.getElementById("'+anim[i].getAttribute('id')+'");svg.selected.shepherd.pasteTiming(trg.shepherd || trg, true);svg.select(svg.selected.shepherd.commit());'});
+						} else {
+							rAttributes.push({ 'onclick': 'event.stopPropagation();popup.hide();var trg=document.getElementById("'+anim[i].getAttribute('id')+'");svg.selected.pasteTiming(trg.shepherd || trg, true);svg.select(svg.selected.commit());'});
+						}
+				}
+			} else {
+				tArray.push([ build.icon("hourglass_empty"), "Copy animation timing", "" ]);
+					rAttributes.push({ 'class': 'disabled', 'title': 'Target has no animations.' });
+			}
+		}
+		
+	}
 	
 	
 	
@@ -378,7 +595,90 @@ popup.prototype.macroContextMenu = function(target) {
 	this.show(target);
 }
 
-popup.prototype.macroAddValue = function(target) {
+popup.prototype.macroScaleKeyframe = function(target, index) {
+	this.reset();
+	
+	var okAction = '';
+	
+	if(anigenManager.classes.windowAnimation.animation instanceof animationGroup ||
+		anigenManager.classes.windowAnimation.animation instanceof SVGAnimateElement) {
+		this.add(build.input('number', '1', { 'id': 'anigenScale', 'step': 0.05, 'title': 'Scale factor' }));
+		
+		okAction += 'var scale=document.getElementById("anigenScale");';
+		okAction += 'anigenManager.classes.windowAnimation.contextMenuEvaluate("scale", '+index+', scale.value);';
+		
+	} else if(anigenManager.classes.windowAnimation.animation.getAttribute('type') == 'rotate') {
+		this.add(build.icon('refresh', 'md-24'));
+		this.add(build.input('number', '1', { 'id': 'anigenScaleAngle', 'step': 0.05, 'title': 'Angle scale factor' }));
+		this.add(build.icon('zoom_out_map', 'md-24 turn-45'));
+		this.add(build.input('number', '1', { 'id': 'anigenScaleX', 'step': 0.05, 'title': 'X axe scale factor' }));
+		this.add(build.input('number', '1', { 'id': 'anigenScaleY', 'step': 0.05, 'title': 'Y axe scale factor' }));
+		
+		okAction += 'var scaleAngle=document.getElementById("anigenScaleAngle");';
+		okAction += 'var scaleX=document.getElementById("anigenScaleX");';
+		okAction += 'var scaleY=document.getElementById("anigenScaleY");';
+		okAction += 'anigenManager.classes.windowAnimation.contextMenuEvaluate("scale", '+index+', {"angle":scaleAngle.value,"x":scaleX.value,"y":scaleY.value});';
+
+	} else {
+		this.add(build.icon('zoom_out_map', 'md-24 turn-45'));
+		this.add(build.input('number', '1', { 'id': 'anigenScaleX', 'step': 0.05, 'title': 'X axe scale factor' }));
+		this.add(build.input('number', '1', { 'id': 'anigenScaleY', 'step': 0.05, 'title': 'Y axe scale factor' }));
+		
+		okAction += 'var scaleX=document.getElementById("anigenScaleX");';
+		okAction += 'var scaleY=document.getElementById("anigenScaleY");';
+		okAction += 'anigenManager.classes.windowAnimation.contextMenuEvaluate("scale", '+index+', {"x":scaleX.value,"y":scaleY.value});';
+		
+	}
+	
+	this.addButtonOk(okAction);
+	this.addButtonCancel();
+	
+	this.show(target);
+}
+
+popup.prototype.macroLoop = function(target) {
+	this.reset();
+	
+	var okAction = '';
+		okAction += 'var min=parseFloat(document.getElementById("anigenMinTime").value);';
+		okAction += 'var max=parseFloat(document.getElementById("anigenMaxTime").value);';
+		okAction += 'if(isNaN(min)){min=null;}';
+		okAction += 'if(isNaN(max)){max=null;}';
+		okAction += 'anigenManager.classes.editor.clock.setMin(min, true);';
+		okAction += 'anigenManager.classes.editor.clock.setMax(max, true);';
+		okAction += 'anigenManager.classes.editor.clock.update();';
+		
+	var cancelAction = '';
+		cancelAction += 'anigenManager.classes.editor.clock.setMin();';
+		cancelAction += 'anigenManager.classes.editor.clock.setMax();';
+		cancelAction += 'anigenManager.classes.editor.clock.update();';
+	
+	var clock = anigenManager.classes.editor.clock;
+	
+	this.add(build.input('number', clock.minTime || 0, { 'id': 'anigenMinTime', 'min': 0,
+		'onchange': 'var max=parseFloat(document.getElementById("anigenMaxTime").value);if(isNaN(max)){return;}if(this.value>max){this.value=max;}'
+	}));
+	this.add(build.input('number', clock.maxTime || 0, { 'id': 'anigenMaxTime', 'min': 0,
+		'onchange': 'var min=parseFloat(document.getElementById("anigenMinTime").value);if(isNaN(min)){return;}if(this.value<min){this.value=min;}'
+	}));
+	
+	
+	this.addButtonOk(okAction);
+	
+	var button = document.createElement("button");
+	button.setAttribute("class", "middle");
+	button.setAttribute("onclick", "popup.hide();"+cancelAction);
+	button.appendChild(document.createTextNode("Remove"));
+	
+	this.addButton(button);
+	
+	this.addButtonCancel();
+	
+	this.show(target);
+}
+
+
+popup.prototype.macroSetCurrentValue = function(target) {
 	var animation = svg.selected.shepherd || svg.selected;
 	if(!animation || !(animation instanceof SVGAnimationElement)) { return; }
 	
@@ -386,38 +686,101 @@ popup.prototype.macroAddValue = function(target) {
 	
 	this.reset();
 	
-	var closestFrame = animation.getClosestFrame(true);
-	var closestTime = animation.getClosestTime(true);
-	var relativeTime = animation.getCurrentProgress();
+	svg.pauseToggle(false);
+	anigenManager.classes.editor.refreshPause();
 	
-	var closestItem = animation.keyframes.getItem(closestFrame);
+	var currentHistoryIndex = svg.history.index;	// revert point
 	
-	var isEditing = Math.abs(relativeTime-closestItem.time) < 0.00001;
+	var closest = animation.getClosest(true);
 	
-	if(animation instanceof animationGroup) {
+	if(closest.progress > 1 || closest.progress < 0) {		// needs stretching
+		var closestFrame = animation.stretchTo();
+		if(!closestFrame) { return; }	// can't for some reason
+		
+		anigenManager.classes.windowAnimation.animation = animation.commit();
+		anigenManager.classes.windowAnimation.refresh();
+		animation = anigenManager.classes.windowAnimation.animation;
+		
+		closest.progress = closest.progress < 0 ? 0 : 1;
+		
+		closest = animation.getClosest(true);
+	}
+	
+	var closestExclusive = animation.getClosest();
+	
+	var isEdit = Math.abs(closest.progress-closest.closest.frame.time) < 0.00001;
+	
+	var cancelAction = 'svg.history.toIndex('+currentHistoryIndex+');';	// rolls back history on cancel
+	
+	this.noRemoteClick = true;
+	
+	// this prevents remote ok action (and creation of new keyframe) when no value was changed
+	var okAction = 'popup.noRemoteClick=null;svg.evaluateSetCurrentValue();';
+	
+	if(animation instanceof animatedViewbox) {
+		this.add(build.icon('zoom_out_map', 'md-24 turn-45'));
+		this.add(build.input('number', closest.previous.frame.value.x, { 'style': 'width:5em', 'step': 1, 'id': 'anigenAddValueX', 'title': 'Axis X', 'onchange': okAction }));
+		this.add(build.input('number', closest.previous.frame.value.y, { 'style': 'width:5em','step': 1, 'id': 'anigenAddValueY', 'title': 'Axis Y', 'onchange': okAction }));
+		
+		this.add(build.icon('zoom_out_map', 'md-24'));
+		this.add(build.input('number', closest.previous.frame.value.width, { 'style': 'width:5em','step': 1, 'min': 0, 'id': 'anigenAddValueWidth', 'title': 'Width', 'onchange': okAction }));
+		this.add(build.input('number', closest.previous.frame.value.height, { 'style': 'width:5em','step': 1, 'min': 0, 'id': 'anigenAddValueHeight', 'title': 'Height', 'onchange': okAction }));
+		
+	} else if(animation instanceof animationGroup) {
 		var chil = svg.animationStates[animation.groupName];
 		var opt = [];
+		
 		for(var i = 0; i < chil.length; i++) {
 			opt.push({'value': String(i), 'text': String(chil[i].name)});
+			if(closest.previous.frame.value == i) { opt[opt.length-1].selected = 'selected'; }
 		}
-		var stateSelect = build.select(opt);
 		
+		var stateSelect = build.select(opt);
+			stateSelect.setAttribute('onchange', okAction);
+			stateSelect.setAttribute('id', 'anigenAddValue');
+		
+		var intensity;
+		if(!closestExclusive.previous.frame) {
+			intensity = build.slider(isEdit ? closest.previous.frame.intensity : 1, { 'min': 0, 'max': 1, 'step': 0.01, 'disabled': 'disabled'}, true, true);
+		} else {
+			intensity = build.slider(isEdit ? closest.previous.frame.intensity : 1, { 'min': 0, 'max': 1, 'step': 0.01, 'onchange': okAction, 'title': 'Intensity'}, true, true);
+		}
+		intensity.setAttribute('id', 'anigenIntensity');
+		intensity.style.display = 'inline-block';
+		
+		this.add(build.icon('fingerprint', 'md-24'));
 		this.add(stateSelect);
 		
-		stateSelect.setSelected(closestItem.value);
+		this.add(build.icon('star_half', 'md-24'));
+		this.add(intensity);
+		
+		
+	} else if(animation instanceof SVGAnimateMotionElement) {
+		this.add(build.icon('swap_calls', 'md-24'));
+		this.add(build.input('number', closest.previous.frame.value*100, { 'id': 'anigenAddValue', 'min': 0, 'max': 100, 'step': 0.1, 'title': 'Distance as percentage', 'onchange': okAction }));
 	} else {
 		if(animation instanceof SVGAnimateTransformElement) {
 			switch(animation.getAttribute('type')) {
 				case 'rotate':
-					this.add(build.input('number', closestItem.value.angle));
+					this.add(build.icon('refresh', 'md-24'));
+					this.add(build.input('number', closest.previous.frame.value.angle, { 'id': 'anigenAddValue', 'title': 'Angle', 'onchange': okAction }));
 				case 'translate':
+					this.add(build.icon('zoom_out_map', 'md-24 turn-45'));
+					this.add(build.input('number', closest.previous.frame.value.x, { 'id': 'anigenAddValueX', 'title': 'Axis X', 'onchange': okAction }));
+					this.add(build.input('number', closest.previous.frame.value.y, { 'id': 'anigenAddValueY', 'title': 'Axis Y', 'onchange': okAction }));
+					break;
 				case 'scale':
-					this.add(build.input('number', closestItem.value.x));
-					this.add(build.input('number', closestItem.value.y));
+					this.add(build.icon('zoom_out_map', 'md-24'));
+					this.add(build.input('number', closest.previous.frame.value.x*100, { 'id': 'anigenAddValueX', 'title': 'Scale X', 'onchange': okAction }));
+					this.add(build.input('number', closest.previous.frame.value.y*100, { 'id': 'anigenAddValueY', 'title': 'Scale Y', 'onchange': okAction }));
 					break;
 				case 'skewX':
+					this.add(build.icon('swap_horiz', 'md-24'));
+					this.add(build.input('number', closest.previous.frame.value.angle, { 'id': 'anigenAddValue', 'title': 'Angle', 'onchange': okAction }));
+					break;
 				case 'skewY':
-					this.add(build.input('number', closestItem.value.angle));
+					this.add(build.icon('swap_vert', 'md-24'));
+					this.add(build.input('number', closest.previous.frame.value.angle, { 'id': 'anigenAddValue', 'title': 'Angle', 'onchange': okAction }));
 					break;
 			}
 		} else {
@@ -434,29 +797,38 @@ popup.prototype.macroAddValue = function(target) {
 					if(lastType != null && lastType != attrValues[i].substring(1, attrValues[i].length-1)) { return; }
 					lastType = attrValues[i].substring(1, attrValues[i].length-1);
 				} else {
-					opt.push({'value': attrValues[i], 'selected': closestItem.value == attrValues[i] ? 'selected' : null});
+					opt.push({'value': attrValues[i], 'selected': closest.previous.frame.value == attrValues[i] ? 'selected' : null});
 				}
 			}
 			
 			if(count == 0) {
-				this.add(build.select(opt));
+				var sel = build.select(opt);
+					sel.setAttribute('id', 'anigenAddValue');
+				if(isEdit) {
+					sel.setAttribute('onchange', okAction);
+				}
+				this.add(sel);
 			} else {
 				if(count == attrValues.length) {
 					switch(lastType) {
 						case "string":
 						case "iri":
-							this.add(build.input('text', closestItem.value, { 'title': 'Type: '+lastType }));
+							this.add(build.icon('text_fields', 'md-24'));
+							this.add(build.input('text', closest.previous.frame.value, { 'title': 'Type: '+lastType, 'id': 'anigenAddValue', 'onchange': okAction }));
 							break;
 						case "number":
 						case "length":
 						case "angle":
-							this.add(build.input('number', closestItem.value, { 'title': 'Type: '+lastType }));
+							this.add(build.icon('settings_ethernet', 'md-24'));
+							this.add(build.input('number', closest.previous.frame.value, { 'title': 'Type: '+lastType, 'id': 'anigenAddValue', 'onchange': okAction }));
 							break;
 						case "fraction":
-							this.add(build.input('number', closestItem.value, { 'title': 'Type: '+lastType, 'min': 0, 'max': 1, 'step': 0.01 }));
+							this.add(build.icon('timelapse', 'md-24'));
+							this.add(build.input('number', closest.previous.frame.value*100, { 'title': 'Type: '+lastType, 'id': 'anigenAddValue', 'min': 0, 'max': 100, 'step': 0.1, 'class': 'fraction', 'onchange': okAction }));
 							break;
 						case "color":
-							this.add(build.input('color', new color(closestItem.value), { 'title': 'Type: '+lastType }));
+							this.add(build.icon('format_paint', 'md-24'));
+							this.add(build.input('color', new color(closest.previous.frame.value), { 'title': 'Type: '+lastType, 'id': 'anigenAddValue', 'onchange': okAction }));
 							break;
 					}
 				} else {
@@ -473,29 +845,44 @@ popup.prototype.macroAddValue = function(target) {
 			optCustom.setAttribute('value', -1);
 			optCustom.appendChild(document.createTextNode('custom'));
 		splineSelect.appendChild(optCustom);
-		splineSelect.setAttribute('onchange', "if(this.value == '-1') { this.addClass('small');this.nextElementSibling.removeClass('hidden'); } else { this.removeClass('small');this.nextElementSibling.addClass('hidden'); }");
+		
+		var splineChangeAction = '';
+			splineChangeAction += 'if(this.value == "-1") {';
+				splineChangeAction += 'this.addClass("small");';
+				splineChangeAction += 'this.nextElementSibling.removeClass("hidden");';
+			splineChangeAction += '} else {';
+				splineChangeAction += 'this.removeClass("small");';
+				splineChangeAction += 'this.nextElementSibling.addClass("hidden");';
+			splineChangeAction += '}';
+		
+		splineChangeAction += okAction;
+		
+		splineSelect.setAttribute('onchange', splineChangeAction);
+		splineSelect.setAttribute('id', 'anigenAddSpline');
+		
+		if(!closestExclusive.previous.frame) {
+			splineSelect.setAttribute('disabled', 'disabled');
+		}
 		
 		var closestSpline;
-		if(closestFrame != null) {
-			try {
-				closestSpline = closestItem.spline ? closestItem.spline : animation.keyframes.getItem(closestFrame+1).spline;
-			} catch(err) {
-				// only one keyframe - no spline
-				closestSpline = new spline();
-			}
-			
+		if(closest.closest.frame != null) {
+			closestSpline = closest.closest.frame.spline || (animation.keyframes.getItem(1) ? animation.keyframes.getItem(1).spline : null) || new spline();
 			closestSpline = closestSpline.type;
 		} else {
 			closestSpline = 0;
 		}
 		splineSelect.setSelected(closestSpline);
 		
-		this.add(splineSelect);
+		this.add(build.icon('timer', 'md-24'));
 		
-		var ins1 = build.input('number', '0', { 'min': 0, 'max': 1, 'step': 0.05, 'pattern': '[0-9]*' });
-		var ins2 = build.input('number', '0', { 'min': 0, 'max': 1, 'step': 0.05, 'pattern': '[0-9]*' });
-		var ins3 = build.input('number', '1', { 'min': 0, 'max': 1, 'step': 0.05, 'pattern': '[0-9]*' });
-		var ins4 = build.input('number', '1', { 'min': 0, 'max': 1, 'step': 0.05, 'pattern': '[0-9]*' });
+		this.add(splineSelect);
+	
+		var ins1 = build.input('number', '0', { 'min': 0, 'max': 1, 'step': 0.05, 'pattern': '[0-9]*', 'onchange': okAction });
+		var ins2 = build.input('number', '0', { 'min': 0, 'max': 1, 'step': 0.05, 'pattern': '[0-9]*', 'onchange': okAction });
+		var ins3 = build.input('number', '1', { 'min': 0, 'max': 1, 'step': 0.05, 'pattern': '[0-9]*', 'onchange': okAction });
+		var ins4 = build.input('number', '1', { 'min': 0, 'max': 1, 'step': 0.05, 'pattern': '[0-9]*', 'onchange': okAction });
+	
+		
 		var contSplineInput = document.createElement('span');
 			contSplineInput.setAttribute('class', 'splineInput hidden');
 			contSplineInput.appendChild(ins1);
@@ -505,10 +892,11 @@ popup.prototype.macroAddValue = function(target) {
 		this.add(contSplineInput);
 	}
 	
-	this.addButtonOk('svg.evaluateAddValue('+(isEditing)+', '+closestFrame+');');
-	this.addButtonCancel();
+	this.addButtonOk(okAction);
+	this.addButtonCancel(cancelAction);
 	
 	this.show(target);
+	this.closeOnSeek = true;
 }
 
 popup.prototype.macroAddState = function(target) {
@@ -519,45 +907,40 @@ popup.prototype.macroAddState = function(target) {
 	
 	animation.getKeyframes();
 	
-	var relativeTime = animation.getCurrentProgress();
-	var prevFrame = animation.getPreviousFrame(true);
-	var nextFrame = animation.getNextFrame(true);
+	var closest = animation.getClosest(true);
 	
-	if(relativeTime == null || prevFrame == null || nextFrame == null ||
-		!animation.getAttribute('anigen:group') || !svg.animationStates) { return; }
-	
-	var prevItem = animation.keyframes.getItem(prevFrame);
-	var nextItem = animation.keyframes.getItem(nextFrame);
-	
+	if(!animation.getAttribute('anigen:group') || !svg.animationStates) { return; }
 	var states = svg.animationStates[animation.getAttribute('anigen:group')];
-	
 	if(!states) { return; }
 	
-	var progression;
+	var inbetween;
+	var ratio;
 	
-	if(nextItem.time == prevItem.time) {
-		progression = 0;
-	} else {
-		progression = (relativeTime-prevItem.time)/(nextItem.time-prevItem.time);
-		if(nextItem.spline) {
-			progression = nextItem.spline.getValue(progression);
+	if(!closest.running) {
+		if(!closest.previous.frame && !closest.next.frame) { return; }
+		if(!closest.previous.frame) {		// hasn't started
+			ratio = 1;
+			inbetween = new animationState(states[closest.previous.frame.value].element.cloneNode(true), states[closest.previous.frame.value].name+'-clone');
+		} else {	// ended already
+			ratio = 0;
+			inbetween = new animationState(states[closest.next.frame.value].element.cloneNode(true), states[closest.next.frame.value].name+'-clone');
 		}
+	} else {
+		ratio = (closest.progress-closest.previous.frame.time)/(closest.next.frame.time-closest.previous.frame.time);
+		var inbetween = states[closest.previous.frame.value].inbetween(states[closest.next.frame.value], ratio);
 	}
-		
-	var inbetween = states[prevItem.value].inbetween(states[nextItem.value], progression);
 	
 	var preview = new imageSVG(inbetween.element, { width: 250, height: 250 });
 	
 	this.add(preview.container);
 	
-	this.add(build.input('text', states[prevItem.value].name+'-'+(Math.abs(progression*100)/100)+'-'+states[nextItem.value].name));
+	this.add(build.input('text', inbetween.name));
 	
-	this.addButtonOk('svg.evaluateGroupInbetween(null, "'+animation.getAttribute('anigen:group')+'", this.previousElementSibling.value, '+prevItem.value+', '+nextItem.value+', '+progression+');');
+	this.addButtonOk('svg.evaluateGroupInbetween(null, "'+animation.getAttribute('anigen:group')+'", this.previousElementSibling.value, '+closest.previous.frame.value+', '+closest.next.frame.value+', '+ratio+');');
 	this.addButtonCancel();
 	
 	this.show(target);
 }
-
 
 popup.prototype.macroChildren = function(target, object) {
 	target = target || anigenManager.classes.context.buttons.children.container;
@@ -601,7 +984,6 @@ popup.prototype.macroChildren = function(target, object) {
 	this.show(target);
 }
 
-
 popup.prototype.macroAnimateMenu = function(target) {
 	target = target || anigenManager.classes.context.buttons.animate.container;
 	
@@ -624,7 +1006,8 @@ popup.prototype.macroAnimateMenu = function(target) {
 	
 	if(svg.selected == svg.svgElement) {
 		if(svg.camera) {
-			rAttributes.push({ 'class': 'disabled' });
+			//rAttributes.push({ 'class': 'disabled' });
+			rAttributes.push({ 'onclick': 'popup.hide();svg.select(svg.camera.element);' });
 		} else {
 			rAttributes.push({ 'onclick': 'popup.hide();svg.createAnimationViewbox();' });
 		}
@@ -643,6 +1026,71 @@ popup.prototype.macroAnimateMenu = function(target) {
 	this.show(target);
 }
 
+popup.prototype.macroSpline = function(target, index) {
+	this.reset();
+	
+	var animation = anigenManager.classes.windowAnimation.animation;
+	if(!animation) { return; }
+	
+	var spline = animation.getKeyframes().getItem(index).spline;
+	if(!spline) { return; }
+	
+	var edAction = '';
+		edAction += 'this.container.nextElementSibling.value = this.value.x1;';
+		edAction += 'this.container.nextElementSibling.nextElementSibling.value = this.value.y1;';
+		edAction += 'this.container.nextElementSibling.nextElementSibling.nextElementSibling.value = this.value.x2;';
+		edAction += 'this.container.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.value = this.value.y2;';
+		
+		edAction += 'anigenManager.classes.windowAnimation.batchSet("spline", '+index+', this.value.toString());';
+	
+	this.add(new splineEditor(200, spline, { 
+		'move': edAction
+	})).style.margin = '0 auto';
+	
+	this.add(build.input('number', spline.x1, { 'min': 0, 'max': 1, 'step': 0.01,
+		'onchange': 'var ed = this.previousElementSibling.shepherd;ed.value.x1 = this.value;ed.refresh();ed.evaluate();'
+	}));
+	this.add(build.input('number', spline.y1, { 'min': 0, 'max': 1, 'step': 0.01,
+		'onchange': 'var ed = this.previousElementSibling.previousElementSibling.shepherd;ed.value.y1 = this.value;ed.refresh();ed.evaluate();'
+	}));
+	this.add(build.input('number', spline.x2, { 'min': 0, 'max': 1, 'step': 0.01,
+		'onchange': 'var ed = this.previousElementSibling.previousElementSibling.previousElementSibling.shepherd;ed.value.x2 = this.value;ed.refresh();ed.evaluate();'
+	}));
+	this.add(build.input('number', spline.y2, { 'min': 0, 'max': 1, 'step': 0.01,
+		'onchange': 'var ed = this.previousElementSibling.previousElementSibling.previousElementSibling.previousElementSibling.shepherd;ed.value.y2 = this.value;ed.refresh();ed.evaluate();'
+	}));
+	
+	this.show(target);
+}
+
+popup.prototype.macroReplace = function(target) {
+	this.reset();
+	
+	this.add(build.input('text', 'Find', {
+		'onfocus': 'if(this.style.opacity == "0.5") { this.value = ""; this.style.opacity = "1"; }',
+		'onblur': 'if(this.value == "") { this.value = "Find"; this.style.opacity = "0.5"; }',
+		'title': 'Attribute value to find',
+		'style': 'opacity:0.5;'
+	}));
+	this.add(build.input('text', 'Replace by', {
+		'onfocus': 'if(this.style.opacity == "0.5") { this.value = ""; this.style.opacity = "1"; }',
+		'onblur': 'if(this.value == "") { this.value = "Replace by"; this.style.opacity = "0.5"; }',
+		'title': 'Value to replace with',
+		'style': 'opacity:0.5;'
+	}));
+	this.add(build.select([
+		{ 'text': 'In selection', 'value': 'selection' },
+		{ 'text': 'Entire document', 'value': 'document' },
+	]));
+	
+	var action = '';
+		action += 'if(this.previousElementSibling.previousElementSibling.style.opacity != "0.5" && this.previousElementSibling.previousElementSibling.previousElementSibling.style.opacity != "0.5") { svg.replace(this.previousElementSibling.previousElementSibling.previousElementSibling.value, this.previousElementSibling.previousElementSibling.value, this.previousElementSibling.value == "selection"); }';
+	
+	this.addButtonOk(action);
+	this.addButtonCancel();
+	
+	this.show(target);
+}
 
 
 popup.prototype.macroMenuFile = function(target) {
@@ -651,18 +1099,20 @@ popup.prototype.macroMenuFile = function(target) {
 	var tArray = [];
 	var rAttributes = [];
 	
-	tArray.push([ build.icon("folder_open"), "Open..." ]);
-	tArray.push([ build.icon("save"), "Save" ]);
-	tArray.push([ build.icon("file_download"), "Save and download" ]);
-	tArray.push([ build.icon("archive"), "Export..." ]);
-	tArray.push([ "", "" ]);
-	tArray.push([ build.icon("description"), "Document properties..." ]);
-	tArray.push([ build.icon("settings"), "Settings..." ]);
+	tArray.push([ build.icon("folder_open"), "Open...", "Ctrl+O" ]);
+	tArray.push([ build.icon("save"), "Save", "Ctrl+S" ]);
+	tArray.push([ build.icon("file_download"), "Save and download", "Ctrl+Shift+S" ]);
+	tArray.push([ build.icon("archive"), "Export...", "Ctrl+Shift+E" ]);
+	tArray.push([ build.icon("launch"), "Show preview", "Ctrl+Shift+P" ]);
+	tArray.push([ "", "", "" ]);
+	tArray.push([ build.icon("description"), "Document properties...", "" ]);
+	tArray.push([ build.icon("settings"), "Settings...", "" ]);
 	
 	rAttributes.push({ 'onclick': 'popup.hide();overlay.macroOpen();' });
 	rAttributes.push({ 'onclick': 'popup.hide();svg.save(true);' });
 	rAttributes.push({ 'onclick': 'popup.hide();svg.save();' });
 	rAttributes.push({ 'onclick': 'popup.hide();overlay.macroExport();' });
+	rAttributes.push({ 'onclick': 'popup.hide();svg.previewWindow.paused=false;svg.previewWindow.seed();' });
 	rAttributes.push({ 'class': 'hr' });
 	rAttributes.push({ 'onclick': 'popup.hide();overlay.macroDocument();' });
 	rAttributes.push({ 'onclick': 'popup.hide();overlay.macroSettings();' });
@@ -678,18 +1128,20 @@ popup.prototype.macroMenuEdit = function(target) {
 	var tArray = [];
 	var rAttributes = [];
 	
-	tArray.push([ build.icon("undo"), "Undo" ]);
-	tArray.push([ build.icon("redo"), "Redo" ]);
-	tArray.push([ "", "" ]);
-	tArray.push([ build.icon("content_cut"), "Cut" ]);
-	tArray.push([ build.icon("content_paste"), "Paste" ]);
-	tArray.push([ build.icon("content_copy"), "Copy" ]);
-	tArray.push([ "", "" ]);
-	tArray.push([ build.icon("storage"), "Duplicate" ]);
+	tArray.push([ build.icon("undo"), "Undo", "Ctrl+Z" ]);
+	tArray.push([ build.icon("redo"), "Redo", "Ctrl+Y" ]);
+	tArray.push([ "", "", "" ]);
+	tArray.push([ build.icon("search"), "Find and replace", "Ctrl+F" ]);
+	tArray.push([ "", "", "" ]);
+	tArray.push([ build.icon("content_cut"), "Cut", "Ctrl+X" ]);
+	tArray.push([ build.icon("content_paste"), "Paste", "Ctrl+V" ]);
+	tArray.push([ build.icon("content_copy"), "Copy", "Ctrl+C" ]);
+	tArray.push([ "", "", "" ]);
+	tArray.push([ build.icon("storage"), "Duplicate", "Ctrl+D" ]);
 	if(svg.selected != svg.svgElement) {
-		tArray.push([ build.icon("link"), "Create link" ]);
+		tArray.push([ build.icon("link"), "Create link", "Ctrl+L/Alt+D" ]);
 	}
-	tArray.push([ build.icon("delete"), "Delete" ]);
+	tArray.push([ build.icon("delete"), "Delete", "Delete" ]);
 	
 	if(svg.history.index >= 0) {
 		rAttributes.push({ 'onclick': 'popup.hide();svg.history.undo();' });
@@ -699,33 +1151,40 @@ popup.prototype.macroMenuEdit = function(target) {
 	} else { rAttributes.push({ 'class': 'disabled' }); }
 	
 	rAttributes.push({ 'class': 'hr' });
-	rAttributes.push({ 'onclick': 'popup.hide();svg.cut(svg.selected);' });
+	rAttributes.push({ 'onclick': 'popup.hide();popup.macroReplace();' });
 	
-	if(svg.selected.getAttribute('inkscape:groupmode') == 'layer' || svg.selected == svg.svgElement) {
-		rAttributes.push({ 'onclick': 'event.stopPropagation();popup.hide();svg.paste(null, svg.selected);'});
-	} else {
-		rAttributes.push({ 'onclick': 'event.stopPropagation();popup.hide();svg.paste(null, svg.selected.parentNode, svg.selected);'});
-	}
-	
-	rAttributes.push({ 'onclick': 'popup.hide();svg.copy(svg.selected);' });
 	rAttributes.push({ 'class': 'hr' });
-	rAttributes.push({ 'onclick': 'popup.hide();svg.duplicate(svg.selected);' });
-	if(svg.selected != svg.svgElement) {
-		rAttributes.push({ 'onclick': 'popup.hide();svg.createLink(svg.selected);' });
-	}
-	rAttributes.push({ 'onclick': 'popup.hide();svg.delete(svg.selected);' });
-
-	
 	if(svg.selected == svg.svgElement) {
-		rAttributes[3] = { 'class': 'disabled' };
-		rAttributes[5] = { 'class': 'disabled' };
-		rAttributes[7] = { 'class': 'disabled' };
-		rAttributes[8] = { 'class': 'disabled' };
+		rAttributes.push({ 'class': 'disabled' });
+	} else {
+		rAttributes.push({ 'onclick': 'popup.hide();svg.cut(svg.selected);' });
 	}
 	
 	if(!svg.elementTemp) {
-		rAttributes[4] = { 'class': 'disabled' };
+		rAttributes.push({ 'class': 'disabled' });
+	} else {
+		if(svg.selected.getAttribute('inkscape:groupmode') == 'layer' || svg.selected == svg.svgElement) {
+			rAttributes.push({ 'onclick': 'event.stopPropagation();popup.hide();svg.paste(null, svg.selected);'});
+		} else {
+			rAttributes.push({ 'onclick': 'event.stopPropagation();popup.hide();svg.paste(null, svg.selected.parentNode, svg.selected);'});
+		}
 	}
+	
+	if(svg.selected == svg.svgElement) {
+		rAttributes.push({ 'class': 'disabled' });
+	} else {
+		rAttributes.push({ 'onclick': 'popup.hide();svg.copy(svg.selected);' });
+	}
+	rAttributes.push({ 'class': 'hr' });
+	if(svg.selected == svg.svgElement) {
+		rAttributes.push({ 'class': 'disabled' });
+		rAttributes.push({ 'class': 'disabled' });
+	} else {
+		rAttributes.push({ 'onclick': 'popup.hide();svg.duplicate(svg.selected);' });
+		rAttributes.push({ 'onclick': 'popup.hide();svg.createLink(svg.selected);' });
+	}
+	
+	rAttributes.push({ 'onclick': 'popup.hide();svg.delete(svg.selected);' });
 	
 	this.add(build.table(tArray, null, rAttributes)).setAttribute('class', 'popup-menu');
 	
@@ -738,15 +1197,19 @@ popup.prototype.macroMenuObject = function(target) {
 	var tArray = [];
 	var rAttributes = [];
 	
-	tArray.push([ build.icon("crop_din"), "Group" ]);
-	tArray.push([ build.icon("crop_free"), "Ungroup" ]);
-	tArray.push([ "", "" ]);
-	tArray.push([ build.icon("fingerprint"), "Object to animation state..." ]);
-	tArray.push([ build.icon("power_settings_new", "turn-90"), "Create animated group..." ]);
-	tArray.push([ build.icon("settings_applications"), "Manage animation states..." ]);
+	tArray.push([ build.icon("crop_din"), "Group", "Ctrl+G" ]);
+	tArray.push([ build.icon("crop_free"), "Ungroup", "Ctrl+U" ]);
+	tArray.push([ "", "", "" ]);
+	tArray.push([ build.icon("fingerprint"), "Object to animation state...", "" ]);
+	tArray.push([ build.icon("power_settings_new", "turn-90"), "Create animated group...", "" ]);
+	tArray.push([ build.icon("settings_applications"), "Manage animation states...", "" ]);
 	
 	rAttributes.push({ 'onclick': 'popup.hide();svg.group();' });
-	rAttributes.push({ 'onclick': 'popup.hide();svg.ungroup();' });
+	if(svg.selected instanceof SVGGElement) {
+		rAttributes.push({ 'onclick': 'popup.hide();svg.ungroup();' });
+	} else {
+		rAttributes.push({ 'class': 'disabled' });
+	}
 	rAttributes.push({ 'class': 'hr' });
 	rAttributes.push({ 'onclick': 'popup.hide();anigenManager.classes.menu.refresh();popup.macroToAnimationState(document.getElementById("anigenMenu"), svg.selected);' });
 	rAttributes.push({ 'onclick': 'popup.hide();anigenManager.classes.menu.refresh();popup.macroNewAnimationGroup(document.getElementById("anigenMenu"));' });
@@ -776,26 +1239,36 @@ popup.prototype.macroMenuAnimation = function(target) {
 	var rAttributes = [];
 	
 	if(svg.selected == svg.svgElement) {
-		tArray.push([ build.icon("videocam"), "Camera" ]);
+		tArray.push([ build.icon("videocam"), "Camera", "" ]);
 	} else {
-		tArray.push([ build.icon("trending_up"), "Translate" ]);
-		tArray.push([ build.icon("swap_calls"), "Move through path" ]);
-		tArray.push([ build.icon("refresh"), "Rotate" ]);
-		tArray.push([ build.icon("zoom_out_map"), "Scale" ]);
-		tArray.push([ build.icon("swap_horiz"), "Skew horizontally" ]);
-		tArray.push([ build.icon("swap_vert"), "Skew vertically" ]);
-		tArray.push([ build.icon("text_format"), "Animate attribute..." ]);
+		tArray.push([ build.icon("trending_up"), "Translate", "" ]);
+		tArray.push([ build.icon("swap_calls"), "Move through path", "" ]);
+		tArray.push([ build.icon("refresh"), "Rotate", "" ]);
+		tArray.push([ build.icon("zoom_out_map"), "Scale", "" ]);
+		tArray.push([ build.icon("swap_horiz"), "Skew horizontally", "" ]);
+		tArray.push([ build.icon("swap_vert"), "Skew vertically", "" ]);
+		tArray.push([ build.icon("text_format"), "Animate attribute...", "" ]);
 	}
 	
-	tArray.push([ "", "" ]);
-	
-	tArray.push([ build.icon("loop"), "Loop animation..." ]);
-	tArray.push([ build.icon("restore"), "Restart animations" ]);
+	tArray.push([ "", "", "" ]);
 	
 	if(svg.svgElement.animationsPaused()) {
-		tArray.push([ build.icon("play_arrow"), "Unpause animations" ]);
+		tArray.push([ build.icon("fast_rewind"), "Seek back (100ms)", "-" ]);
+		tArray.push([ build.icon("fast_forward"), "Seek forward (100ms)", "+" ]);
 	} else {
-		tArray.push([ build.icon("pause"), "Pause animations" ]);
+		tArray.push([ build.icon("fast_rewind"), "Seek back (1s)", "-" ]);
+		tArray.push([ build.icon("fast_forward"), "Seek forward (1s)", "+" ]);
+	}
+	
+	tArray.push([ "", "", "" ]);
+	
+	tArray.push([ build.icon("loop"), "Set animation loop...", "" ]);
+	tArray.push([ build.icon("restore"), "Restart animations", "" ]);
+	
+	if(svg.svgElement.animationsPaused()) {
+		tArray.push([ build.icon("play_arrow"), "Unpause animations", "" ]);
+	} else {
+		tArray.push([ build.icon("pause"), "Pause animations", "" ]);
 	}
 	
 	
@@ -814,9 +1287,20 @@ popup.prototype.macroMenuAnimation = function(target) {
 		rAttributes.push({ 'onclick': 'popup.hide();svg.createAnimation(svg.selected, 6, null, { select: true }, null);' });
 		rAttributes.push({ 'onclick': 'popup.hide();anigenManager.classes.menu.refresh();popup.macroAnimateTypes(document.getElementById("anigenMenu"), svg.selected);' });
 	}
+	
 	rAttributes.push({ 'class': 'hr' });
-	rAttributes.push({ 'onclick': 'popup.hide();anigenManager.classes.menu.refresh();popup.input(document.getElementById("anigenMenu"), "number", anigenManager.classes.editor.clock.maxTime || 0, "value = parseFloat(value);if(value==null || isNaN(value) || value < 0){return;}anigenManager.classes.editor.clock.setMaxTime(value);", null);' });
-	rAttributes.push({ 'onclick': 'popup.hide();anigenManager.classes.menu.refresh();svg.gotoTime(0);' });
+	
+	if(svg.svgElement.animationsPaused()) {
+		rAttributes.push({ 'onclick': 'svg.seek(-0.1);' });
+		rAttributes.push({ 'onclick': 'svg.seek(0.1);' });
+	} else {
+		rAttributes.push({ 'onclick': 'svg.seek(-1);' });
+		rAttributes.push({ 'onclick': 'svg.seek(1);' });
+	}
+	
+	rAttributes.push({ 'class': 'hr' });
+	rAttributes.push({ 'onclick': 'popup.hide();anigenManager.classes.menu.refresh();popup.macroLoop();' });
+	rAttributes.push({ 'onclick': 'popup.hide();anigenManager.classes.menu.refresh();svg.gotoTime(anigenManager.classes.editor.clock.minTime || 0);' });
 	rAttributes.push({ 'onclick': 'popup.hide();anigenManager.classes.menu.refresh();svg.pauseToggle();' });
 	
 	this.add(build.table(tArray, null, rAttributes)).setAttribute('class', 'popup-menu');
@@ -831,10 +1315,12 @@ popup.prototype.macroMenuHelp = function(target) {
 	var rAttributes = [];
 	
 	tArray.push([ build.icon("import_contacts"), "Manual..." ]);
+	tArray.push([ build.icon("call_split", 'turn-90'), "Versions..." ]);
 	tArray.push([ "", "" ]);
 	tArray.push([ build.icon("info_outline"), "About..." ]);
 	
 	rAttributes.push({ 'onclick': 'popup.hide();window.open("manual.html", "_blank");' });
+	rAttributes.push({ 'onclick': 'popup.hide();window.open("../../versions.html", "_blank");' });
 	rAttributes.push({ 'class': 'hr' });
 	rAttributes.push({ 'onclick': 'popup.hide();overlay.macroAbout();' });
 	
@@ -842,6 +1328,7 @@ popup.prototype.macroMenuHelp = function(target) {
 	
 	this.show(target);
 }
+
 
 
 popup.prototype.macroLayerNew = function(targetId) {
@@ -917,26 +1404,118 @@ popup.prototype.macroToAnimationState = function(target, element) {
 	var options = [];
 	options.push({ 'text': 'New group', 'value': '', 'selected': true });
 	
-	for(var i in svg.animationStates) {
-		if(!svg.animationStates[i] || !svg.animationStates[i][0] || svg.animationStates[i][0].children.length == childCount) {
-			options.push({ 'text': i, 'value': i });
+	
+	var stateNameText;
+	var groupNameText;
+	
+	var labelOne, labelTwo;
+	labelOne = element.parentNode && !(element.parentNode instanceof SVGSVGElement) ? element.parentNode : null;
+	while(labelOne && labelOne.parentNode && !(labelOne.parentNode instanceof SVGSVGElement)) {
+		if(labelOne.getAttribute('inkscape:label')) { break; }
+		labelOne = labelOne.parentNode;
+	}
+	
+	labelTwo = labelOne && labelOne.parentNode && !(labelOne.parentNode instanceof SVGSVGElement) ? labelOne.parentNode : null;
+	while(labelTwo && labelTwo.parentNode && !(labelTwo.parentNode instanceof SVGSVGElement)) {
+		if(labelTwo.getAttribute('inkscape:label')) { break; }
+		labelTwo = labelTwo.parentNode;
+	}
+	
+	labelOne = labelOne && labelOne.getAttribute('inkscape:label') ? labelOne : null;
+	labelTwo = labelTwo && labelTwo.getAttribute('inkscape:label') ? labelTwo : null;
+	
+	if(element.getAttribute('inkscape:label')) {
+		stateNameText = element.getAttribute('inkscape:label');
+		groupNameText = labelOne ? labelOne.getAttribute('inkscape:label') : "New group";
+	} else {
+		if(element.parentNode.children.length == 1) {
+			stateNameText = labelOne ? labelOne.getAttribute('inkscape:label') : element.id;
+			groupNameText = labelTwo ? labelTwo.getAttribute('inkscape:label') : "New group";
+		} else {
+			stateNameText = element.id;
+			groupNameText = labelOne ? labelOne.getAttribute('inkscape:label') : "New group";
 		}
 	}
 	
-	this.add(build.input('text', element.id, { 'onfocus': 'if(this.value == "'+element.id+'") { this.value = null; }' } ));
+	var isSelected = false;
 	
-	var stateSelect = build.select(options, { 'onchange': 'this.nextSibling.style.display = this.value == "" ? null : "none";' } );
-	var groupName = build.input('text', 'New group', { 'onfocus': 'if(this.value == "New group") { this.value = null; }' } );
+	for(var i in svg.animationStates) {
+		if(!svg.animationStates[i] || !svg.animationStates[i][0] || svg.animationStates[i][0].children.length == childCount) {
+			options.push({ 'text': i, 'value': i });
+			if(i == groupNameText) {
+				options[options.length-1].selected = 'selected';
+				isSelected = true;
+			}
+		}
+	}
 	
-	if(options.length > 1) {
-		stateSelect.setSelected(1);
+	var isBatchable = true;
+	var baseCount = null;
+	// if(!element.getAttribute('inkscape:label')) { isBatchable = false; }
+	for(var i = 0; i < element.children.length; i++) {
+		if(baseCount == null) {
+			baseCount = element.children[i].getElementsByTagName('', true, true).length;
+		} else {
+			if(element.children[i].getElementsByTagName('', true, true).length != baseCount) {
+				isBatchable = false;
+				break;
+			}
+		}
+	}
+	
+	if(isBatchable) {
+		var batchAction = "";
+			batchAction += "if(this.value=='batch'){";
+			batchAction += "this.nextElementSibling.addClass('hidden');";
+			batchAction += "this.nextElementSibling.nextElementSibling.addClass('hidden');";
+			batchAction += "var inp=this.parentNode.children[this.parentNode.children.length-3];";
+			batchAction += "if(inp.value=='"+groupNameText+"'){inp.value='"+stateNameText+"';}";
+			batchAction += "}else{";
+			batchAction += "this.nextElementSibling.removeClass('hidden');";
+			batchAction += "this.nextElementSibling.nextElementSibling.removeClass('hidden');";
+			batchAction += "var inp=this.parentNode.children[this.parentNode.children.length-3];";
+			batchAction += "if(inp.value=='"+stateNameText+"'){inp.value='"+groupNameText+"';}";
+			batchAction += "}";
+		
+		this.add(build.select([
+			{ 'text': 'Single', 'value': 'single', 'title': 'Make this element an animation state.' },
+			{ 'text': 'Batch', 'value': 'batch', 'title': 'Make every child element an animation state. (EXPERIMENTAL)' }
+		],
+			{	'id': 'anigenBatchSelect',
+				'onchange': batchAction }
+		));
+	}
+	
+	this.add(build.icon('fingerprint'));
+	
+	this.add(build.input('text', stateNameText, { 'title': 'State name', 'id': 'anigenStateName', 'onfocus': 'if(this.value == "'+stateNameText+'") { this.value = null; }' } ));
+	
+	this.add(build.icon('folder_open'));
+	
+	var stateSelect = build.select(options, { 'title': 'Group', 'id': 'anigenGroupSelect', 'onchange': 'this.nextSibling.style.display = this.value == "" ? null : "none";' } );
+	var groupName = build.input('text', groupNameText, { 'title': 'New group name', 'id': 'anigenGroupName', 'onfocus': 'if(this.value == "'+groupNameText+'") { this.value = null; }' } );
+	if(isSelected) { groupName.style.display = 'none'; }
+	
+	if(options.length > 1 && !isSelected) {
+		stateSelect.setSelected(options.length-1);
 		groupName.style.display = 'none';
 	}
 	
 	this.add(stateSelect);
 	this.add(groupName);
 	
-	this.addButtonOk('svg.newAnimState("'+element.id+'", this.previousElementSibling.previousElementSibling.previousElementSibling.value, this.previousElementSibling.previousElementSibling.value != "" ? this.previousElementSibling.previousElementSibling.value : this.previousElementSibling.value);');
+	var okAction = '';
+		okAction += 'var name=document.getElementById("anigenStateName").value;';
+		okAction += 'var group=document.getElementById("anigenGroupSelect");';
+		okAction += 'if(group.value == "") {';
+			okAction += 'group=document.getElementById("anigenGroupName").value;';
+			okAction += '}else{';
+			okAction += 'group=group.value;}';
+		okAction += 'var batch=document.getElementById("anigenBatchSelect");';
+		okAction += 'if(batch&&batch.value=="batch"){batch=true;}else{batch=false;}';
+		okAction += 'svg.newAnimState("'+element.id+'",name,group,batch);';
+	
+	this.addButtonOk(okAction);
 	this.addButtonCancel();
 	
 	this.show(target);
@@ -988,33 +1567,3 @@ popup.prototype.macroSlider = function(target, value, attributes, actionYes, act
 	this.show(target);
 }
 
-popup.prototype.rotate = function(target) {
-	this.reset();
-	
-	var element = document.getElementById(target.id);
-	
-	var rotation = element.getTransformBase().decompose().rotation || 0;
-	
-	this.macroSlider(target, rotation, { 'min': '-360', 'max': '360', 'step': '1',
-		'onchange': 'var val=parseFloat(this.value);var el=document.getElementById("'+target.id+'");svg.rotateTo(el, val);',
-		'onmousemove': 'var val=parseFloat(this.value);var el=document.getElementById("'+target.id+'");svg.rotateTo(el, val);' },
-		'svg.select();', 'var el=document.getElementById("'+target.id+'");svg.rotateTo(el, '+rotation+');', true);
-	
-	this.show(target);
-}
-
-popup.prototype.scale = function(target) {
-	this.reset();
-	
-	var element = document.getElementById(target.id);
-	
-	var scaleX = element.getTransformBase().decompose().scaleX || 1;
-	var scaleY = element.getTransformBase().decompose().scaleY || 1;
-	
-	this.macroSlider(target, scaleX*100, { 'min': 1, 'max': 200, 'step': '1',
-		'onchange': 'var val=parseFloat(this.value);var el=document.getElementById("'+target.id+'");svg.scaleTo(el, val/100);',
-		'onmousemove': 'var val=parseFloat(this.value);var el=document.getElementById("'+target.id+'");svg.scaleTo(el, val/100);' },
-		null, 'var el=document.getElementById("'+target.id+'");svg.scaleTo(el, '+scaleX+', '+scaleY+');', true);
-	
-	this.show(target);
-}

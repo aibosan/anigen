@@ -4,8 +4,9 @@
  *  @copyright	GNU GPLv3
  *	@brief		HTML inline clock element
  */
-function clock() {
+function clock(timeline) {
 	this.maxTime = null;
+	this.minTime = null;
 	
 	this.h = 0;
 	this.m = 0;
@@ -13,6 +14,8 @@ function clock() {
 	this.ms = 0;
 	
     this.time = 0;
+	
+	this.timeline = timeline;
 
     this.container = document.createElement('span');
 	this.container.setAttribute('onclick', 'popup.macroClock(anigenManager.classes.editor.clock.container);event.stopPropagation();');
@@ -54,26 +57,43 @@ clock.prototype.display = function() {
 	}
 }
 
-clock.prototype.setMaxTime = function(value) {
+clock.prototype.setMax = function(value, force) {
+	if(!force && value < this.minTime) { return; }
 	if(value <= 0) {
 		this.maxTime = null;
 		svg.namedView.removeAttribute('anigen:loop', this.maxTime);
+		if(this.timeline) { this.timeline.setMax(this.maxTime); }
 		return;
 	}
 	this.maxTime = value;
 	svg.namedView.setAttribute('anigen:loop', this.maxTime);
-	
+	if(this.timeline) { this.timeline.setMax(this.maxTime); }
+}
+
+clock.prototype.setMin = function(value, force) {
+	if(!force && value > this.maxTime) { return; }
+	if(value <= 0) {
+		this.minTime = null;
+		svg.namedView.removeAttribute('anigen:loopbegin', this.minTime);
+		if(this.timeline) { this.timeline.setMin(this.minTime); }
+		return;
+	}
+	this.minTime = value;
+	svg.namedView.setAttribute('anigen:loopbegin', this.minTime);
+	if(this.timeline) { this.timeline.setMin(this.minTime); }
 }
 
 clock.prototype.update = function() {
-	
-	if(this.maxTime && svg.svgElement.getCurrentTime() > this.maxTime) {
-		svg.gotoTime(0);
+	if(this.minTime && svg.svgElement.getCurrentTime() < this.minTime) {
+		svg.gotoTime(this.minTime);
 	}
 	
-//	timeline.adjustRedline();
+	if(this.maxTime && svg.svgElement.getCurrentTime() > this.maxTime) {
+		svg.gotoTime(this.minTime || 0);
+	}
 	
 	this.time = Math.round(svg.svgElement.getCurrentTime()*1000)/1000;
 	
+	if(this.timeline) { this.timeline.refresh(); }
 	this.display();
 }

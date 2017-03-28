@@ -14,14 +14,14 @@ toolAnchor.prototype.mouseClick = function(event) {
 	var keys = { 'ctrlKey': event.ctrlKey == true, 'altKey': event.altKey == true, 'shiftKey': event.shiftKey == true };
 	
 	if(this.target) {
-		if(this.target.actions && this.target.actions.click) {
-			this.target.click(keys);
-		}
 		if(!event.shiftKey && !event.altKey && !event.ctrlKey) {
 			svg.ui.clearSelect();
 			svg.ui.addSelect(this.target);
 		} else if(event.shiftKey) {
 			svg.ui.toggleSelect(this.target);
+		}
+		if(this.target.actions && this.target.actions.click) {
+			this.target.click(keys);
 		}
 	}
 }
@@ -51,13 +51,18 @@ toolAnchor.prototype.mouseMove = function(event) {
 	}
 	
 	if(this.target.selectable) {
-		for(var i = 0; i < svg.ui.selected.length; i++) {
-			svg.ui.selected[i].moveBy(dAbsolute.x, dAbsolute.y, keys);
+		for(var i = 0; i < svg.ui.selectedIndexes.length; i++) {
+			var candidate = svg.ui.anchorContainer.children[svg.ui.selectedIndexes[i]];
+			if(!candidate) { break; }
+			if(!candidate.shepherd) { continue; }
+			candidate.shepherd.moveBy(dAbsolute.x, dAbsolute.y, keys);
 		}
 	}
 	
-	svg.ui.highlight.refresh();
-	svg.ui.selectionBox.refresh();
+	if(svg && svg.ui && svg.ui.highlight && svg.ui.selectionBox) {
+		svg.ui.highlight.refresh();
+		svg.ui.selectionBox.refresh();
+	}
 	
 	anigenManager.classes.windowAnimation.refreshKeyframes(true);
 	
@@ -65,29 +70,11 @@ toolAnchor.prototype.mouseMove = function(event) {
 }
 
 toolAnchor.prototype.mouseUp = function(event) {
-	var threshold = 1;
-	var thresholdTime = 200;
-	
 	var keys = { 'ctrlKey': event.ctrlKey == true, 'altKey': event.altKey == true, 'shiftKey': event.shiftKey == true };
 	
-	/*
-	console.log(this.downEvent.target, event.target, this.downEvent.target == event.target);
-	console.log(Math.abs(this.downEvent.clientX-event.clientX),
-		Math.abs(this.downEvent.clientY-event.clientY),
-		Math.abs(this.downEvent.timeStamp-event.timeStamp));
-	*/
-	
-	if(this.downEvent && this.downEvent.target == event.target && Math.abs(this.downEvent.timeStamp-event.timeStamp) < thresholdTime &&
-		Math.abs(this.downEvent.clientX-event.clientX) < threshold && Math.abs(this.downEvent.clientY-event.clientY) < threshold) {
-		this.mouseClick(event);
-		this.lastEvent = null;
-		this.downEvent = null;
-		return;
-	} else {
+	if(typeof this.target.mouseUp === 'function') {
 		this.target.mouseUp(keys);
 	}
-	
-	this.target = null;
 	this.lastEvent = null;
 	this.downEvent = null;
 }

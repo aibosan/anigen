@@ -27,6 +27,7 @@ function spline() {
 	} else if(arguments.length == 4) {
 		input = arguments;
 	} else {
+		this.invalid = true;
 		return;
 	}
 	

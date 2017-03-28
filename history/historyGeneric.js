@@ -18,8 +18,12 @@ function historyGeneric(targetId, actionUndo, actionRedo, collapsible) {
 			var target = document.getElementById(this.targetId);
 			try {
 				eval(this.actionUndo);
+				log.report('<span class="tab"></span>Action: '+this.actionUndo, 1);
 			} catch(e) {
-				console.log('Could not evaluate', this.actionUndo, e);
+				log.error('<span class="tab"></span><span class="tab"></span>Failed to evaluate action:', 1);
+				log.error(''+this.actionUndo+'', 1);
+				log.error('<span class="tab"></span><span class="tab"></span>Error::', 1);
+				log.error(''+e+'', 1);
 			}	
 		}
 	};
@@ -29,8 +33,12 @@ function historyGeneric(targetId, actionUndo, actionRedo, collapsible) {
 			var target = document.getElementById(this.targetId);
 			try {
 				eval(this.actionRedo);
+				log.report('<span class="tab"></span>Action: '+this.actionRedo, 1);
 			} catch(e) {
-				console.log('Could not evaluate', this.actionRedo, e);
+				log.error('<span class="tab"></span><span class="tab"></span>Failed to evaluate action:', 1);
+				log.error(''+this.actionRedo+'', 1);
+				log.error('<span class="tab"></span><span class="tab"></span>Error:', 1);
+				log.error(''+e+'', 1);
 			}	
 		}
 	};

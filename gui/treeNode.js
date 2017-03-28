@@ -12,6 +12,9 @@ function treeNode(element) {
 	this.representative = null;
 	
     this.element = element;
+	if(!element) { return; }
+	
+	if(this.element.getAttribute('id') == null) { this.element.generateId(); }
 	
 	var icon = anigenActual.getNodeIcon(element);
 	
@@ -50,8 +53,8 @@ function treeNode(element) {
 		var label = document.createElement("span");
 		
 		var input = new uiButton([ 'chevron_right', 'expand_more' ], [
-			'this.container.parentNode.addClass("checked");',
-			'this.container.parentNode.removeClass("checked");'
+			'this.container.parentNode.addClass("checked");this.container.parentNode.shepherd.bloom();anigenManager.classes.tree.fitScroll(this.container.parentNode.shepherd);',
+			'this.container.parentNode.removeClass("checked");this.container.parentNode.shepherd.bloom();'
 		], [ 'Expand', 'Condense' ], { 'class': 'md-18' }).shepherd;
 		
 		if(name.indexOf('#') >= 0) {
@@ -83,6 +86,7 @@ function treeNode(element) {
 		
 		this.representative = label;
 		this.container = document.createElement('ul');
+		this.li.shepherd = this;
 		this.li.appendChild(this.container);
 	} else {
 		// leaf
@@ -124,6 +128,23 @@ function treeNode(element) {
 	
 }
 
+treeNode.prototype.bloom = function(force) {
+	if(!this.element || !(this.element instanceof SVGElement)) { return; }
+	if(this.children.length > 0 && !force) { return; }
+	if(force) { this.clear(); }
+	var valid = this.element.getViableChildren();
+	for(var i = 0; i < valid.length; i++) {
+		this.append(new treeNode(valid[i]));
+	}
+}
+
+treeNode.prototype.findNode = function(svgNode) {
+	if(!svgNode || !(svgNode instanceof SVGElement)) { return; }
+	for(var i = 0; i < this.children.length; i++) {
+		if(this.children[i].element == svgNode) { return this.children[i]; }
+	}
+}
+
 treeNode.prototype.setSelected = function(value) {
 	if(value) {
 		this.representative.addClass('selected');
@@ -141,9 +162,28 @@ treeNode.prototype.append = function(newNode) {
 	}
 }
 
+treeNode.prototype.clear = function() {
+	this.children = [];
+	if(this.container) {
+		this.container.removeChildren();
+	}
+}
+
+treeNode.prototype.isSpread = function() {
+	if(this.checkbox != null && this.checkbox.state == 1) { return true; }
+	if(this.representative.hasClass('selected')) { return true; }
+	return false;
+}
+
 treeNode.prototype.collapse = function(deep) {
-	if(this.checkbox != null && this.checkbox.state == 1) { this.checkbox.click(); }
-	if(deep) {
+	var was = this.isSpread();
+	if(this.checkbox != null && this.checkbox.state == 1) {
+		this.checkbox.click();
+	}
+	if(!this.checkbox) {
+		this.setSelected(false);
+	}
+	if(was && deep) {
 		for(var i = 0; i < this.children.length; i++) {
 			this.children[i].collapse(deep);
 		}
@@ -152,7 +192,11 @@ treeNode.prototype.collapse = function(deep) {
 
 treeNode.prototype.spread = function() {
 	if(this.checkbox != null && this.checkbox.state != 1) {
+		this.bloom();
 		this.checkbox.click();
+	}
+	if(!this.checkbox) {
+		this.setSelected(true);
 	}
 }
 

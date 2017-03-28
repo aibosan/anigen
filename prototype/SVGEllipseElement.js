@@ -82,13 +82,13 @@ SVGEllipseElement.prototype.generateAnchors = function() {
 	var anchTop = new anchor(adjustedTop, this, 'rectangle', {
 			'move': "this.element.setRadius(null, absolute.y, true);",
 			'mouseup': mouseUpAction
-			}, new constraintLinear(adjustedTop, adjustedMid, false, false)
+			}, new constraintLinear(adjustedTop, adjustedMid)
 		);
 	
 	var anchLeft = new anchor(adjustedRight, this, 'rectangle', {
 			'move': "this.element.setRadius(absolute.x, null, true);",
 			'mouseup': mouseUpAction
-			}, new constraintLinear(adjustedRight, adjustedMid, false, false)
+			}, new constraintLinear(adjustedRight, adjustedMid)
 		);
 		
 	return { 'anchors': [ [ anchTop, anchLeft ] ] };
@@ -97,22 +97,37 @@ SVGEllipseElement.prototype.generateAnchors = function() {
 // returns element's center as its "cx" and "cy" attributes
 // if viewport is true, value given is adjusted to current viewport
 SVGEllipseElement.prototype.getCenter = function(viewport) {
-	var CTM = this.getCTMBase();
-	var topLeft = CTM.toViewport(this.cx.baseVal.value-this.rx.baseVal.value, this.cy.baseVal.value-this.ry.baseVal.value);
-	var botRight = CTM.toViewport(this.cx.baseVal.value+this.rx.baseVal.value, this.cy.baseVal.value+this.ry.baseVal.value);
+	var topLeft = { 'x': this.cx.baseVal.value-this.rx.baseVal.value, 'y': this.cy.baseVal.value-this.ry.baseVal.value };
+	var botRight = { 'x': this.cx.baseVal.value+this.rx.baseVal.value, 'y': this.cy.baseVal.value+this.ry.baseVal.value };
+	var topLeftAnim = { 'x': this.cx.animVal.value-this.rx.animVal.value, 'y': this.cy.animVal.value-this.ry.animVal.value };
+	var botRightAnim = { 'x': this.cx.animVal.value+this.rx.animVal.value, 'y': this.cy.animVal.value+this.ry.animVal.value };
 		
 	if(viewport) {
-		var adjusted = CTM.toViewport(this.cx.baseVal.value, this.cy.baseVal.value);
-		var adjustedAnim = CTM.toViewport(this.cx.animVal.value, this.cy.animVal.value);
+		var CTM = this.getCTMBase();
+		var CTMAnim = this.getCTMAnim();
 		
-		return { 'x': adjusted.x, 'y': adjusted.y, 'x_anim': adjustedAnim.x, 'y_anim': adjustedAnim.y,
+		topLeft = CTM.toViewport(this.cx.baseVal.value-this.rx.baseVal.value, this.cy.baseVal.value-this.ry.baseVal.value);
+		botRight = CTM.toViewport(this.cx.baseVal.value+this.rx.baseVal.value, this.cy.baseVal.value+this.ry.baseVal.value);
+		topLeftAnim = CTMAnim.toViewport(this.cx.animVal.value-this.rx.animVal.value, this.cy.animVal.value-this.ry.animVal.value);
+		botRightAnim = CTMAnim.toViewport(this.cx.animVal.value+this.rx.animVal.value, this.cy.animVal.value+this.ry.animVal.value);
+	
+		var adjusted = CTM.toViewport(this.cx.baseVal.value, this.cy.baseVal.value);
+		var adjustedAnim = CTMAnim.toViewport(this.cx.animVal.value, this.cy.animVal.value);
+		
+		return { 'x': adjusted.x, 'y': adjusted.y,
+			'x_anim': adjustedAnim.x, 'y_anim': adjustedAnim.y,
 			'left': Math.min(topLeft.x, botRight.x), 'right': Math.max(topLeft.x, botRight.x),
-			'top': Math.min(topLeft.y, botRight.y), 'bottom': Math.max(topLeft.y, botRight.y) };
+			'top': Math.min(topLeft.y, botRight.y), 'bottom': Math.max(topLeft.y, botRight.y),
+			'left_anim': Math.min(topLeftAnim.x, botRightAnim.x), 'right_anim': Math.max(topLeftAnim.x, botRightAnim.x),
+			'top_anim': Math.min(topLeftAnim.y, botRightAnim.y), 'bottom_anim': Math.max(topLeftAnim.y, botRightAnim.y)
+			};
 	}
 	return { 'x': this.cx.baseVal.value, 'y': this.cy.baseVal.value,
 			'x_anim': this.cx.animVal.value, 'y_anim': this.cy.animVal.value,
 			'left': Math.min(topLeft.x, botRight.x), 'right': Math.max(topLeft.x, botRight.x),
-			'top': Math.min(topLeft.y, botRight.y), 'bottom': Math.max(topLeft.y, botRight.y) 
+			'top': Math.min(topLeft.y, botRight.y), 'bottom': Math.max(topLeft.y, botRight.y),
+			'left_anim': Math.min(topLeftAnim.x, botRightAnim.x), 'right_anim': Math.max(topLeftAnim.x, botRightAnim.x),
+			'top_anim': Math.min(topLeftAnim.y, botRightAnim.y), 'bottom_anim': Math.max(topLeftAnim.y, botRightAnim.y)
 	};
 }
 
@@ -141,4 +156,6 @@ SVGEllipseElement.prototype.toPath = function() {
 	}
 	return path;
 }
+
+SVGEllipseElement.prototype.isVisualElement = function() { return true; }
 

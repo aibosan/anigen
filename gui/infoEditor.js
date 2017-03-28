@@ -4,13 +4,13 @@
  *  @copyright	GNU GPLv3
  *	@brief		Editor's section with information about time and zoom
  */
-function infoEditor() {
+function infoEditor(timeline) {
     this.container = document.createElement("div");
 	this.container.addClass('editor');
 
 	this.pauseButton = new uiButton(
 		[ 'pause', 'play_arrow' ],
-		[ 'svg.svgElement.unpauseAnimations();', 'svg.svgElement.pauseAnimations();' ],
+		[ 'svg.pauseToggle(true);', 'svg.pauseToggle(false);' ],
 		[ 'Unpause animations', 'Pause animations' ]
 	);
 	this.pauseButton = this.pauseButton.shepherd;
@@ -24,7 +24,7 @@ function infoEditor() {
 	this.hideIcon = this.hideIcon.shepherd;
 	this.container.appendChild(this.hideIcon.container);
 	
-    this.clock = new clock();
+    this.clock = new clock(timeline);
     this.clock.display();
     this.container.appendChild(this.clock.container);
 

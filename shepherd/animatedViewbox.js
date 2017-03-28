@@ -107,17 +107,16 @@ animatedViewbox.prototype.refresh = function() {
 		pData.push(this.y+this.height);
 		pData.push('Z');
 	this.element.setAttribute('d', pData.join(' '));
-	this.element.setAttribute("stroke-width", 1/svg.zoom+"px");
+	this.element.style.strokeWidth = 2/svg.zoom+"px";
 }
 
 animatedViewbox.prototype.adjustZoom = function() {
 	if(anigenActual.settings.get('canvasFrame')) {
-		this.element.removeAttribute("display");
+		this.element.style.display = null;
 	} else {
-		this.element.setAttribute("display", "none");
+		this.element.style.display = 'none';
 	}
-	
-	this.element.setAttribute("stroke-width", 2/svg.zoom+"px");
+	this.element.style.strokeWidth = 2/svg.zoom+"px";
 }
 
 
@@ -139,7 +138,7 @@ animatedViewbox.prototype.getKeyframes = function() {
 			new keyframe(parseFloat(timesArray[i]),
 				(splineArray[i-1] ? new spline(splineArray[i-1]) : null),
 				newValue,
-				(intensityArray && intensityArray[i] ? parseFloat(intensityArray[i]) : null)
+				(intensityArray && intensityArray[i] != null ? parseFloat(intensityArray[i]) : null)
 			)
 		);
 	}
@@ -150,7 +149,7 @@ animatedViewbox.prototype.commit = function(noHistory) {
 	if(noHistory) { this.wipe(); }
 	this.getKeyframes();
 	
-	var out = this;
+	var out = this.element;
 	var count = 0;
 	var intensityChanged = false;
 	
@@ -280,9 +279,12 @@ animatedViewbox.prototype.commit = function(noHistory) {
 		svg.history.add(new historyAttribute(this.element.id, histFrom, histTo, true));
 	}
 	
+	if(anigenActual.settings.get('previewAutorefresh')) {
+		svg.previewWindow.seed(true);
+	}
+	
 	return out;
 }
-
 
 animatedViewbox.prototype.transferOut = function() {
 	this.getBeginList();
@@ -310,52 +312,67 @@ animatedViewbox.prototype.generateAnchors = function() {
 	var allConnectors = [];
 	var allPaths = [];
 
-	var lastAnchors;
+	var previousAnchors;
 	var currentAnchors;
 	var firstAnchors;
-	var lastRect;
+	var currentRectangle;
+		
+	var currentKeyframe;
+	var previousKeyframe;
+	
+		
+		
+	var threshold = 0.01;
 	
 	for(var i = 0; i < anigenManager.classes.windowAnimation.selected.length; i++) {
-		lastRect = document.createElementNS(svgNS, 'rect');
-		lastRect.setAttribute('x', this.keyframes.getItem(anigenManager.classes.windowAnimation.selected[i]).value.x);
-		lastRect.setAttribute('y', this.keyframes.getItem(anigenManager.classes.windowAnimation.selected[i]).value.y);
-		lastRect.setAttribute('width', this.keyframes.getItem(anigenManager.classes.windowAnimation.selected[i]).value.width);
-		lastRect.setAttribute('height', this.keyframes.getItem(anigenManager.classes.windowAnimation.selected[i]).value.height);
-		lastRect.setAttribute("anigen:lock", "interface");
-		lastRect.setAttribute('style', 'fill:none;stroke:#aa0000;stroke-width:'+2/(svg.zoom)+'px');
-		currentAnchors = lastRect.generateAnchors();
+		currentKeyframe = this.keyframes.getItem(anigenManager.classes.windowAnimation.selected[i]);
+		
+		if(currentKeyframe && previousKeyframe && currentKeyframe != previousKeyframe && previousAnchors && 
+			Math.abs(currentKeyframe.value.x-previousKeyframe.value.x) < threshold && Math.abs(currentKeyframe.value.y-previousKeyframe.value.y) < threshold && 
+			Math.abs(currentKeyframe.value.width-previousKeyframe.value.width) < threshold && Math.abs(currentKeyframe.value.height-previousKeyframe.value.height) < threshold
+		) {
+			previousAnchors.anchors[0][0].actions.move += 'this.animation.setValue('+anigenManager.classes.windowAnimation.selected[i]+', null, this.element, true);';
+			previousAnchors.anchors[0][1].actions.move += 'this.animation.setValue('+anigenManager.classes.windowAnimation.selected[i]+', null, this.element, true);';
+			continue;
+		}
+		
+		currentRectangle = document.createElementNS(svgNS, 'rect');
+		currentRectangle.setAttribute('x', currentKeyframe.value.x);
+		currentRectangle.setAttribute('y', currentKeyframe.value.y);
+		currentRectangle.setAttribute('width', currentKeyframe.value.width);
+		currentRectangle.setAttribute('height', currentKeyframe.value.height);
+		currentRectangle.setAttribute("anigen:lock", "interface");
+		currentRectangle.setAttribute('style', 'fill:none;stroke:#aa0000;stroke-width:'+2/(svg.zoom)+'px');
+		currentAnchors = currentRectangle.generateAnchors(true);
 		
 		if(firstAnchors == null) { firstAnchors = currentAnchors; }
 		
 		if(anigenManager.classes.windowAnimation.selected.length != 1 && i == anigenManager.classes.windowAnimation.selected.length-1 &&
-			this.keyframes.getItem(anigenManager.classes.windowAnimation.selected[i]).value.x == this.keyframes.getItem(anigenManager.classes.windowAnimation.selected[0]).value.x &&
-			this.keyframes.getItem(anigenManager.classes.windowAnimation.selected[i]).value.y == this.keyframes.getItem(anigenManager.classes.windowAnimation.selected[0]).value.y &&
-			this.keyframes.getItem(anigenManager.classes.windowAnimation.selected[i]).value.width == this.keyframes.getItem(anigenManager.classes.windowAnimation.selected[0]).value.width &&
-			this.keyframes.getItem(anigenManager.classes.windowAnimation.selected[i]).value.height == this.keyframes.getItem(anigenManager.classes.windowAnimation.selected[0]).value.height) {
+			Math.abs(this.keyframes.getItem(anigenManager.classes.windowAnimation.selected[i]).value.x-this.keyframes.getItem(anigenManager.classes.windowAnimation.selected[0]).value.x) < threshold &&
+			Math.abs(this.keyframes.getItem(anigenManager.classes.windowAnimation.selected[i]).value.y-this.keyframes.getItem(anigenManager.classes.windowAnimation.selected[0]).value.y) < threshold &&
+			Math.abs(this.keyframes.getItem(anigenManager.classes.windowAnimation.selected[i]).value.width-this.keyframes.getItem(anigenManager.classes.windowAnimation.selected[0]).value.width) < threshold &&
+			Math.abs(this.keyframes.getItem(anigenManager.classes.windowAnimation.selected[i]).value.height-this.keyframes.getItem(anigenManager.classes.windowAnimation.selected[0]).value.height) < threshold) {
 				currentAnchors = firstAnchors;
 		} else {
 			allAnchors = allAnchors.concat(currentAnchors.anchors);
-			allPaths.push(lastRect);
+			allPaths.push(currentRectangle);
 		}
-		currentAnchors.anchors[0][0].actions.move = 'this.element.setX(absolute.x);this.element.setY(absolute.y);'
-		currentAnchors.anchors[0][0].addChild(currentAnchors.anchors[0][1]);
+		
+		currentAnchors.anchors[0][1].constraint.flags.optional = false;
+		
 		for(var j = 0; j < currentAnchors.anchors[0].length; j++) {
 			currentAnchors.anchors[0][j].animation = this;
 			currentAnchors.anchors[0][j].actions.move += 'this.animation.setValue('+anigenManager.classes.windowAnimation.selected[i]+', null, this.element, true);';
-			currentAnchors.anchors[0][j].actions.mouseup = '';
 		}
-		currentAnchors.anchors[0][1].selectable = false;
-		currentAnchors.anchors[0][1].constraint.a = currentAnchors.anchors[0][0];
-		currentAnchors.anchors[0][1].constraint.b = currentAnchors.anchors[0][1];
-		currentAnchors.anchors[0][1].constraint.optional = false;
 		
-		if(anigenActual.settings.get('progressCurve') && lastAnchors && currentAnchors && currentAnchors != lastAnchors) {
+		if(anigenActual.settings.get('progressCurve') && previousAnchors && currentAnchors && currentAnchors != previousAnchors) {
 			for(var j = 0; j < currentAnchors.anchors[0].length; j++) {
-				var slave = new connector(currentAnchors.anchors[0][j], lastAnchors.anchors[0][j], '#00aa00');
+				var slave = new connector(currentAnchors.anchors[0][j], previousAnchors.anchors[0][j], '#00aa00');
 				allConnectors.push(slave);
 			}
 		}
-		lastAnchors = currentAnchors;
+		previousAnchors = currentAnchors;
+		previousKeyframe = currentKeyframe;
 	}
 	return { 'connectors': allConnectors, 'anchors': allAnchors, 'paths': allPaths };
 }
@@ -367,12 +384,17 @@ animatedViewbox.prototype.setValue = function(index, portion, value) {
 	
 	var val = this.keyframes.getItem(index);
 	
+	if(portion instanceof SVGRectElement) {
+		value = portion;
+		portion = null;
+	}
+	
 	if(portion == null) {
 		if(!(value instanceof SVGRectElement)) { throw new DOMException(17); }
-		val.value.x = value.x.baseVal.value;
-		val.value.y = value.y.baseVal.value;
-		val.value.width = value.width.baseVal.value;
-		val.value.height = value.height.baseVal.value;
+		val.value.x = typeof value.x === 'number' ? value.x : value.x.baseVal.value;
+		val.value.y = typeof value.y === 'number' ? value.y : value.y.baseVal.value;
+		val.value.width = typeof value.width === 'number' ? value.width : value.width.baseVal.value;
+		val.value.height = typeof value.height === 'number' ? value.height : value.height.baseVal.value;
 		this.commit();
 		return;
 	}
@@ -400,5 +422,6 @@ animatedViewbox.prototype.setValue = function(index, portion, value) {
 	
 	this.commit();
 }
+
 
 

@@ -92,7 +92,7 @@ uiButton.prototype.click = function() {
 		try {
 			eval(this.actions[this.state]);
 		} catch(err) {
-			console.log(this.actions[this.state]);
+			console.error(this.actions[this.state]);
 			throw err;
 		}
 	}

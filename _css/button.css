@@ -103,6 +103,10 @@ img.button:hover {
 	transition: color 0.25s ease-out;
 }
 
+.uiButton.hidden {
+	display: none !important;
+}
+
 .uiButton.inline {
 	white-space: nowrap;
 }
@@ -157,6 +161,14 @@ img.button:hover {
 	transform: scale(1, -1);
 }
 
+.uiButton.turn-45 .material-icons {
+	-moz-transform: rotate(45deg);
+	-webkit-transform: rotate(45deg);
+	-o-transform: rotate(45deg);
+	-ms-transform: rotate(45deg);
+	transform: rotate(45deg);
+}
+
 .uiButton.turn-90 .material-icons {
 	-moz-transform: rotate(90deg);
 	-webkit-transform: rotate(90deg);
@@ -184,7 +196,7 @@ img.button:hover {
 
 span.uiLink {
 	display: inline-block;
-	margin: 2px;
+	margin: 0px 2px;
 	padding: 1px 0.75ex 1px 1px;
 	border-radius: 5px;
 	cursor: pointer;
