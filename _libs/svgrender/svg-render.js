@@ -208,17 +208,30 @@ SVGRender.prototype.render = function (options, callback) {
      * @type {HTMLCanvasElement}
      * @private
      */
-    this.svgArea = (options.svgArea || document.createElement('div'));
+    this.svgArea = options.svgArea;
+	if(!this.svgArea) {
+		this.svgArea = document.createElement('div');
+		this.svgArea.style.display = 'none';
+		document.body.appendChild(this.svgArea);
+		// cleanup?
+	}
+	
+	/**
+	 * Format ('png' or 'svg' for static SVGs)
+	 */
+	this.format = options.format || 'png';
 	
 	/**
 	 * Downsampling
 	 */
 	this.downsampling = (options.downsampling || 1);
+	if(this.format == 'svg') { this.downsampling = 1; }
 	
 	/**
 	 * Verbose mode
 	 */
 	this.verbose = (options.verbose || false);
+	
 	
 };
 
@@ -283,6 +296,27 @@ SVGRender.prototype.renderNextFrame = function () {
 	var svgString = (new XMLSerializer()).serializeToString(clone);
 	clone.parentNode.removeChild(clone);
 	
+	this.startTime = + new Date();
+	
+	if(this.format == 'svg') {
+		if (this.progressSignal && typeof this.progressSignal === "function") {
+            this.progressSignal(this.imagesDoneCount, this.imagesCount, this.beginTime);
+        }
+
+        this.images[this.imagesDoneCount++] = svgString;
+        if (this.imagesDoneCount < this.imagesCount) {
+            this.nextFrame = setTimeout(this.renderNextFrame.bind(this), 0);
+        } else {
+            this.finished = true;
+            this.callback(this.format);
+        }
+		
+		if(this.verbose) {
+			console.log('Rendering time: ' + ((+ new Date())-this.startTime) + ' ms');
+			this.startTime = + new Date();
+		}
+		return;
+	}
 
     this.svgImage = new Image();
     this.svgImage.onload = function () {
@@ -318,7 +352,7 @@ SVGRender.prototype.renderNextFrame = function () {
             this.nextFrame = setTimeout(this.renderNextFrame.bind(this), 0);
         } else {
             this.finished = true;
-            this.callback();
+            this.callback(this.format);
         }
 		
 		if(this.verbose) {
@@ -327,8 +361,6 @@ SVGRender.prototype.renderNextFrame = function () {
 		}
 		
     }.bind(this);
-	
-	this.startTime = + new Date();
 	
     this.svgImage.src = "data:image/svg+xml;base64," + btoa("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n\
         <!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">" + unescape(encodeURIComponent(svgString)));
