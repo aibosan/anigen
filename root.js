@@ -1348,7 +1348,7 @@ root.prototype.transferOut = function(stripIds, scale) {
 	var selId = this.selected.getAttribute('id');
 	
 	par.removeChild(this.svgElement);
-	this.svgElement.endAnimations();
+	//this.svgElement.endAnimations();		// actually unnecessary - this gets done equally well by just removing the SVG from document
 	
 	var clone = this.svgElement.cloneNode(true);
 	
@@ -1357,7 +1357,7 @@ root.prototype.transferOut = function(stripIds, scale) {
 	} else {
 		par.appendChild(this.svgElement);
 	}
-	this.svgElement.startAnimations();
+	//this.svgElement.startAnimations();
 	
 	this.select(selId);
 	

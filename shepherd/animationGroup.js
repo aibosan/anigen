@@ -260,7 +260,12 @@ animationGroup.prototype.commit = function(noHistory, noWipe) {
 		var grp = svg.animationStates[this.groupName];
 		if(!grp) { return false;};
 		this.getKeyframes();
-
+		
+		var firstState;
+		if(this.keyframes.length >= 1) {
+			firstState = grp[this.keyframes.getItem(0).value];
+		}
+		
 		for(var i in this.animations) {		// for all groups of animations attributes animated
 			for(var j = 0; j < this.animations[i].length; j++) { // for each animation itself
 				var lastValue = null;
@@ -270,6 +275,16 @@ animationGroup.prototype.commit = function(noHistory, noWipe) {
 				var childIndex = this.animations[i][j].getAttribute('anigen:childindex');
 				if(!childIndex) { continue; }
 				childIndex = parseInt(childIndex);
+				
+				// overwrite initial values to reflect those of first keyframe
+				if(firstState) {
+					if(this.animations[i][j].parentNode.style.hasNativeProperty(i)) {
+						this.animations[i][j].parentNode.style[i] = firstState.children[childIndex].style[i];
+					} else {
+						this.animations[i][j].parentNode.setAttribute(i, firstState.children[childIndex].getAttribute(i));
+					}
+				}
+				
 				
 				var lastChange = null;
 				for(k = 0; k < this.keyframes.length; k++) { // for each keyFrame
