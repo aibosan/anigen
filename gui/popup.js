@@ -1320,7 +1320,7 @@ popup.prototype.macroMenuHelp = function(target) {
 	tArray.push([ build.icon("info_outline"), "About..." ]);
 	
 	rAttributes.push({ 'onclick': 'popup.hide();window.open("manual.html", "_blank");' });
-	rAttributes.push({ 'onclick': 'popup.hide();window.open("../../versions.html", "_blank");' });
+	rAttributes.push({ 'onclick': 'popup.hide();window.open("../../index.html?redirect=false", "_blank");' });
 	rAttributes.push({ 'class': 'hr' });
 	rAttributes.push({ 'onclick': 'popup.hide();overlay.macroAbout();' });
 	

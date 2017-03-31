@@ -198,9 +198,14 @@ overlay.prototype.macroOpen = function() {
 		this.add(new uiLink('delete', 'svg.removeLocal();overlay.macroOpen();', 'Delete', { 'title': 'Delete local file' }));
 		this.add(build.br());
 	}
-	this.add(new uiLink('import_contacts', 'window.open("manual.html", "_blank");', 'Manual'));
-	this.add(build.br());
+	this.add(new uiLink('import_contacts', 'window.open("manual.html", "_blank");', 'Open manual'));
 	
+	if(svg.svgElement) {
+		this.add(new uiLink('call_split', 'window.open("../../index.html?redirect=false", "_blank");', 'Switch version', { 'title': 'Show different versions' })).children[0].addClass('turn-90');
+	} else {
+		this.add(new uiLink('call_split', 'window.location.href = "../../index.html?redirect=false";', 'Switch version', { 'title': 'Show different versions' })).children[0].addClass('turn-90');
+	}
+	this.add(build.br());
 	
 	if(svg.svgElement != null) {
 		this.addButtonCancel(null, true);
