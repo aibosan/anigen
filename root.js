@@ -1616,7 +1616,7 @@ root.prototype.fileIn = function(fileElement, filename, isNew) {
 		
 		if(filename) {
 			this.fileName = filename;
-			document.title = filename + " - aniGen";
+			anigenActual.resetTitle();
 		}
 		
 		log.report('File <strong>'+filename+'</strong> was opened.');

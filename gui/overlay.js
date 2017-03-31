@@ -200,10 +200,12 @@ overlay.prototype.macroOpen = function() {
 	}
 	this.add(new uiLink('import_contacts', 'window.open("manual.html", "_blank");', 'Open manual'));
 	
-	if(svg.svgElement) {
-		this.add(new uiLink('call_split', 'window.open("../../index.html?redirect=false", "_blank");', 'Switch version', { 'title': 'Show different versions' })).children[0].addClass('turn-90');
-	} else {
-		this.add(new uiLink('call_split', 'window.location.href = "../../index.html?redirect=false";', 'Switch version', { 'title': 'Show different versions' })).children[0].addClass('turn-90');
+	if(!window.location.href.match(/^file:/)) {
+		if(svg.svgElement) {
+			this.add(new uiLink('call_split', 'window.open("../../index.html?redirect=false", "_blank");', 'Switch version', { 'title': 'Show different versions' })).children[0].addClass('turn-90');
+		} else {
+			this.add(new uiLink('call_split', 'window.location.href = "../../index.html?redirect=false";', 'Switch version', { 'title': 'Show different versions' })).children[0].addClass('turn-90');
+		}
 	}
 	this.add(build.br());
 	
@@ -499,7 +501,7 @@ overlay.prototype.macroExportBar = function() {
 	var progress = new progressBar({ 'id': 'anigenProgressBar' });
 	this.add(progress.container);
 	
-	this.addButtonCancel('svg.svgrender.pause();anigenActual.exporting = false;document.title = svg.fileName + " - aniGen";document.getElementById("svgArea").removeChildren();svg.forceRefresh();', true);
+	this.addButtonCancel('svg.svgrender.pause();anigenActual.exporting = false;anigenActual.resetTitle();document.getElementById("svgArea").removeChildren();svg.forceRefresh();', true);
 	
 	this.show();
 	return progress;

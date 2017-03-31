@@ -80,6 +80,17 @@ anigenActual.prototype.checkWindows = function() {
 	anigenManager.refresh();
 }
 
+anigenActual.prototype.resetTitle = function() {
+	var devel = 
+		(window.location.href.match('GitHub') || window.location.href.match('devel')) ? " DEV" : "";
+	
+	if(!svg || !svg.fileName) {
+		document.title = "aniGen " + this.versionNumeric + devel;
+	} else {
+		document.title = svg.fileName + " - aniGen " + this.versionNumeric + devel;
+	}
+}
+
 anigenActual.prototype.eventNavigation = function(event) {
 	if(!svg || !svg.svgElement) { return true; }
 	event.returnValue = "Navigating from this page will cause the loss of any unsaved data.";

@@ -130,6 +130,7 @@ uiManager.prototype.seedAnigen = function() {
 	// load settings
 	anigenActual.settings.loadData();
 	anigenActual.settings.apply();
+	anigenActual.resetTitle();
 	
 	log.report('UI built.');
 }
