@@ -607,27 +607,37 @@ popup.prototype.macroScaleKeyframe = function(target, index) {
 		okAction += 'var scale=document.getElementById("anigenScale");';
 		okAction += 'anigenManager.classes.windowAnimation.contextMenuEvaluate("scale", '+index+', scale.value);';
 		
-	} else if(anigenManager.classes.windowAnimation.animation.getAttribute('type') == 'rotate') {
-		this.add(build.icon('refresh', 'md-24'));
-		this.add(build.input('number', '1', { 'id': 'anigenScaleAngle', 'step': 0.05, 'title': 'Angle scale factor' }));
-		this.add(build.icon('zoom_out_map', 'md-24 turn-45'));
-		this.add(build.input('number', '1', { 'id': 'anigenScaleX', 'step': 0.05, 'title': 'X axe scale factor' }));
-		this.add(build.input('number', '1', { 'id': 'anigenScaleY', 'step': 0.05, 'title': 'Y axe scale factor' }));
-		
-		okAction += 'var scaleAngle=document.getElementById("anigenScaleAngle");';
-		okAction += 'var scaleX=document.getElementById("anigenScaleX");';
-		okAction += 'var scaleY=document.getElementById("anigenScaleY");';
-		okAction += 'anigenManager.classes.windowAnimation.contextMenuEvaluate("scale", '+index+', {"angle":scaleAngle.value,"x":scaleX.value,"y":scaleY.value});';
-
 	} else {
-		this.add(build.icon('zoom_out_map', 'md-24 turn-45'));
-		this.add(build.input('number', '1', { 'id': 'anigenScaleX', 'step': 0.05, 'title': 'X axe scale factor' }));
-		this.add(build.input('number', '1', { 'id': 'anigenScaleY', 'step': 0.05, 'title': 'Y axe scale factor' }));
-		
-		okAction += 'var scaleX=document.getElementById("anigenScaleX");';
-		okAction += 'var scaleY=document.getElementById("anigenScaleY");';
-		okAction += 'anigenManager.classes.windowAnimation.contextMenuEvaluate("scale", '+index+', {"x":scaleX.value,"y":scaleY.value});';
-		
+		switch(anigenManager.classes.windowAnimation.animation.getAttribute('type')) {
+			case 'rotate':
+				this.add(build.icon('refresh', 'md-24'));
+				this.add(build.input('number', '1', { 'id': 'anigenScaleAngle', 'step': 0.05, 'title': 'Angle scale factor' }));
+				this.add(build.icon('zoom_out_map', 'md-24 turn-45'));
+				this.add(build.input('number', '1', { 'id': 'anigenScaleX', 'step': 0.05, 'title': 'X axe scale factor' }));
+				this.add(build.input('number', '1', { 'id': 'anigenScaleY', 'step': 0.05, 'title': 'Y axe scale factor' }));
+				
+				okAction += 'var scaleAngle=document.getElementById("anigenScaleAngle");';
+				okAction += 'var scaleX=document.getElementById("anigenScaleX");';
+				okAction += 'var scaleY=document.getElementById("anigenScaleY");';
+				okAction += 'anigenManager.classes.windowAnimation.contextMenuEvaluate("scale", '+index+', {"angle":scaleAngle.value,"x":scaleX.value,"y":scaleY.value});';
+				break;
+			case 'skewX':
+			case 'skewY':
+				this.add(build.icon('refresh', 'md-24'));
+				this.add(build.input('number', '1', { 'id': 'anigenScaleAngle', 'step': 0.05, 'title': 'Angle scale factor' }));
+				
+				okAction += 'var scaleAngle=document.getElementById("anigenScaleAngle");';
+				okAction += 'anigenManager.classes.windowAnimation.contextMenuEvaluate("scale", '+index+', {"angle":scaleAngle.value});';
+				break;
+			default:
+				this.add(build.icon('zoom_out_map', 'md-24 turn-45'));
+				this.add(build.input('number', '1', { 'id': 'anigenScaleX', 'step': 0.05, 'title': 'X axe scale factor' }));
+				this.add(build.input('number', '1', { 'id': 'anigenScaleY', 'step': 0.05, 'title': 'Y axe scale factor' }));
+				okAction += 'var scaleX=document.getElementById("anigenScaleX");';
+				okAction += 'var scaleY=document.getElementById("anigenScaleY");';
+				okAction += 'anigenManager.classes.windowAnimation.contextMenuEvaluate("scale", '+index+', {"x":scaleX.value,"y":scaleY.value});';
+				break;
+		}
 	}
 	
 	this.addButtonOk(okAction);
