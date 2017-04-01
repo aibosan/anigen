@@ -416,6 +416,26 @@ SVGElement.prototype.moveBottom = function(makeHistory) {
 }
 
 
+SVGElement.prototype.applyAnimations = function(recursive, animationGroup) {
+	animationGroup = animationGroup || this.getAttribute('anigen:type') == 'animationGroup';
+	
+	if(animationGroup && this instanceof SVGAnimationElement && this.getAttribute('attributeName') == 'd') {
+		var val = this.getAttribute('values');
+		if(!val) { return; }
+		val = val.split(';')[0];
+		if(!val) { return; }
+		this.parentNode.setAttribute('d', val);
+		return;
+	}
+	
+	if(recursive) {
+		var children = this.children;
+		for(var i = 0; i < children.length; i++) {
+			children[i].applyAnimations(recursive, animationGroup);
+		}
+	}
+}
+
 SVGElement.prototype.consumeAnimations = function(recursive, zealous) {
 	var candidates = [];
 	

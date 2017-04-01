@@ -297,7 +297,7 @@ root.prototype.paste = function(position, target, beforeElement) {
 		to = target.shepherd || target;
 		fr = this.elementTemp.shepherd || this.elementTemp;
 		
-		to.pasteTiming(fr, true)
+		to.pasteTiming(fr, true);
 		this.select(to.commit());
 		
 		log.report('Timing of element <strong>'+fr.getAttribute('id')+'</strong> was pasted into element <strong>'+target.getAttribute('id')+'</strong>.');
@@ -1348,6 +1348,9 @@ root.prototype.transferOut = function(stripIds, scale) {
 	var selId = this.selected.getAttribute('id');
 	
 	par.removeChild(this.svgElement);
+	
+	this.svgElement.applyAnimations(true);
+	
 	//this.svgElement.endAnimations();		// actually unnecessary - this gets done equally well by just removing the SVG from document
 	
 	var clone = this.svgElement.cloneNode(true);

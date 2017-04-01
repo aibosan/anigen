@@ -334,20 +334,14 @@ SVGAnimationElement.prototype.commit = function(noHistory) {
 		histTo['begin'] = newBegin;
 		this.setAttribute('begin', newBegin);
 		
-		var clone = this.cloneNode(true);
-		clone.wipe();
-		this.parentNode.insertBefore(clone, this);
-		this.parentNode.removeChild(this);
-		out = clone;
-		
-		if(svg.selected == this) { svg.selected = clone; }
-		if(anigenManager.classes.windowAnimation.animation == this) { anigenManager.classes.windowAnimation.animation = clone; }
-		anigenManager.classes.tree.seed();
-		
-		if(svg.selected == this) { svg.selected = clone; }
-		
-		anigenManager.classes.tree.select(svg.selected);
-		svg.select();
+		var nex = this.nextElementSibling;
+		var par = this.parentNode;
+		par.removeChild(this);
+		if(nex) {
+			par.insertBefore(this, nex);
+		} else {
+			par.appendChild(this);
+		}
 		
 		count++;
 	}
