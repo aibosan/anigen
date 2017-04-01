@@ -343,7 +343,7 @@ windowColors.prototype.refreshTab = function(tab, appliesTo, alphaChannel, onlyF
 			array.push(build.input('color', new color(targetValue), { 'onchange': actionColor }));
 			
 			alphaValue = alphaValue.indexOf('%') > -1 ? parseFloat(alphaValue)/100 : parseFloat(alphaValue);
-			var alphaHex = (alphaValue*255).toString(16);
+			var alphaHex = Math.round(alphaValue*255).toString(16);
 				alphaHex = String("00" + alphaHex).slice(-2);
 			
 			var actionSlider = 'svg.selected.setAttributeHistory({"'+alphaChannel+'": this.value/255}, null, anigenManager.classes.windowColors.ui.recursiveButton.state);';
