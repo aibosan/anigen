@@ -414,25 +414,12 @@ animationGroup.prototype.commit = function(noHistory, noWipe) {
 				
 				var nex = this.animations[i][j].nextElementSibling;
 				var par = this.animations[i][j].parentNode;
-				par.removeChild(this);
-				if(nex) {
-					par.insertBefore(this, nex);
-				} else {
-					par.appendChild(this);
-				}
-				
-				/*
-				var clone = this.animations[i][j].cloneNode(true);
-				var par = this.animations[i][j].parentNode;
-				par.insertBefore(clone, this.animations[i][j]);
 				par.removeChild(this.animations[i][j]);
-				
-				if(svg.selected == this.animations[i][j]) { svg.selected = clone; }
-				if(anigenManager.classes.windowAnimation.animation == this.animations[i][j]) { anigenManager.classes.windowAnimation.animation = clone; }
-				
-				if(svg.selected == this.animations[i][j]) { svg.selected = clone; }
-				this.animations[i][j] = clone;
-				*/
+				if(nex) {
+					par.insertBefore(this.animations[i][j], nex);
+				} else {
+					par.appendChild(this.animations[i][j]);
+				}
 			}
 		}
 		
