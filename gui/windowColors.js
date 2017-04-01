@@ -85,7 +85,7 @@ windowColors.prototype.seed = function() {
 	
 	this.ui.opacitySlider = build.input('range', 0, { 'min': 0, 'max': 100, 'step': 0.01,
 		'onchange': opacityAction,
-		'onmousemove': 'if(window.event.buttons==1){'+opacityAction+'}'
+		'onmousemove': 'if(event.buttons==1){'+opacityAction+'}'
 	});
 	this.ui.opacityInput = build.input('number', 0, { 'min': 0, 'max': 100,
 		'onchange': opacityInputAction
@@ -96,7 +96,7 @@ windowColors.prototype.seed = function() {
 	
 	this.ui.blurSlider = build.input('range', 0, { 'min': 0, 'max': 100, 'step': 0.01,
 		'onchange': blurAction,
-		'onmousemove': 'if(window.event.buttons==1){'+blurAction+'}'
+		'onmousemove': 'if(event.buttons==1){'+blurAction+'}'
 	});
 	this.ui.blurInput = build.input('number', 0, { 'min': 0, 'max': 100,
 		'onchange': blurInputAction
@@ -350,7 +350,7 @@ windowColors.prototype.refreshTab = function(tab, appliesTo, alphaChannel, onlyF
 				actionSlider += 'var textHex=this.parentNode.nextElementSibling.children[0];textHex.value=textHex.value.substr(0,6)+String("00"+parseInt(this.value).toString(16)).slice(-2);'
 			
 			array.push(build.input('range', alphaValue*255, { 'min': 0, 'max': 255, 'step': 1,
-				'onmousemove': 'if(window.event.buttons==1){'+actionSlider+'}', 'onchange': actionSlider
+				'onmousemove': 'if((window.event || event).buttons==1){'+actionSlider+'}', 'onchange': actionSlider
 			}));
 			
 			

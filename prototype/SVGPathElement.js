@@ -16,35 +16,6 @@ SVGPathElement.prototype.getPathData = function() {
 	// baseVal
 	this.pathData.baseVal = new pathSegList();
 	
-	
-	// this works, but it makes the path flicker between static and animated states (TODO)	
-	/*
-	// remove all animations
-	var animArray = [];
-	var nextArray = [];
-	for(var i = 0; i < this.children.length; i++) {
-		if(this.children[i] instanceof SVGAnimateElement && this.children[i].getAttribute('attributeName') == 'd') {
-			nextArray.push(this.children[i].nextElementSibling);
-			animArray.push(this.children[i]);
-		}
-	}
-	for(var i = 0; i < animArray.length; i++) { this.removeChild(animArray[i]); }
-	
-	var path = this.getAttribute('d') || '';
-	
-	// put them back
-	animArray.reverse();
-	nextArray.reverse();
-	for(var i = 0; i < animArray.length; i++) {
-		if(nextArray[i]) {
-			this.insertBefore(animArray[i], nextArray[i]);
-		} else {
-			this.appendChild(animArray[i], nextArray[i]);
-		}
-	}
-	
-	*/
-	
 	var path = this.getAttribute('d') || '';
 	path = path.replace(/,/g, ' ').replace(/^\s+|\s+$/g, '').replace(/\s+/g, ' ');
 	path = path.split(' ');

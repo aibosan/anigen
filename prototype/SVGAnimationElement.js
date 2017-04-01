@@ -808,16 +808,14 @@ SVGAnimationElement.prototype.getCurrentValue = function(time) {
 					temp.setAttribute('d', this.parentNode.getAttribute('d'));
 					return temp.getPathData().baseVal;
 			} else {	// ended already
-				var temp = document.createElementNS("http://www.w3.org/2000/svg", "path");
-					temp.setAttribute('d', closest.previous.frame.value);
-					return;
+				return;
 			}
 		}
 		
 		if(closest.closest.frame.time == closest.progress) {
 			var temp = document.createElementNS("http://www.w3.org/2000/svg", "path");
 				temp.setAttribute('d', closest.previous.frame.value);
-				return;
+				return temp.getPathData().baseVal;
 		}
 		
 		var ratio = (closest.progress-closest.previous.frame.time)/(closest.next.frame.time-closest.previous.frame.time);

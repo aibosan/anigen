@@ -628,7 +628,7 @@ anigenActual.prototype.eventKeyDown = function(event) {
 	
 	if(!response) {
 		event.preventDefault ? event.preventDefault() : event.returnValue = false;
-		event.stopPropagation ? event.stopPropagation() : window.event.cancelBubble = true;
+		event.stopPropagation ? event.stopPropagation() : (window.event || event).cancelBubble = true;
 		return false;
 	}
 	return true;

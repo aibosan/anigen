@@ -22,7 +22,7 @@ function popup() {
 	
 	this.container.addEventListener("click", function(event) { 
 		event.preventDefault ? event.preventDefault() : event.returnValue = false;
-		event.stopPropagation ? event.stopPropagation() : window.event.cancelBubble = true;
+		event.stopPropagation ? event.stopPropagation() : event.cancelBubble = true;
 	}, false);
 	
 	this.container.addEventListener("mousedown", this.eventMouseDown, false);
@@ -77,7 +77,7 @@ popup.prototype.hide = function() {
 }
 
 popup.prototype.show = function(target) {
-	this.event = window.event;
+	this.event = (window.event || event);
 	var toX, toY;
 	var toX2;
 	

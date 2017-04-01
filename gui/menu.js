@@ -17,7 +17,7 @@ function menu() {
 	
 	this.container.addEventListener("click", function(event) { 
 		event.preventDefault ? event.preventDefault() : event.returnValue = false;
-		event.stopPropagation ? event.stopPropagation() : window.event.cancelBubble = true;
+		event.stopPropagation ? event.stopPropagation() : (window.event || event).cancelBubble = true;
 	}, false);
 }
 

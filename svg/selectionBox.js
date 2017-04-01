@@ -122,7 +122,11 @@ selectionBox.prototype.refresh = function() {
 		if(typeof this.element.getBBox === 'function') {	// .getCenter doesn't work properly, and I'm not finding out why now
 		// bbox fallback
 		var CTM = this.element.getCTM();
-		var area = this.element.getBBox();
+		try {
+			var area = this.element.getBBox();
+		} catch(err) {	// firefox can't handle undisplayed objects :C
+			return;
+		}
 		if(!CTM) { return; }
 		
 		var tl = CTM.toViewport(area.x, area.y);
@@ -184,13 +188,13 @@ selectionBox.prototype.refresh = function() {
 	}
 	
 	if(this.showRotation) {
-		if(window.event && window.event.shiftKey) {
+		if((window.event || event) && (window.event || event).shiftKey) {
 			this.origin.hide();
 		} else {
 			this.origin.show();
 		}
 	} else {
-		if(window.event && window.event.shiftKey) {
+		if((window.event || event) && (window.event || event).shiftKey) {
 			this.origin.show();
 		} else {
 			this.origin.hide();
