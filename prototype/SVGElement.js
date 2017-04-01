@@ -432,6 +432,7 @@ SVGElement.prototype.applyAnimations = function(recursive, animationGroup) {
 	if(recursive) {
 		var children = this.children;
 		for(var i = 0; i < children.length; i++) {
+			if(typeof children[i].applyAnimations !== 'function') { continue; }
 			children[i].applyAnimations(recursive, animationGroup);
 		}
 	}
@@ -511,7 +512,7 @@ SVGElement.prototype.consumeAnimations = function(recursive, zealous) {
 	if(recursive) {
 		var children = this.children;
 		for(var i = 0; i < children.length; i++) {
-			if(children[i] instanceof SVGAnimationElement) { continue; }
+			if(children[i] instanceof SVGAnimationElement || typeof children[i].consumeAnimations !== 'function') { continue; }
 			children[i].consumeAnimations(recursive, zealous);
 		}
 	}

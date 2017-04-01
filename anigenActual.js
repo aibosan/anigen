@@ -18,7 +18,8 @@ function anigenActual() {
 	this.threshold = {
 		'position': 2,
 		'time': 250,
-		'dbl': 500
+		'dbl': 500,
+		'redraw': 50
 	}
 	
 	this.tools = [
@@ -34,6 +35,8 @@ function anigenActual() {
 	this.lastEvent = null;
 	
 	this.lastClick = null;
+	
+	this.nextRedraw = null;
 	
 	this.focused = null;
 	this.exporting = false;
@@ -913,9 +916,13 @@ anigenActual.prototype.eventUIRefresh = function(hard) {
 		anigenManager.classes.selection.refresh();
 		anigenManager.classes.context.refresh();
 		anigenManager.classes.windowLayers.refresh();
-		if(!anigenActual.hasClock) {
+		if(!this.hasClock) {
 			window.setInterval(function() { 
 				if(!svg || !svg.svgElement || svg.svgElement.animationsPaused()) { return; }
+				
+				var curTime = + new Date();
+				if(this.nextRedraw && this.nextRedraw > curTime) { return; }
+				
 				if(popup.closeOnSeek) {
 					if(popup.buttonOk) { 
 						if(popup.noRemoteClick) {
@@ -930,12 +937,15 @@ anigenActual.prototype.eventUIRefresh = function(hard) {
 				anigenManager.classes.editor.clock.update();
 				anigenManager.classes.context.refreshKeyframeButtons();
 				if(svg && svg.ui && svg.ui.selectionBox &&
-					anigenActual.settings.get('selectionboxAutorefresh')) {
+					this.settings.get('selectionboxAutorefresh')) {
 					svg.ui.selectionBox.refresh();
 				}
 				
-			}, 19);
-			anigenActual.hasClock = true;
+				var endTime = (+ new Date());
+				this.nextRedraw = endTime+((endTime-curTime) > this.threshold.redraw ? (endTime-curTime) : this.threshold.redraw);
+				
+			}.bind(this), 19);
+			this.hasClock = true;
 		}
 	}
 	

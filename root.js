@@ -1331,7 +1331,7 @@ root.prototype.transferIn = function() {
 }
 
 // removes UI and other editor-specific elements and restores the original width/height/bounding box of the element, returning a file-ready root svg element
-root.prototype.transferOut = function(stripIds, scale) {
+root.prototype.transferOut = function(stripIds, scale, strict) {
 	if(scale == null) { scale = { 'x': 1, 'y': 1 }; }
 	this.namedView.setAttribute('inkscape:cx', this.posX);
 	this.namedView.setAttribute('inkscape:cy', -1*this.posY);
@@ -1394,6 +1394,15 @@ root.prototype.transferOut = function(stripIds, scale) {
 		if(isNaN(children[i].getAttribute('inkscape:transform-center-x'))) { children[i].removeAttribute('inkscape:transform-center-x'); }
 		if(isNaN(children[i].getAttribute('inkscape:transform-center-y'))) { children[i].removeAttribute('inkscape:transform-center-y'); }
 		children[i].removeAttribute('anigen:references');
+	}
+	
+	if(strict) {
+		var states = clone.getElementsByAttribute('anigen:type', 'animationState', true, false);
+		for(var i = 0; i < states.length; i++) {
+			if(states[i].parentNode.parentNode) {
+				states[i].parentNode.parentNode.removeChild(states[i].parentNode);
+			}
+		}
 	}
 	
 	if(stripIds) {
@@ -1502,7 +1511,7 @@ root.prototype.export = function(begin, dur, fps, scale, format, name, downsampl
 	
 	anigenActual.exporting = true;
 	
-	var clone = this.transferOut(false, scale);
+	var clone = this.transferOut(false, scale, true);
 	clone.setAttribute('preserveAspectRatio', 'none');
 	
 	if(crispEdges) {
@@ -2206,3 +2215,12 @@ root.prototype.skew = function(target, skewX, change, aroundOrigin, makeHistory)
 		this.ui.selectionBox.origin = null;
 	}
 }
+
+root.prototype.cleanse = function() {
+	for(var i in this.animationStates) {
+		if(!this.animationStates[i][0]) { continue; }
+		this.defs.removeChild(this.animationStates[i][0].groupElement);
+	}
+}
+
+
