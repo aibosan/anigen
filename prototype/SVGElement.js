@@ -419,7 +419,8 @@ SVGElement.prototype.moveBottom = function(makeHistory) {
 SVGElement.prototype.applyAnimations = function(recursive, animationGroup) {
 	animationGroup = animationGroup || this.getAttribute('anigen:type') == 'animationGroup';
 	
-	if(animationGroup && this instanceof SVGAnimationElement && this.getAttribute('attributeName') == 'd') {
+	if(this instanceof SVGAnimationElement && this.getAttribute('attributeName') == 'd') {
+		if(!animationGroup && !this.getProgress(0).running) { return; }
 		var val = this.getAttribute('values');
 		if(!val) { return; }
 		val = val.split(';')[0];
