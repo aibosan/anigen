@@ -117,7 +117,7 @@ function animationGroup(target, numeric, flags, attributes) {
 			}
 		}
 		try {
-			anigenManager.classes.tree.seed();
+			window.dispatchEvent(new Event("treeSeed"));
 		} catch(e) { }
 	}
 }
@@ -162,7 +162,7 @@ animationGroup.prototype.animate = function(attribute, noCommit) {
 	if(!noCommit) {
 		this.commit(true);
 		// no longer necessary, since the animations are hidden anyway
-		//anigenManager.classes.tree.seed();
+		//window.dispatchEvent(new Event("treeSeed"));
 		//svg.select();
 	}
 }
@@ -174,7 +174,7 @@ animationGroup.prototype.unanimate = function(attribute) {
 	}
 	delete this.animations[attribute];
 	
-	anigenManager.classes.tree.seed();
+	window.dispatchEvent(new Event("treeSeed"));
 	svg.select();
 }
 
@@ -425,7 +425,7 @@ animationGroup.prototype.commit = function(noHistory, noWipe) {
 		
 		// not necessary since animations are hidden, and the actual element doesn't get pulled out and reinserted
 		/*
-		anigenManager.classes.tree.seed();
+		window.dispatchEvent(new Event("treeSeed"));
 		anigenManager.classes.tree.select(svg.selected);
 		svg.select();
 		*/

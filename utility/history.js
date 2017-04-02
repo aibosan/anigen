@@ -9,6 +9,8 @@ function history() {
 	this.index = -1;
 	
 	this.collapseConstant = 300;		// limit between two timestamps to allow history objects to collapse into one
+	
+	window.addEventListener("historyAdd", function(event) { this.add(event.detail); }.bind(this), false);
 }
 
 history.prototype.clear = function() {

@@ -191,7 +191,7 @@ selection.prototype.group = function() {
 	this.elements = [group];
 	
 	if(anigenManager.classes.tree) {
-		anigenManager.classes.tree.seed();
+		window.dispatchEvent(new Event("treeSeed"));
 		anigenManager.classes.tree.select(group);
 	}
 	

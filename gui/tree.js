@@ -18,6 +18,8 @@ function tree() {
     this.boxes = [];
 	
 	this.container.addEventListener("click", function(event) { event.target.blur(); }, false);
+	
+	window.addEventListener("treeSeed", function(event) { this.seed(event.detail); }.bind(this), false);
 }
 	
 tree.prototype.parseSVG = function(svgNode, parentTreeNode) {

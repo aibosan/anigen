@@ -56,10 +56,10 @@ infoContext.prototype.seed = function() {
 	this.toolButtons.group.flipH = new uiButton('flip', 'svg.scale(svg.selected, { "scaleX": -1, "scaleY": 1}, false, true);', 'Flip horizontally', { 'class': 'floatLeft' }).shepherd;
 	this.toolButtons.group.flipV = new uiButton('flip', 'svg.scale(svg.selected, { "scaleX": 1, "scaleY": -1}, false, true);', 'Flip vertically', { 'class': 'floatLeft turn-90' }).shepherd;
 	
-	this.toolButtons.group.moveBot = new uiButton('vertical_align_bottom', 'svg.selected.moveBottom(true);anigenManager.classes.tree.seed();svg.select();', 'Lower element to the bottom (end)', { 'class': 'floatLeft' }).shepherd;
-	this.toolButtons.group.moveDown = new uiButton('arrow_downward', 'svg.selected.moveDown(true);anigenManager.classes.tree.seed();svg.select();', 'Lower element one step (page down)', { 'class': 'floatLeft' }).shepherd;
-	this.toolButtons.group.moveUp = new uiButton('arrow_upward', 'svg.selected.moveUp(true);anigenManager.classes.tree.seed();svg.select();', 'Raise element one step (page up)', { 'class': 'floatLeft' }).shepherd;
-	this.toolButtons.group.moveTop = new uiButton('vertical_align_top', 'svg.selected.moveTop(true);anigenManager.classes.tree.seed();svg.select();', 'Raise element to the top (home)', { 'class': 'floatLeft' }).shepherd;
+	this.toolButtons.group.moveBot = new uiButton('vertical_align_bottom', 'svg.selected.moveBottom(true);window.dispatchEvent(new Event("treeSeed"));svg.select();', 'Lower element to the bottom (end)', { 'class': 'floatLeft' }).shepherd;
+	this.toolButtons.group.moveDown = new uiButton('arrow_downward', 'svg.selected.moveDown(true);window.dispatchEvent(new Event("treeSeed"));svg.select();', 'Lower element one step (page down)', { 'class': 'floatLeft' }).shepherd;
+	this.toolButtons.group.moveUp = new uiButton('arrow_upward', 'svg.selected.moveUp(true);window.dispatchEvent(new Event("treeSeed"));svg.select();', 'Raise element one step (page up)', { 'class': 'floatLeft' }).shepherd;
+	this.toolButtons.group.moveTop = new uiButton('vertical_align_top', 'svg.selected.moveTop(true);window.dispatchEvent(new Event("treeSeed"));svg.select();', 'Raise element to the top (home)', { 'class': 'floatLeft' }).shepherd;
 	
 	this.toolGroups[1].appendChild(new uiBreak('floatLeft'));
 	this.toolGroups[1].appendChild(this.toolButtons.group.rotateLeft.container);

@@ -195,7 +195,7 @@ anigenActual.prototype.eventKeyDown = function(event) {
 				anigenManager.classes.windowAnimation.contextMenuEvaluate('up', anigenManager.classes.windowAnimation.selected[0]);
 			} else {
 				svg.selected.moveUp(true);
-				anigenManager.classes.tree.seed();
+				window.dispatchEvent(new Event("treeSeed"));
 				svg.select();
 			}
 			break;
@@ -205,18 +205,18 @@ anigenActual.prototype.eventKeyDown = function(event) {
 				anigenManager.classes.windowAnimation.contextMenuEvaluate('down', anigenManager.classes.windowAnimation.selected[0]);
 			} else {
 				svg.selected.moveDown(true);
-				anigenManager.classes.tree.seed();
+				window.dispatchEvent(new Event("treeSeed"));
 				svg.select();
 			}
 			break;
 		case 'End':		// end
 			svg.selected.moveBottom(true);
-			anigenManager.classes.tree.seed();
+			window.dispatchEvent(new Event("treeSeed"));
 			svg.select();
 			break;
 		case 'Home':		// home
 			svg.selected.moveTop(true);
-			anigenManager.classes.tree.seed();
+			window.dispatchEvent(new Event("treeSeed"));
 			svg.select();
 			break;
 		case '1':
@@ -950,7 +950,7 @@ anigenActual.prototype.eventUIRefresh = function(hard) {
 	}
 	
 	anigenManager.classes.windowAnimation.refresh();
-	anigenManager.classes.tree.seed();
+	window.dispatchEvent(new Event("treeSeed"));
 	svg.gotoTime();
 	// already a part of tree.seed();
 	//svg.select();

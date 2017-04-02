@@ -52,4 +52,68 @@ SVGUseElement.prototype.getCenter = function(viewport) {
 
 SVGUseElement.prototype.isVisualElement = function() { return true; }
 
+SVGUseElement.prototype.unlink = function(lenient) {
+	var href = this.getAttribute('xlink:href');
+	if(!href) { return; }
+	href = href.substring(1);
+	var targ = document.getElementById(href);
+	if(targ) {
+		var nex = targ.nextElementSibling;
+		var par = targ.parentNode;
+		par.removeChild(targ);
+		
+		var clone = targ.cloneNode(true);
+			clone.stripId(true);
+			clone.generateId(true);
+		
+		if(nex) {
+			par.insertBefore(targ, nex);
+		} else {
+			par.appendChild(targ);
+		}
+		
+		par = this.parentNode;
+		nex = this.nextElementSibling;
+		
+		par.removeChild(this);
+		
+		var transform = clone.getAttribute('transform') || '';
+		
+		clone.setAttribute('transform',
+				(clone.getAttribute('transform') || '') +
+				'translate('+(this.getAttribute('x') || 0)+','+(this.getAttribute('x') || 0)+')' +
+				(this.getAttribute('transform') || '')
+			);
+				
+		
+		clone.setAttribute('id', this.getAttribute('id'));
+		
+		if(svg && svg.history) {
+			svg.history.add(new historyCreation(
+				clone.cloneNode(true), par.getAttribute('id'),
+				nex ? nex.getAttribute('id') : null, false, true
+			));
+			svg.history.add(new historyCreation(
+				this.cloneNode(true), par.getAttribute('id'),
+				nex ? nex.getAttribute('id') : null, true, true
+			));
+		}
+		
+		if(nex) {
+			par.insetBefore(clone, nex);
+		} else {
+			par.appendChild(clone);
+		}
+		
+		window.dispatchEvent(new Event('treeSeed'));
+		window.dispatchEvent(new Event('select'));
+		
+		return clone;
+	} else if(!lenient) {
+		this.parentNode.removeChild(this);
+		return this;
+	}
+	return null;
+}
+
 

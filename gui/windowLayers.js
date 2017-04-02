@@ -69,12 +69,12 @@ windowLayers.prototype.contextMenuEvaluate = function(option, id) {
 			break;
 		case 'raise':
 			document.getElementById(id).moveUp(true);
-			anigenManager.classes.tree.seed();
+			window.dispatchEvent(new Event("treeSeed"));
 			svg.select();
 			break;
 		case 'lower':
 			document.getElementById(id).moveDown(true);
-			anigenManager.classes.tree.seed();
+			window.dispatchEvent(new Event("treeSeed"));
 			svg.select();
 			break;
 		case 'duplicate':
@@ -98,22 +98,22 @@ windowLayers.prototype.eventToolbar = function(option) {
 			break;
 		case 'top':
 			currentLayer.moveTop(true);
-			anigenManager.classes.tree.seed();
+			window.dispatchEvent(new Event("treeSeed"));
 			svg.select();
 			break;
 		case 'bottom':
 			currentLayer.moveBottom(true);
-			anigenManager.classes.tree.seed();
+			window.dispatchEvent(new Event("treeSeed"));
 			svg.select();
 			break;
 		case 'up':
 			currentLayer.moveUp(true);
-			anigenManager.classes.tree.seed();
+			window.dispatchEvent(new Event("treeSeed"));
 			svg.select();
 			break;
 		case 'down':
 			currentLayer.moveDown(true);
-			anigenManager.classes.tree.seed();
+			window.dispatchEvent(new Event("treeSeed"));
 			svg.select();
 			break;
 	}

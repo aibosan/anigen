@@ -27,6 +27,8 @@ function root() {
 	this.svgrender = new SVGRender();
 	
 	window.svg = this;
+	
+	window.addEventListener("select", function(event) { this.select(event.detail); }.bind(this), false);
 }
 
 // creates the interface group in the svg
@@ -102,7 +104,7 @@ root.prototype.addLayer = function(name, position) {
 	
 	
 	
-	anigenManager.classes.tree.seed();
+	window.dispatchEvent(new Event("treeSeed"));
 	this.select();
 }
 
@@ -119,7 +121,7 @@ root.prototype.renameLayer = function(targetId, newName) {
 	
 	target.setAttribute('inkscape:label', newName);
 	
-	anigenManager.classes.tree.seed();
+	window.dispatchEvent(new Event("treeSeed"));
 	this.select();
 }
 
@@ -248,7 +250,7 @@ root.prototype.duplicate = function(target) {
 	
 	this.history.add(new historyCreation(clone.cloneNode(true), clone.parentNode.id, clone.nextElementSibling ? clone.nextElementSibling.id : null, false));
 	
-	anigenManager.classes.tree.seed();	// the tree is reconstructed
+	window.dispatchEvent(new Event("treeSeed"));	// the tree is reconstructed
 	
 	//timeline.rebuild();
 	
@@ -353,7 +355,7 @@ root.prototype.paste = function(position, target, beforeElement) {
 	transformBase = targetCTM.inverse().multiply(transformBase);
 	newElement.setAttribute('transform', transformBase);
 	
-	anigenManager.classes.tree.seed();	// the tree is reconstructed
+	window.dispatchEvent(new Event("treeSeed"));	// the tree is reconstructed
 	
 	anigenManager.classes.context.refresh();
 	
@@ -383,7 +385,7 @@ root.prototype.delete = function(target) {
 		this.camera = null;
 	}
 	
-	anigenManager.classes.tree.seed();	// the tree is reconstructed
+	window.dispatchEvent(new Event("treeSeed"));	// the tree is reconstructed
 	if(selectParent != null) {
 		this.select(selectParent);
 	} else {
@@ -412,7 +414,7 @@ root.prototype.createLink = function(target) {
 	log.report('<strong>'+use.getAttribute('id')+'</strong>, a new link of <strong>'+target.getAttribute('id')+'</strong> was created.');
 	
 	this.history.add(new historyCreation(use.cloneNode(true), use.parentNode.id, target.id, false));
-	anigenManager.classes.tree.seed();
+	window.dispatchEvent(new Event("treeSeed"));
 	this.select(use);
 }
 
@@ -438,7 +440,7 @@ root.prototype.group = function(target) {
 	
 	log.report('<strong>'+target.getAttribute('id')+'</strong> was put into a new group, <strong>'+newGroup.getAttribute('id')+'</strong>.');
 	
-	anigenManager.classes.tree.seed();	// the tree is reconstructed
+	window.dispatchEvent(new Event("treeSeed"));	// the tree is reconstructed
 	//timeline.rebuild();
 	anigenManager.classes.context.refresh();
 	
@@ -455,14 +457,14 @@ root.prototype.ungroup = function(target) {
 	
 	target.ungroup(true);
 	
-	//anigenManager.classes.tree.seed();
+	//window.dispatchEvent(new Event("treeSeed"));
 	this.select(par);
 	
 	
 	if(anigenManager.classes.tree.selected) {
 		anigenManager.classes.tree.selected.bloom(true);
 	} else {
-		anigenManager.classes.tree.seed();
+		window.dispatchEvent(new Event("treeSeed"));
 		svg.select();
 	}
 	
@@ -582,7 +584,7 @@ root.prototype.evaluateStatesManager = function() {
 		}
 	}
 	anigenManager.classes.windowAnimation.refreshKeyframes();
-	anigenManager.classes.tree.seed();
+	window.dispatchEvent(new Event("treeSeed"));
 	svg.select();
 }
 
@@ -616,7 +618,7 @@ root.prototype.evaluateGroupInbetween = function(valueIndex, groupName, name, in
 		anigenManager.classes.windowAnimation.animation.commit();
 	}
 	anigenManager.classes.windowAnimation.refreshKeyframes();
-	anigenManager.classes.tree.seed();
+	window.dispatchEvent(new Event("treeSeed"));
 	svg.select();
 }
 
@@ -766,7 +768,7 @@ root.prototype.toPath = function(target) {
 	this.history.add(new historyCreation(newTree.cloneNode(true), newTree.parentNode.getAttribute('id'),
 		newTree.nextElementSibling ? newTree.nextElementSibling.getAttribute('id') : null, false, true));
 	
-	anigenManager.classes.tree.seed();
+	window.dispatchEvent(new Event("treeSeed"));
 	svg.select(svg.selected.getAttribute('id'));
 }
 
@@ -952,7 +954,7 @@ root.prototype.createAnimation = function(owner, type, numeric, flags, other) {
 	
 	// timeline.add(new timelineObject(shepherd));
 	
-	anigenManager.classes.tree.seed();
+	window.dispatchEvent(new Event("treeSeed"));
 	anigenManager.classes.context.refresh();
 	this.gotoTime();
 	this.select(flags.select ? animationElement : this.selected);
@@ -962,7 +964,7 @@ root.prototype.createAnimation = function(owner, type, numeric, flags, other) {
 root.prototype.createAnimationViewbox = function() {
 	this.camera = new animatedViewbox(this);
 	this.ui.putOnTop();
-	anigenManager.classes.tree.seed();
+	window.dispatchEvent(new Event("treeSeed"));
 	this.ui.frame.refresh();
 	
 	log.report('New camera animation <strong>'+this.camera.getAttribute('id')+'</strong> was created.');
@@ -1203,7 +1205,7 @@ root.prototype.changeId = function(target, toId, selectAfter) {
 	
 	
 	
-	anigenManager.classes.tree.seed();
+	window.dispatchEvent(new Event("treeSeed"));
 	if(selectAfter) { this.select(target); }
 }
 
