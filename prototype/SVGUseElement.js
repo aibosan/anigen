@@ -52,43 +52,82 @@ SVGUseElement.prototype.getCenter = function(viewport) {
 
 SVGUseElement.prototype.isVisualElement = function() { return true; }
 
-SVGUseElement.prototype.unlink = function(lenient) {
-	var href = this.getAttribute('xlink:href');
-	if(!href) { return; }
-	href = href.substring(1);
-	var targ = document.getElementById(href);
+// this doesn't really work;
+// it has to also copy all other attributes and somehow make sense of their priorities
+// basically, too much work
+// TODO
+SVGUseElement.prototype.unlink = function(noHistory, lenient) {
+	var targ = this.getAttribute('xlink:href');
+	if(!targ) { return; }
+	targ = targ.substring(1);
+	var targ = document.getElementById(targ);
 	if(targ) {
-		var nex = targ.nextElementSibling;
-		var par = targ.parentNode;
-		par.removeChild(targ);
+		var targ = this;
+		var transformOriginal = [];
+		do {
+			var parT = targ.parentNode;
+			var nexT = targ.nextElementSibling;
+			parT.removeChild(targ);
+			
+			transformOriginal.push(targ.getAttribute('transform'));
+			if(targ.getAttribute('x') || targ.getAttribute('y')) {
+				transformOriginal.push('translate('+targ.getAttribute('x')+','+targ.getAttribute('y')+')');
+			}
+			
+			if(nexT) {
+				parT.insertBefore(targ, nexT);
+			} else {
+				parT.appendChild(targ);
+			}
+			if(targ instanceof SVGUseElement) {
+				targ = targ.getAttribute('xlink:href');
+				if(!targ) { break; }
+				targ = targ.substring(1);
+				targ = document.getElementById(targ);
+				if(!targ) { break; }
+			} else { break; }
+		} while(true);
 		
+		if(!targ) { return; }		// chain is broken
+		
+		var parT = targ.parentNode;
+		var nexT = targ.nextElementSibling;
+		parT.removeChild(targ);
 		var clone = targ.cloneNode(true);
-			clone.stripId(true);
-			clone.generateId(true);
-		
-		if(nex) {
-			par.insertBefore(targ, nex);
+		if(nexT) {
+			parT.insertBefore(targ, nexT);
 		} else {
-			par.appendChild(targ);
+			parT.appendChild(targ);
 		}
 		
-		par = this.parentNode;
-		nex = this.nextElementSibling;
+		transformOriginal.reverse();
+		transformOriginal = transformOriginal.join('');
 		
-		par.removeChild(this);
+		var par = this.parentNode;
+		var nex = this.nextElementSibling;
 		
-		var transform = clone.getAttribute('transform') || '';
+		var transform = '';
 		
-		clone.setAttribute('transform',
-				(clone.getAttribute('transform') || '') +
-				'translate('+(this.getAttribute('x') || 0)+','+(this.getAttribute('x') || 0)+')' +
-				(this.getAttribute('transform') || '')
-			);
-				
+		if(transformOriginal) { transform += transformOriginal; }
+		if(this.getAttribute('x') || this.getAttribute('y')) {
+			transform += 'translate('+(this.getAttribute('x') || 0)+','+(this.getAttribute('x') || 0)+')';
+		}
+		if(this.getAttribute('transform')) { transform += this.getAttribute('transform'); }
+		
+		if(transform.length > 0) {
+			clone.setAttribute('transform', transform);
+		}
+		
+		var skip = [ 'x', 'y', 'transform', 'width', 'height' ];
+		
+		for(var i = 0; i < this.attributes.length; i++) {
+			if(skip.indexOf(this.attributes[i].name) != -1) { continue; }
+			clone.setAttribute(this.attributes[i].name, this.attributes[i].value);
+		}
 		
 		clone.setAttribute('id', this.getAttribute('id'));
 		
-		if(svg && svg.history) {
+		if(!noHistory && svg && svg.history) {
 			svg.history.add(new historyCreation(
 				clone.cloneNode(true), par.getAttribute('id'),
 				nex ? nex.getAttribute('id') : null, false, true
@@ -100,13 +139,13 @@ SVGUseElement.prototype.unlink = function(lenient) {
 		}
 		
 		if(nex) {
-			par.insetBefore(clone, nex);
+			par.insertBefore(clone, nex);
 		} else {
 			par.appendChild(clone);
 		}
 		
 		window.dispatchEvent(new Event('treeSeed'));
-		window.dispatchEvent(new Event('select'));
+		window.dispatchEvent(new Event('rootSelect'));
 		
 		return clone;
 	} else if(!lenient) {

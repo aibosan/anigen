@@ -188,13 +188,13 @@ selectionBox.prototype.refresh = function() {
 	}
 	
 	if(this.showRotation) {
-		if((window.event || event) && (window.event || event).shiftKey) {
+		if(window.event && window.event.shiftKey) {
 			this.origin.hide();
 		} else {
 			this.origin.show();
 		}
 	} else {
-		if((window.event || event) && (window.event || event).shiftKey) {
+		if(window.event && window.event.shiftKey) {
 			this.origin.show();
 		} else {
 			this.origin.hide();

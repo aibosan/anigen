@@ -812,10 +812,10 @@ SVGAnimationElement.prototype.getCurrentValue = function(time) {
 			}
 		}
 		
-		if(closest.closest.frame.time == closest.progress) {
-			var temp = document.createElementNS("http://www.w3.org/2000/svg", "path");
-				temp.setAttribute('d', closest.previous.frame.value);
-				return temp.getPathData().baseVal;
+		if(closest.closest.frame.time == closest.progress || closest.perfect) {
+			var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+				path.setAttribute('d', closest.closest.frame.value);
+			return path.getPathData().baseVal;
 		}
 		
 		var ratio = (closest.progress-closest.previous.frame.time)/(closest.next.frame.time-closest.previous.frame.time);

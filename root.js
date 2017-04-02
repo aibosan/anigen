@@ -28,7 +28,7 @@ function root() {
 	
 	window.svg = this;
 	
-	window.addEventListener("select", function(event) { this.select(event.detail); }.bind(this), false);
+	window.addEventListener("rootSelect", function(event) { this.select(event.detail); }.bind(this), false);
 }
 
 // creates the interface group in the svg
@@ -1333,7 +1333,7 @@ root.prototype.transferIn = function() {
 }
 
 // removes UI and other editor-specific elements and restores the original width/height/bounding box of the element, returning a file-ready root svg element
-root.prototype.transferOut = function(stripIds, scale, strict) {
+root.prototype.transferOut = function(scale, flags) {
 	if(scale == null) { scale = { 'x': 1, 'y': 1 }; }
 	this.namedView.setAttribute('inkscape:cx', this.posX);
 	this.namedView.setAttribute('inkscape:cy', -1*this.posY);
@@ -1398,8 +1398,10 @@ root.prototype.transferOut = function(stripIds, scale, strict) {
 		children[i].removeAttribute('anigen:references');
 	}
 	
-	if(strict) {
-		var states = clone.getElementsByAttribute('anigen:type', 'animationState', true, false);
+	if(!flags) { return clone; }
+	
+	if(flags.clean) {
+		var states = clone.getElementsByAttribute('anigen:type', 'animationState', true);
 		for(var i = 0; i < states.length; i++) {
 			if(states[i].parentNode.parentNode) {
 				states[i].parentNode.parentNode.removeChild(states[i].parentNode);
@@ -1407,7 +1409,15 @@ root.prototype.transferOut = function(stripIds, scale, strict) {
 		}
 	}
 	
-	if(stripIds) {
+	// THIS DOESN'T WORK (see SVGUseElement.prototype.unlink) (hence the false &&) TODO
+	if(false && flags.unlink) {
+		var uses = clone.getElementsByTagName('use', true);
+		for(var i = 0; i < uses.length; i++) {
+			uses[i].unlink(true);
+		}
+	}
+	
+	if(flags.strip) {
 		clone.stripId(true);
 	}
 	
@@ -1513,7 +1523,7 @@ root.prototype.export = function(begin, dur, fps, scale, format, name, downsampl
 	
 	anigenActual.exporting = true;
 	
-	var clone = this.transferOut(false, scale, true);
+	var clone = this.transferOut(scale, { 'clean': true, 'unlink': false });
 	clone.setAttribute('preserveAspectRatio', 'none');
 	
 	if(crispEdges) {
@@ -1555,20 +1565,17 @@ root.prototype.packRendered = function(format) {
 				var type = "image\/svg+xml";
 				var blob = new Blob(this.svgrender.images[0].split(), { "type" : type });
 				saveAs(blob, this.exportName.replace(/\..{3-4}$/, '.svg'));
-				overlay.hide();
-				document.getElementById('svgArea').removeChildren();
-				if(anigenActual.notify) { anigenActual.bell(); }
-				return;
 			break;
 			default:
 				var pngFile = b64toBlob(this.svgrender.images[0], 'image/png');
 				saveAs(pngFile, this.exportName.replace(/\..{3-4}$/, '.png'));
-				overlay.hide();
-				document.getElementById('svgArea').removeChildren();
-				if(anigenActual.notify) { anigenActual.bell(); }
-				return;
 			break;
 		}
+		overlay.hide();
+		document.getElementById('svgArea').removeChildren();
+		if(anigenActual.notify) { anigenActual.bell(); }
+		anigenActual.exporting = false;
+		return;
 	}
 	
 	switch(format) {

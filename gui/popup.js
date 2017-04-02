@@ -77,7 +77,7 @@ popup.prototype.hide = function() {
 }
 
 popup.prototype.show = function(target) {
-	this.event = (window.event || event);
+	this.event = window.event;
 	var toX, toY;
 	var toX2;
 	

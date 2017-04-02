@@ -350,7 +350,7 @@ windowColors.prototype.refreshTab = function(tab, appliesTo, alphaChannel, onlyF
 				actionSlider += 'var textHex=this.parentNode.nextElementSibling.children[0];textHex.value=textHex.value.substr(0,6)+String("00"+parseInt(this.value).toString(16)).slice(-2);'
 			
 			array.push(build.input('range', alphaValue*255, { 'min': 0, 'max': 255, 'step': 1,
-				'onmousemove': 'if((window.event || event).buttons==1){'+actionSlider+'}', 'onchange': actionSlider
+				'onmousemove': 'if(window.event && window.event.buttons==1){'+actionSlider+'}', 'onchange': actionSlider
 			}));
 			
 			

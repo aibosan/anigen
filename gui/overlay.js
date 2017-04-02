@@ -460,7 +460,7 @@ overlay.prototype.macroExport = function() {
 	]]);
 	
 	this.add(build.table([
-		[ "Begin at (seconds)", build.input('number', beginning, { 'id': 'anigenInputBegin' }), build.button("←", { "onclick": "this.parentNode.previousSibling.children[0].value = "+beginning+";" }) ],
+		[ "Begin at (seconds)", build.input('number', beginning, { 'id': 'anigenInputBegin', 'min': '0', 'step': '0.1' }), build.button("←", { "onclick": "this.parentNode.previousSibling.children[0].value = "+beginning+";" }) ],
 		[ "Duration (seconds)", build.input('number', duration, { 'id': 'anigenInputDur', 'min': '0', 'onkeyup': nameCheck }),
 			build.button("←", { "onclick": "this.parentNode.previousSibling.children[0].value = "+duration+";" }) ],
 		[ "Frames per second", build.input('number', '30', { 'id': 'anigenInputFramerate', 'min': '0', 'onkeyup': nameCheck }),
