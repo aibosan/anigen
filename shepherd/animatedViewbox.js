@@ -275,6 +275,9 @@ animatedViewbox.prototype.commit = function(noHistory) {
 	this.animation.parentNode.removeChild(this.animation);
 	this.animation = clone;
 	
+	window.dispatchEvent(new Event('treeSeed'));
+	window.dispatchEvent(new Event('rootSelect'));
+	
 	if(!noHistory && svg && svg.history && count > 0) {
 		svg.history.add(new historyAttribute(this.element.id, histFrom, histTo, true));
 	}

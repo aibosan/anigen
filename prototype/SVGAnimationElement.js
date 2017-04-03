@@ -332,16 +332,22 @@ SVGAnimationElement.prototype.commit = function(noHistory) {
 	if(newBegin != this.getAttribute('begin') && newBegin.length != 0 && this.getAttribute('begin')) {
 		histFrom['begin'] = this.getAttribute('begin');
 		histTo['begin'] = newBegin;
-		this.setAttribute('begin', newBegin);
 		
 		var nex = this.nextElementSibling;
 		var par = this.parentNode;
 		par.removeChild(this);
+		
+		this.setAttribute('begin', newBegin);
+		out = this.cloneNode(true);
+		
 		if(nex) {
-			par.insertBefore(this, nex);
+			par.insertBefore(out, nex);
 		} else {
-			par.appendChild(this);
+			par.appendChild(out);
 		}
+		
+		window.dispatchEvent(new Event('treeSeed'));
+		window.dispatchEvent(new Event('rootSelect'));
 		
 		count++;
 	}
