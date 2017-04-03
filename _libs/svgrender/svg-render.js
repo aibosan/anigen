@@ -213,6 +213,7 @@ SVGRender.prototype.render = function (options, callback) {
 		this.svgArea = document.createElement('div');
 		this.svgArea.style.display = 'none';
 		document.body.appendChild(this.svgArea);
+		this.cleanup = true;
 		// cleanup?
 	}
 	
@@ -231,8 +232,6 @@ SVGRender.prototype.render = function (options, callback) {
 	 * Verbose mode
 	 */
 	this.verbose = (options.verbose || false);
-	
-	
 };
 
 /**
@@ -278,7 +277,11 @@ SVGRender.prototype.renderNextFrame = function () {
 //        throw "this.nextFrame timeout should have been removed already!";
         return;
     }
-
+	
+	if(this.verbose) {
+		this.startTime = + new Date();
+		this.lastTime = + new Date();
+	}
 
     this.SVGtime = this.beginMS + Math.round(1000 * this.imagesDoneCount) / (this.FPS);
     
@@ -292,11 +295,19 @@ SVGRender.prototype.renderNextFrame = function () {
 	this.svgArea.appendChild(clone);
 	clone.setCurrentTime(this.SVGtime / 1000);
 	clone.consumeAnimations(true);
+	
+	if(this.verbose) {
+		console.log('\tSVG preparation: ' + ((+ new Date())-this.lastTime) + ' ms');
+		this.lastTime = + new Date();
+	}
 
 	var svgString = (new XMLSerializer()).serializeToString(clone);
 	clone.parentNode.removeChild(clone);
 	
-	this.startTime = + new Date();
+	if(this.verbose) {
+		console.log('\tSerialization: ' + ((+ new Date())-this.lastTime) + ' ms');
+		this.lastTime = + new Date();
+	}
 	
 	if(this.format == 'svg') {
 		if (this.progressSignal && typeof this.progressSignal === "function") {
@@ -308,12 +319,15 @@ SVGRender.prototype.renderNextFrame = function () {
             this.nextFrame = setTimeout(this.renderNextFrame.bind(this), 0);
         } else {
             this.finished = true;
+			if(this.cleanup) {
+				this.svgArea.parentNode.removeChild(this.svgArea);
+			}
             this.callback(this.format);
         }
 		
 		if(this.verbose) {
-			console.log('Rendering time: ' + ((+ new Date())-this.startTime) + ' ms');
-			this.startTime = + new Date();
+			console.log('\tRendering: ' + ((+ new Date())-this.lastTime) + ' ms');
+			console.log('Total time: ' + ((+ new Date())-this.startTime) + ' ms');
 		}
 		return;
 	}
@@ -352,12 +366,15 @@ SVGRender.prototype.renderNextFrame = function () {
             this.nextFrame = setTimeout(this.renderNextFrame.bind(this), 0);
         } else {
             this.finished = true;
+			if(this.cleanup) {
+				this.svgArea.parentNode.removeChild(this.svgArea);
+			}
             this.callback(this.format);
         }
 		
 		if(this.verbose) {
-			console.log('Rendering time: ' + ((+ new Date())-this.startTime) + ' ms');
-			this.startTime = + new Date();
+			console.log('\tRendering: ' + ((+ new Date())-this.lastTime) + ' ms');
+			console.log('Total time: ' + ((+ new Date())-this.startTime) + ' ms');
 		}
 		
     }.bind(this);

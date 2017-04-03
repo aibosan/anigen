@@ -263,7 +263,7 @@ label[for="files"] {
 }
 
 label[for="files"]:hover, label[for="files"].dragover {
-    background-color: gray;
+    background-color: #444;
 	color: white;
 }
 

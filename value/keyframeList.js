@@ -183,17 +183,25 @@ keyframeList.prototype.invertValues = function(index) {
 keyframeList.prototype.scaleValues = function(index, factor) {
 	if(index != null) {
 		if(index < 0 || index >= this.arr.length) { throw new DOMException(1); }
-		if(typeof this.arr[index].value.isScalable !== 'function' || !this.arr[index].value.isScalable()) {
-			return false;
+		if(typeof this.arr[index].value === 'number' || (typeof this.arr[index].value.isScalable === 'function' && this.arr[index].value.isScalable())) {
+			if(typeof this.arr[index].value === 'number') {
+				this.arr[index].value *= factor;
+			} else {
+				this.arr[index].value.scale(factor);
+			}
 		} else {
-			this.arr[index].value.scale(factor);
+			return false;
 		}
 	} else {
 		for(var i = 0; i < this.arr.length; i++) {
-			if(typeof this.arr[i].value.isScalable !== 'function' || !this.arr[i].value.isScalable()) {
-				return false;
+			if(typeof this.arr[i].value === 'number' || (typeof this.arr[i].value.isScalable === 'function' && this.arr[i].value.isScalable())) {
+				if(typeof this.arr[i].value === 'number') {
+					this.arr[i].value *= factor;
+				} else {
+					this.arr[i].value.scale(factor);
+				}
 			} else {
-				this.arr[i].value.scale(factor);
+				return false;
 			}
 		}
 	}

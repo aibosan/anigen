@@ -867,6 +867,7 @@ anigenActual.prototype.eventFileDrop = function(event) {
 	event.preventDefault ? event.preventDefault() : event.returnValue = false;
 	if(!event.dataTransfer || !event.dataTransfer.files) { return; }
 	svg.load(event.dataTransfer);
+	document.body.focus();
 }
 
 anigenActual.prototype.eventFileStart = function(event) {

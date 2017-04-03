@@ -5,11 +5,28 @@
  *	@brief		Prototypes for generic element
  */
  
-Element.prototype.removeChildren = function() {
-    /*this.innerHTML = '';*/
-    while(this.firstChild) {
-        this.removeChild(this.firstChild);
-    }
+Element.prototype.removeChildren = function(conditional, deep) {
+	if(!conditional) {
+		while(this.firstChild) {
+			this.removeChild(this.firstChild);
+		}
+		return;
+	}
+	
+	for(var i = 0; i < this.children.length; i++) {
+		if(!this.children[i].parentNode) { continue; }
+		
+		if(conditional.bind(this.children[i])()) {
+			this.children[i].parentNode.removeChild(this.children[i]);
+			i--;
+		}
+	}
+	
+	if(deep) {
+		for(var i = 0; i < this.children.length; i++) {
+			this.children[i].removeChildren(conditional, deep);
+		}
+	}
 }
 
 Element.prototype.getElementsByTagName = function(tag, deep, lenient) {
@@ -143,5 +160,24 @@ Element.prototype.hasClass = function(name) {
 		if(this.classList[i] == name) { return true; }
 	}
 	return false;
+}
+
+/** Rips element from document to clone it in a state not affected by animations 
+ *  Leads to a bit of flicker, so use with care.
+ */
+Element.prototype.cloneNodeStatic = function(deep) {
+	var par = this.parentNode;
+	var nex = this.nextElementSibling;
+	
+	if(!par) { return this.cloneNode(deep); }
+	
+	par.removeChild(this);
+	var clone = this.cloneNode(deep);
+	if(nex) {
+		par.insertBefore(this, nex);
+	} else {
+		par.appendChild(this);
+	}
+	return clone;
 }
 

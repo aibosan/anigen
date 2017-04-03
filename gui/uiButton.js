@@ -44,7 +44,9 @@ function uiButton(images, actions, titles, flags) {
 	
 	this.stateIcons = [];
 	
-	this.container.addEventListener('click', function(event) { event.target.shepherd.click(); }, false);
+	this.container.addEventListener('click', function(event) {
+		event.target.shepherd.click();
+	}, false);
 	
 	for(var i = 0; i < images.length; i++) {
 		if(typeof images[i] === 'number') {
@@ -63,11 +65,6 @@ function uiButton(images, actions, titles, flags) {
 		
 			icon.appendChild(document.createTextNode(images[i]));
 			icon.shepherd = this;
-		
-		/* something something ligature compatibility
-		var code = this.getCode(images[i]);
-		if(code) { icon.appendChild(document.createTextNode(code)); }
-		*/
 		
 			if(titles[i]) { icon.setAttribute('title', titles[i]); }
 		

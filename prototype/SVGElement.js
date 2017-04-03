@@ -323,6 +323,20 @@ SVGElement.prototype.getLinkList = function(deep, references) {
 }
 
 
+SVGElement.prototype.unlinkChildren = function(deep, noHistory, noDispatch) {
+	for(var i = 0; i < this.children.length; i++) {
+		if(this.children[i] instanceof SVGUseElement) {
+			this.children[i].unlink(noHistory, noDispatch);
+		}
+	}
+	
+	if(deep) {
+		for(var i = 0; i < this.children.length; i++) {
+			this.children[i].unlinkChildren(deep, noHistory, noDispatch);
+		}
+	}
+}
+
 
 // ends all animations and restores SVG to its static state
 // strip attribute removes animations from SVG as well

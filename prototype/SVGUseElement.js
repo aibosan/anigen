@@ -52,107 +52,122 @@ SVGUseElement.prototype.getCenter = function(viewport) {
 
 SVGUseElement.prototype.isVisualElement = function() { return true; }
 
-// this doesn't really work;
-// it has to also copy all other attributes and somehow make sense of their priorities
-// basically, too much work
-// TODO
-SVGUseElement.prototype.unlink = function(noHistory, lenient) {
-	var targ = this.getAttribute('xlink:href');
-	if(!targ) { return; }
-	targ = targ.substring(1);
-	var targ = document.getElementById(targ);
-	if(targ) {
-		var targ = this;
-		var transformOriginal = [];
-		do {
-			var parT = targ.parentNode;
-			var nexT = targ.nextElementSibling;
-			parT.removeChild(targ);
-			
-			transformOriginal.push(targ.getAttribute('transform'));
-			if(targ.getAttribute('x') || targ.getAttribute('y')) {
-				transformOriginal.push('translate('+targ.getAttribute('x')+','+targ.getAttribute('y')+')');
-			}
-			
-			if(nexT) {
-				parT.insertBefore(targ, nexT);
-			} else {
-				parT.appendChild(targ);
-			}
-			if(targ instanceof SVGUseElement) {
-				targ = targ.getAttribute('xlink:href');
-				if(!targ) { break; }
-				targ = targ.substring(1);
-				targ = document.getElementById(targ);
-				if(!targ) { break; }
-			} else { break; }
-		} while(true);
+SVGUseElement.prototype.unlink = function(noHistory, noDispatch) {
+	var chain = [ ];
+	var target = this;
+	var broken = false;
 		
-		if(!targ) { return; }		// chain is broken
-		
-		var parT = targ.parentNode;
-		var nexT = targ.nextElementSibling;
-		parT.removeChild(targ);
-		var clone = targ.cloneNode(true);
-		if(nexT) {
-			parT.insertBefore(targ, nexT);
-		} else {
-			parT.appendChild(targ);
-		}
-		
-		transformOriginal.reverse();
-		transformOriginal = transformOriginal.join('');
-		
+	do {
+		if(!(target instanceof SVGUseElement)) { break; }
+		chain.push(target);
+		target = target.getAttribute('xlink:href');
+		if(!target) { broken = true; break; }
+		target = document.getElementById(target.substring(1));
+		if(!target) { broken = true; break; }
+	} while(target);
+	
+	if(broken) {
 		var par = this.parentNode;
 		var nex = this.nextElementSibling;
-		
-		var transform = '';
-		
-		if(transformOriginal) { transform += transformOriginal; }
-		if(this.getAttribute('x') || this.getAttribute('y')) {
-			transform += 'translate('+(this.getAttribute('x') || 0)+','+(this.getAttribute('x') || 0)+')';
-		}
-		if(this.getAttribute('transform')) { transform += this.getAttribute('transform'); }
-		
-		if(transform.length > 0) {
-			clone.setAttribute('transform', transform);
-		}
-		
-		var skip = [ 'x', 'y', 'transform', 'width', 'height' ];
-		
-		for(var i = 0; i < this.attributes.length; i++) {
-			if(skip.indexOf(this.attributes[i].name) != -1) { continue; }
-			clone.setAttribute(this.attributes[i].name, this.attributes[i].value);
-		}
-		
-		clone.setAttribute('id', this.getAttribute('id'));
+		par.removeChild(this);
 		
 		if(!noHistory && svg && svg.history) {
-			svg.history.add(new historyCreation(
-				clone.cloneNode(true), par.getAttribute('id'),
-				nex ? nex.getAttribute('id') : null, false, true
-			));
 			svg.history.add(new historyCreation(
 				this.cloneNode(true), par.getAttribute('id'),
 				nex ? nex.getAttribute('id') : null, true, true
 			));
 		}
-		
-		if(nex) {
-			par.insertBefore(clone, nex);
-		} else {
-			par.appendChild(clone);
+		if(!noDispatch) {
+			window.dispatchEvent(new Event('treeSeed'));
+			window.dispatchEvent(new Event('rootSelect'));
+		}
+		return;
+	}
+	
+	chain.reverse();
+	var clone = target.cloneNodeStatic(true);
+	if(clone.style.opacity == null) { clone.style.opacity = 1; }
+	var cloneTransform = clone.getAttribute('transform') || '';
+	
+	for(var i = 0; i < chain.length; i++) {
+		var useTransform = 'translate('+(chain[i].getAttribute('x')||0)+','+(chain[i].getAttribute('y')||0)+')';
+		if(useTransform != 'translate(0,0)') {
+			cloneTransform = useTransform + cloneTransform;
+		}
+		var baseTransform = chain[i].getTransformBase();
+		if(!baseTransform.isIdentity()) {
+			cloneTransform = baseTransform.toString() + cloneTransform;
 		}
 		
+		for(var j = 0; j < chain[i].style.length; j++) {
+			switch(chain[i].style[j]) {
+				case 'opacity':
+					clone.style.opacity = parseFloat(clone.style.opacity)*parseFloat(chain[i].style.opacity);
+					continue;
+				case 'display':
+					if(clone.style.display != 'none') {
+						clone.style.display = chain[i].style.display;
+					}
+					continue;
+				case 'visibility':
+					if(clone.style.visibility != 'hidden') {
+						clone.style.visibility = chain[i].style.visibility;
+					}
+					continue;
+			}
+			
+			if(!clone.style[chain[i].style[j]]) {
+				clone.style[chain[i].style[j]] = chain[i].style[chain[i].style[j]];
+			}
+		}
+		
+		for(var j = 0; j < chain[i].children.length; j++) {
+			var childClone = chain[i].children[j].cloneNodeStatic(true);
+			clone.appendChild(childClone);
+			if(childClone instanceof SVGAnimateElement && childClone.getAttribute('attributeName') == 'opacity') {
+				var ratio = parseFloat(clone.style.opacity)/parseFloat(chain[i].style.opacity||1);
+				childClone.scaleValues(null, ratio);
+				childClone.setAttribute('values', childClone.keyframes.getValues().join(';'));
+				childClone.setAttribute('additive', 'sum');
+			}	
+		}
+	}
+	
+	clone.setAttribute('id', this.getAttribute('id'));
+	
+	if(cloneTransform.length > 0) {
+		clone.setAttribute('transform', cloneTransform);
+	}
+	
+	var par = this.parentNode;
+	var nex = this.nextElementSibling;
+	
+	par.removeChild(this);
+	
+	if(!noHistory && svg && svg.history) {
+		svg.history.add(new historyCreation(
+			this.cloneNode(true), par.getAttribute('id'),
+			nex ? nex.getAttribute('id') : null, true, true
+		));
+		svg.history.add(new historyCreation(
+			clone.cloneNode(true), par.getAttribute('id'),
+			nex ? nex.getAttribute('id') : null, false, true
+		));
+	}
+	
+	if(nex) {
+		par.insertBefore(clone, nex);
+	} else {
+		par.appendChild(clone);
+	}
+	
+	if(!noDispatch) {
 		window.dispatchEvent(new Event('treeSeed'));
 		window.dispatchEvent(new Event('rootSelect'));
-		
-		return clone;
-	} else if(!lenient) {
-		this.parentNode.removeChild(this);
-		return this;
 	}
-	return null;
 }
+
+
+		
 
 

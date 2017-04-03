@@ -50,27 +50,52 @@ img.button:hover {
 .material-icons.md-36 { font-size: 36px !important; }
 .material-icons.md-48 { font-size: 48px !important; }
 
-.uiButton.md-18, .window h1 .uiButton {
+.uiLink.md-18 div, .uiButton.md-18, .window h1 .uiButton {
 	font-size: 18px !important;
 	width: 18px !important;
 	height: 18px !important;
+	line-height: 18px !important;
 }
-.uiButton.md-24, .popup-menu .uiButton {
+.uiLink.md-24 div, .uiButton.md-24, .popup-menu .uiButton {
 	font-size: 24px !important;
 	width: 24px !important;
 	height: 24px !important;
+	line-height: 24px !important;
 }
 
-.uiButton.md-36 {
+.uiLink.md-36 div, .uiButton.md-36 {
 	font-size: 36px !important;
 	width: 36px !important;
 	height: 36px !important;
+	line-height: 36px !important;
 
 }
-.uiButton.md-48 {
+.uiLink.md-48 div, .uiButton.md-48 {
 	font-size: 48px !important;
 	width: 48px !important;
 	height: 48px !important;
+	line-height: 48px !important;
+}
+
+
+.uiLink.md-18 {
+	font-size: 16px;
+	line-height: 18px !important;
+}
+
+.uiLink.md-24 {
+	font-size: 20px;
+	line-height: 24px !important;
+}
+
+.uiLink.md-36 {
+	font-size: 28px;
+	line-height: 36px !important;
+}
+
+.uiLink.md-48 {
+	font-size: 36px;
+	line-height: 48px !important;
 }
 
 /*
@@ -194,30 +219,30 @@ img.button:hover {
 }
 
 
-span.uiLink {
+.uiLink {
 	display: inline-block;
 	margin: 0px 2px;
 	padding: 1px 0.75ex 1px 1px;
-	border-radius: 5px;
+	border-radius: 4px;
 	cursor: pointer;
 	/*border: 1px solid transparent;*/
 	
 }
 
-span.uiLink:hover {
-	border-color: gray;
-	background-color: gray;
+.uiLink:hover {
+	border-color: black;
+	background-color: #444;
 	color: white;
 }
 
-span.uiLink .uiButton {
-	font-size: inherit !important;
+.uiLink .uiButton {
+	/*font-size: inherit !important;*/
 	vertical-align: text-top;
 	-webkit-transition: color 0s ease-out;
 	transition: color 0s ease-out;
 }
 
-span.uiLink .uiButton:hover {
+.uiLink .uiButton:hover {
 	color: inherit;
 	cursor: pointer !important;
 }

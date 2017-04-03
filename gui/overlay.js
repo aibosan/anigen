@@ -412,30 +412,6 @@ overlay.prototype.macroExport = function() {
 		typeSelect.setAttribute('id', 'anigenSelectType');
 		typeSelect.setAttribute('onchange', nameCheck);
 	
-	// TODO: browser can run out of memory, and DS 8 is about when crispEdges stop to matter
-	var aaSelect = build.select([
-		{ 'text': "No downsampling", 'value': '1' },
-		{ 'text': "2", 'value': '2' },
-		{ 'text': "4", 'value': '4' },
-		{ 'text': "8", 'value': '8' },
-		{ 'text': "16", 'value': '16' }
-	]);
-		aaSelect.style.width = "100%";
-		aaSelect.setAttribute('id', 'anigenSelectAA');
-		aaSelect.setAttribute('title', 'Image will be rendered in larger resolution and then scaled down, potentially improving quality at the cost of rendering speed. High multipliers can lead to browser running out of memory - save your work before you export with this setting!');
-	
-	var crispSelect = build.select([
-		{ 'text': "Native shape rendering", 'value': '0', 'title': 'Renders with native setting in mind.' },
-		{ 'text': "Crisp edges", 'value': '1', 'title': 'Enforces shape-rendering: crispEdges, creating pixel perfect (but blocky) images. Reduces rendering time and SVG artifacting stemming from anti-aliasing. Combine with downsampling for optimal results.' }
-	]);
-		crispSelect.style.width = "100%";
-		crispSelect.setAttribute('id', 'anigenSelectCrisp');
-	
-	var aaTable = build.table([[
-		aaSelect,
-		crispSelect
-	]]);
-	
 	var name;
 	if(svg.svgElement.getAttribute('inkscape:export-filename')) {
 		name = svg.svgElement.getAttribute('inkscape:export-filename');
@@ -459,6 +435,18 @@ overlay.prototype.macroExport = function() {
 		})
 	]]);
 	
+	var aaSelect = build.select([
+		{ 'text': "None", 'value': '1' },
+		{ 'text': "2x", 'value': '2' },
+		{ 'text': "4x", 'value': '4' },
+		{ 'text': "8x", 'value': '8' },
+		{ 'text': "16x", 'value': '16' }
+	]);
+		aaSelect.style.width = "100%";
+		aaSelect.setAttribute('id', 'anigenSelectAA');
+		aaSelect.setAttribute('title', 'Image will be rendered in larger resolution and then scaled down, potentially improving quality at the cost of rendering speed. High multipliers can lead to browser running out of memory - save your work before you export with this setting!');
+	
+	
 	this.add(build.table([
 		[ "Begin at (seconds)", build.input('number', beginning, { 'id': 'anigenInputBegin', 'min': '0', 'step': '0.1' }), build.button("←", { "onclick": "this.parentNode.previousSibling.children[0].value = "+beginning+";" }) ],
 		[ "Duration (seconds)", build.input('number', duration, { 'id': 'anigenInputDur', 'min': '0', 'onkeyup': nameCheck }),
@@ -469,24 +457,41 @@ overlay.prototype.macroExport = function() {
 			build.button("←", { "onclick": "document.getElementById('anigenInputWidth').value=svg.svgWidth;document.getElementById('anigenInputHeight').value=svg.svgHeight;document.getElementById('anigenInputRatio').shepherd.setState(1);" }) ],
 		[ "Output name", nameInput, build.button("←", { "onclick": "this.parentNode.previousSibling.children[0].value = '"+name+"';"+nameCheck }) ],
 		[ "Output type", typeSelect, "" ],
-		[ "Downsampling", aaTable, build.button("←", { "onclick": "document.getElementById('anigenSelectAA').setSelected(0);document.getElementById('anigenSelectCrisp').setSelected(0);" }) ],
-		[ "", [
-			new uiButton(['notifications_off', 'notifications_active'], ['anigenActual.notify=true;', 'anigenActual.notify=false;'], [ 'Notification disabled', 'Notification enabled' ], {'state': anigenActual.notify ? 1 : 0, 'class': 'md-24'}),
-			/*"Notify on finish",*/
-			new uiButton('volume_up', 'anigenActual.bell();', 'Preview', {'class': 'md-24'})
-			], "" ],
-			
+		[ "Downsampling", aaSelect, "" ]
 	]));
 	
+	var containerMore = document.createElement('div');
+		containerMore.style.paddingTop = '1em';
+		containerMore.appendChild(
+			new uiLink([ 'check_box_outline_blank', 'check_box' ], null, 'Crisp edges', { 'id': 'anigenCrisp', 'title': 'Overrides native anti-aliasing, creating pixel-perfect, but jagged lines.' })
+		);
+		containerMore.appendChild(
+			new uiLink([ 'check_box_outline_blank', 'check_box' ], null, 'Unlink elements', { 'state': 1, 'id': 'anigenUnlink', 'title': 'Unlink <use> elements before rendering.' })
+		);
+		containerMore.appendChild(
+			new uiLink([ 'check_box_outline_blank', 'check_box' ], null, 'Verbose', { 'id': 'anigenVerbose', 'title': 'Additional rendering information will be shown in the console.' })
+		);
+		containerMore.appendChild(
+			new uiLink([ 'check_box_outline_blank', 'check_box' ], null, 'Notification', { 'id': 'anigenNotification',  'title': 'Play sound when rendering is finished.' })
+		);
+		containerMore.appendChild(
+			new uiLink('volume_up', 'anigenActual.bell();', null, { 'title': 'Test sound.' })
+		);
+	
+	this.add(containerMore);
+	
 	var okAction = '';
-		okAction += "svg.export(document.getElementById('anigenInputBegin').value,";
-		okAction += "document.getElementById('anigenInputDur').value,";
-		okAction += "document.getElementById('anigenInputFramerate').value,";
-		okAction += "{ 'x': document.getElementById('anigenInputWidth').value/svg.svgWidth, 'y': document.getElementById('anigenInputHeight').value/svg.svgHeight },";
-		okAction += "document.getElementById('anigenSelectType').value,";
-		okAction += "document.getElementById('anigenInputName').value,";
-		okAction += "document.getElementById('anigenSelectAA').value,"
-		okAction += "document.getElementById('anigenSelectCrisp').value == '1');"
+		okAction += "svg.export({ 'begin': parseFloat(document.getElementById('anigenInputBegin').value),";
+		okAction += "'dur': parseFloat(document.getElementById('anigenInputDur').value),";
+		okAction += "'fps': parseFloat(document.getElementById('anigenInputFramerate').value),";
+		okAction += "'scale': { 'x': document.getElementById('anigenInputWidth').value/svg.svgWidth, 'y': document.getElementById('anigenInputHeight').value/svg.svgHeight },";
+		okAction += "'format': document.getElementById('anigenSelectType').value,";
+		okAction += "'filename': document.getElementById('anigenInputName').value,";
+		okAction += "'downsampling': parseInt(document.getElementById('anigenSelectAA').value),";
+		okAction += "'crispedges': document.getElementById('anigenCrisp').shepherd.getState() == 1, ";
+		okAction += "'verbose': document.getElementById('anigenVerbose').shepherd.getState() == 1,";
+		okAction += "'unlink': document.getElementById('anigenUnlink').shepherd.getState() == 1";
+		okAction += "});";
 	
 	this.addButtonOk(okAction, true);
 	this.addButtonCancel(null, true);

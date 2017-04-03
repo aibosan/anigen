@@ -1401,20 +1401,22 @@ root.prototype.transferOut = function(scale, flags) {
 	if(!flags) { return clone; }
 	
 	if(flags.clean) {
-		var states = clone.getElementsByAttribute('anigen:type', 'animationState', true);
-		for(var i = 0; i < states.length; i++) {
-			if(states[i].parentNode.parentNode) {
-				states[i].parentNode.parentNode.removeChild(states[i].parentNode);
+		var toClean = clone.getElementsByAttribute('anigen:type', 'animationState', true);
+			toClean = toClean.concat(clone.getElementsByTagName('inkscape:path-effect', true));
+		for(var i = 0; i < toClean.length; i++) {
+			if(toClean[i].parentNode) {
+				toClean[i].parentNode.removeChild(toClean[i]);
 			}
 		}
 	}
 	
-	// THIS DOESN'T WORK (see SVGUseElement.prototype.unlink) (hence the false &&) TODO
-	if(false && flags.unlink) {
-		var uses = clone.getElementsByTagName('use', true);
-		for(var i = 0; i < uses.length; i++) {
-			uses[i].unlink(true);
-		}
+	if(flags.unlink) {
+		var svgArea = document.getElementById('svgArea');
+			svgArea.appendChild(clone);
+		
+		clone.unlinkChildren(true, true, true);
+		
+		svgArea.removeChild(clone);
 	}
 	
 	if(flags.strip) {
@@ -1507,26 +1509,29 @@ root.prototype.load = function(target) {
 	var newSVG = svg.upload(file, (svg.svgElement == null || !overlay.hidden));
 }
 
-root.prototype.export = function(begin, dur, fps, scale, format, name, downsampling, crispEdges) {
-	this.exportName = name || this.fileName;
-	format = format || 'png';
-	if(begin == null || dur == null || fps == null) { return; }
-	if(scale == null) { scale = { 'x': 1, 'y': 1 }; }
-	if(!downsampling) { downsampling = 1; }
-	downsampling = parseInt(downsampling);
-	crispEdges = crispEdges || false;
-	begin = parseFloat(begin);
-	dur = parseFloat(dur);
-	fps = parseFloat(fps);
-	if(dur <= 0 || fps <= 0) { return; }
-	if(begin < 0) { begin = 0; }
+root.prototype.export = function(options) {
+	if(!options || options.begin == null || options.dur == null || options.fps == null) { return; }
+	if(isNaN(options.begin) || isNaN(options.dur) || isNaN(options.fps))  { return; }
+	if(options.dur <= 0 || options.fps <= 0)  { return; }
+	
+	if(options.begin < 0)  { options.begin = 0; }
+	
+	this.exportName = options.filename = options.filename || this.fileName;
+	options.format = options.format || 'png';
+	options.scale = options.scale || { 'x': 1, 'y': 1 };
+	options.downsampling = options.downsampling || 1;
+	
+	options.crispedges = options.crispedges || false;
+	options.unlink = options.unlink || true;
+	options.verbose = options.verbose || false;
+	options.clean = options.clean || true;
 	
 	anigenActual.exporting = true;
 	
-	var clone = this.transferOut(scale, { 'clean': true, 'unlink': false });
+	var clone = this.transferOut(options.scale, { 'clean': options.clean, 'unlink': options.unlink });
 	clone.setAttribute('preserveAspectRatio', 'none');
 	
-	if(crispEdges) {
+	if(options.crispedges) {
 		clone.setAttribute('shape-rendering', 'crispEdges');
 	}
 	
@@ -1542,14 +1547,13 @@ root.prototype.export = function(begin, dur, fps, scale, format, name, downsampl
 	this.svgrender.load(clone);
 	this.svgrender.render({
 		'progressSignal': anigenActual.eventRenderProcess,
-		'begin': begin,
-		'FPS': fps,
-		'time': dur,
-		'format': format || 'png',
+		'begin': options.begin,
+		'FPS': options.fps,
+		'time': options.dur,
+		'format': options.format,
 		'svgArea': document.getElementById('svgArea'),
-		'canvas': document.getElementById('renderArea'),
-		'downsampling': downsampling,
-		'verbose': true
+		'downsampling': options.downsampling,
+		'verbose': options.verbose
 	}, anigenActual.eventRenderDone);
 }
 
