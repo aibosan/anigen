@@ -883,6 +883,8 @@ windowAnimation.prototype.setTime = function(index, value) {
 	value = parseFloat(value);
 	if(index == null || value == null) { return; }
 	
+	var mainFrame = this.animation.keyframes.getItem(index);
+	
 	var noSelect = this.selected.length <= 1;
 	
 	if((this.selected.length == 1 && this.selected[0] == index) || this.selected.indexOf(index) == -1) {
@@ -902,18 +904,14 @@ windowAnimation.prototype.setTime = function(index, value) {
 	this.animation.keyframes.sort();
 	this.animation.commit();
 	
-	var newSelected = [];
-	for(var i = 0; i < changedItems.length; i++) {
-		for(var j = 0; j < this.animation.keyframes.length; j++) {
-			if(this.animation.keyframes.getItem(j).time > changedItems[i].time) { break; }
-			if(this.animation.keyframes.getItem(j) == changedItems[i]) {
-				newSelected.push(j);
-				break;
-			}
+	this.lastClicked = this.animation.keyframes.indexOf(mainFrame);
+	
+	this.selected = [];
+	if(!noSelect) {
+		for(var i = 0; i < changedItems.length; i++) {
+			this.selected.push(this.animation.keyframes.indexOf(changedItems[i]));
 		}
 	}
-	
-	this.selected = noSelect ? [] : newSelected;
 	
 	this.refreshSelection();
 	this.refreshKeyframes();
@@ -1186,13 +1184,13 @@ windowAnimation.prototype.eventClick = function(event) {
 		max = index+1 < anim.keyframes.length ? (anim.keyframes.getItem(index+1).time * 100) : 100;
 		if(index == 0) { max = 0; }
 		if(index == anim.keyframes.length-1) { min = 100; }
-		attrOut.onchange += 'anigenManager.classes.windowAnimation.setTime('+index+', parseFloat(this.value)/100);';
+		attrOut.onchange += 'anigenManager.classes.windowAnimation.setTime(anigenManager.classes.windowAnimation.lastClicked, parseFloat(this.value)/100);';
 	} else {	// actual time
 		min = index == 0 ? 0 : (anim.keyframes.getItem(index-1).time * anim.dur.value);
 		max = index+1 < anim.keyframes.length ? (anim.keyframes.getItem(index+1).time * anim.dur.value) : anim.dur.value;
 		if(index == 0) { max = 0; }
 		if(index == anim.keyframes.length-1) { min = anim.dur.value; }
-		attrOut.onchange += 'anigenManager.classes.windowAnimation.setTime('+index+', parseFloat(this.value)/'+anim.dur.value+');';
+		attrOut.onchange += 'anigenManager.classes.windowAnimation.setTime(anigenManager.classes.windowAnimation.lastClicked, parseFloat(this.value)/'+anim.dur.value+');';
 	}
 	
 	attrOut.onmousemove += 'if(event.buttons!=1){return;}';
