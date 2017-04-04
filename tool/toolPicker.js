@@ -90,21 +90,41 @@ toolPicker.prototype.mouseMove = function(event) {
 	
 	this.lastEvent = event;
 	
+	// cursor change
+	
+	
+	// target or selection is svgElement - DEFAULT
 	if(event.target == svg.svgElement || svg.selected == svg.svgElement) {
-		anigenManager.setCursor('url(_cursors/picker.png) 5 5');
-	} else if(svg.selected instanceof SVGAnimateMotionElement && event.target instanceof SVGPathElement) {
-		anigenManager.setCursor('url(_cursors/picker_path.png) 5 5');
-	} else if((svg.selected.shepherd instanceof animationGroup || svg.selected instanceof SVGAnimationElement) &&
-		(event.target.shepherd instanceof animationGroup || event.target.hasAnimation()) &&
-		!(svg.selected instanceof SVGAnimateElement) || (svg.selected instanceof SVGAnimateElement && anigenManager.classes.windowAnimation.selected.length == 0)) {
-		anigenManager.setCursor('url(_cursors/picker_time.png) 5 5');
-	} else {
-		if(event.shiftKey) {
-			anigenManager.setCursor('url(_cursors/picker_stroke.png) 5 5');
+		anigenManager.setCursor('url(_cursors/picker_none.png) 5 5');
+	} else
+	// selected (or selected shepherd) is animation
+	if(svg.selected instanceof SVGAnimationElement || svg.selected.shepherd instanceof SVGAnimationElement) {
+		// some keyframes are selected (copy values)
+		if(anigenManager.classes.windowAnimation.selected.length > 0) {
+			// target has corresponding attribute - DEFAULT
+			if(event.target.getAttribute(svg.selected.getAttribute('attributeName')) || event.target.style[svg.selected.getAttribute('attributeName')]) {
+				anigenManager.setCursor('url(_cursors/picker.png) 5 5');
+			} else {
+			// target has no such attribute	- NO PICK
+				anigenManager.setCursor('url(_cursors/picker_none.png) 5 5');
+			}
 		} else {
+		// no keyframes are selected (copy timing)
+			if(event.target.hasAnimation()) {
+			// target has animation - TIMING
+				anigenManager.setCursor('url(_cursors/picker_time.png) 5 5');
+			} else {
+			// target has no animation - NO PICK
+				anigenManager.setCursor('url(_cursors/picker_none.png) 5 5');
+			}
+		}
+	} else {
+	// selected is regular object
+		if(event.shiftKey) {	// shift key - PICK STROKE
+			anigenManager.setCursor('url(_cursors/picker_stroke.png) 5 5');
+		} else {	// no shift key - PICK FILL
 			anigenManager.setCursor('url(_cursors/picker_fill.png) 5 5');
 		}
-		
 	}
 	
 	if((event.button == 1 || event.buttons == 4) && this.lastEvent) {
