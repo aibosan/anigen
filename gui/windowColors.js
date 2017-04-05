@@ -32,7 +32,6 @@ windowColors.prototype.seed = function() {
 		);
 	recursiveButton.style.float = "right";
 	this.ui.recursiveButton = recursiveButton.shepherd;
-	this.footer.appendChild(recursiveButton);
 	this.heading.appendChild(recursiveButton);
 	
 	

@@ -133,6 +133,7 @@ animationState.prototype.setName = function(name) {
 }
 
 animationState.prototype.destroy = function() {
+	if(!this.element.parentNode) { return; }
 	var siblings = this.element.parentNode.children;
 	for(var i = 0; i < siblings.length; i++) { 
 		if(siblings[i].shepherd.number > this.number) {

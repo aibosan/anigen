@@ -39,6 +39,27 @@ windowAnimation.prototype.seed = function() {
 	
 	this.ui = {};
 	
+	
+	var syncButton =
+		new uiButton([ 'sync_disabled', 'sync' ], [
+				'anigenManager.classes.windowAnimation.animation.setUpdate(true);',
+				'anigenManager.classes.windowAnimation.animation.setUpdate(false);'
+			], [
+			'Automatic synchronization disabled',
+			'Synchronized - will update automatically when file is reloaded'
+			]
+		);
+	syncButton.style.float = "right";
+	this.ui.syncButton = syncButton.shepherd;
+	this.heading.appendChild(syncButton);
+	
+	var rebuildButton =
+		new uiButton('refresh', 'anigenManager.classes.windowAnimation.animation.rebuild();', 'Rebuild animation');
+	rebuildButton.style.float = "right";
+	this.ui.rebuildButton = rebuildButton.shepherd;
+	this.heading.appendChild(rebuildButton);
+	
+	
 	var changeAction = '';
 		changeAction += 'if(!anigenManager.classes.windowAnimation.animation || (this.value == 0 && (anigenManager.classes.windowAnimation.ui.keepTimes.checked || anigenManager.classes.windowAnimation.ui.adjustBegins.checked))){return;};';
 		changeAction += 'anim=anigenManager.classes.windowAnimation.animation;'
@@ -191,9 +212,9 @@ windowAnimation.prototype.refreshKeyframes = function(dontEdit) {
 		headings.push("State");
 		headings.push("Intensity");
 		headings.push("Preview");
-		if(!svg.animationStates || !svg.animationStates[this.animation.groupName]) { return; }
+		//if(!svg.animationStates || !svg.animationStates[this.animation.groupName]) { return; }
 		
-		var chil = svg.animationStates[this.animation.groupName];
+		var chil = svg.animationStates[this.animation.groupName] || [];
 		var opt = [];
 		for(var i = 0; i < chil.length; i++) {
 			opt.push({'value': String(i), 'text': String(chil[i].name)});
@@ -363,7 +384,7 @@ windowAnimation.prototype.refreshKeyframes = function(dontEdit) {
 			case 6:		// animated group
 				var preview;
 				if(lastState == null || this.animation.keyframes.getItem(i).intensity == 1) {
-					lastState = svg.animationStates[this.animation.groupName][this.animation.keyframes.getItem(i).value];
+					lastState = (svg.animationStates[this.animation.groupName] || [])[this.animation.keyframes.getItem(i).value];
 					
 //					preview = lastState ? lastState.preview.container.cloneNode(true) : document.createElement('div');
 					if(lastState) {
@@ -598,12 +619,21 @@ windowAnimation.prototype.refresh = function(clearSelection) {
 	
 	var animation = null;
 	
+	this.ui.syncButton.container.addClass('hidden');
 	if(svg.selected.getAttribute('anigen:type') == 'animationGroup') {
+		this.ui.syncButton.container.removeClass('hidden');
 		if(!svg.selected.shepherd) {
 			animation = new animationGroup(svg.selected);
 		} else {
 			animation = svg.selected.shepherd;
 		}
+		
+		if(animation.getAttribute('anigen:sync')) {
+			this.ui.syncButton.setState(1);
+		} else {
+			this.ui.syncButton.setState(0);
+		}
+		
 	} else if(svg.selected.getAttribute('anigen:type') == 'animatedViewbox') {
 		animation = svg.selected.shepherd;
 	} else if(svg.selected.isAnimation()) {

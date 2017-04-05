@@ -265,6 +265,20 @@ SVGElement.prototype.getFingerprint = function(previous) {
 	return ('00000000' + print.toString(16)).slice(-8);
 }
 
+SVGElement.prototype.getStructure = function(exclude) {
+	var out = [ this.nodeName.toLowerCase() ];
+	
+	for(var i = 0; i < this.children.length; i++) {
+		if(typeof this.children[i].getStructure !== 'function') { continue; }
+		if(exclude && typeof exclude === 'function') {
+			if(!exclude(this.children[i])) { continue; }
+		}
+		out = out.concat(this.children[i].getStructure(exclude));
+	}
+	
+	return out;
+}
+
 
 SVGElement.prototype.getLinkList = function(deep, references) {
 	// references flag should be preceeded by clearing references in the SVG tree to be useful

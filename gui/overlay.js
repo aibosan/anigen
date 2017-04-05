@@ -171,7 +171,9 @@ overlay.prototype.macroSettings = function() {
 		[ "Refresh preview when camera is changed",
 			new uiButton(['check_box_outline_blank', 'check_box'], null, ["Disabling can improve performance on some systems", 0], { 'class': 'md-24', 'state': anigenActual.settings.get('previewAutorefresh') })],
 		[ "Automatically refresh selection box",
-			new uiButton(['check_box_outline_blank', 'check_box'], null, ["Disabling can improve performance on some systems", 0], { 'class': 'md-24', 'state': anigenActual.settings.get('selectionboxAutorefresh') })]
+			new uiButton(['check_box_outline_blank', 'check_box'], null, ["Disabling can improve performance on some systems", 0], { 'class': 'md-24', 'state': anigenActual.settings.get('selectionboxAutorefresh') })],
+		[ "Load animation states from entire document",
+			new uiButton(['check_box_outline_blank', 'check_box'], null, ["Loads animation states from the entire document, automatically updating those in documents with new data", 0], { 'class': 'md-24', 'state': anigenActual.settings.get('loadDocumentStates') })]
 			
 	]));
 	

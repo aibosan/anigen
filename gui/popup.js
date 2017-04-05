@@ -1439,10 +1439,10 @@ popup.prototype.macroToAnimationState = function(target, element) {
 		groupNameText = labelOne ? labelOne.getAttribute('inkscape:label') : "New group";
 	} else {
 		if(element.parentNode.children.length == 1) {
-			stateNameText = labelOne ? labelOne.getAttribute('inkscape:label') : element.id;
+			stateNameText = labelOne ? labelOne.getAttribute('inkscape:label') : (element.getAttribute('anigen:name') || element.id);
 			groupNameText = labelTwo ? labelTwo.getAttribute('inkscape:label') : "New group";
 		} else {
-			stateNameText = element.id;
+			stateNameText = (element.getAttribute('anigen:name') || element.id);
 			groupNameText = labelOne ? labelOne.getAttribute('inkscape:label') : "New group";
 		}
 	}

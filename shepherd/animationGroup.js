@@ -8,19 +8,15 @@ function animationGroup(target, numeric, flags, attributes) {
 	if(!target || !((target instanceof animationState) || (target instanceof SVGElement))) { return null; }
 	
 	if(!numeric) {
-		numeric = { dur: '10s', begin: '0s', repeatCount: 'indefinite' }
+		numeric = { 'dur': '10s', 'begin': '0s', 'repeatCount': 'indefinite' }
 	}
 	if(!flags) { flags = {}; }
 	if(!numeric.dur) { numeric.dur = '10s'; }
 	if(!numeric.begin) { numeric.begin = '0s'; }
 	if(!numeric.repeatCount) { numeric.repeatCount = 'indefinite'; }
-	if(!flags.additive) { flags.additive = 'replace'; }
-	if(!flags.accumulate) { flags.accumulate = 'none'; }
-	if(!flags.fill) { flags.fill = 'remove'; }
 	if(!flags.calcMode) { flags.calcMode = 'spline'; }
 	
 	this.type = 7;
-	this.calcMode = flags.calcMode;
 	this.timelineObject = null;
 	
 	if(target instanceof animationState) {
@@ -56,6 +52,7 @@ function animationGroup(target, numeric, flags, attributes) {
 		this.additive = flags.additive;
 		this.accumulate = flags.accumulate;
 		this.fill = flags.fill;
+		this.calcMode = flags.calcMode;
 		
 		this.times = [ 0, 1 ];
 		this.splines = [ new spline("0 0 1 1") ];
@@ -64,23 +61,23 @@ function animationGroup(target, numeric, flags, attributes) {
 		this.element.removeAttribute('anigen:name');
 		this.element.removeAttribute('anigen:number');
 		this.element.setAttribute('anigen:type', "animationGroup");
-		this.element.setAttribute('anigen:keytimes', "0;1");
-		this.element.setAttribute('anigen:keysplines', "0 0 1 1");
-		this.element.setAttribute('anigen:values', target.number+";"+target.number);
+		this.element.setAttribute('anigen:keytimes', numeric.keytimes || "0;1");
+		this.element.setAttribute('anigen:keysplines', numeric.keysplines || "0 0 1 1");
+		this.element.setAttribute('anigen:values', numeric.values || (target.number+";"+target.number));
+		this.element.setAttribute('anigen:intensity', numeric.intensity || "1;1");
 		this.element.setAttribute('anigen:begin', this.beginList.join(';'));
 		this.element.setAttribute('anigen:dur', this.dur);
 		this.element.setAttribute('anigen:repeatcount', numeric.repeatCount);
 		this.element.setAttribute('anigen:calcmode', this.calcMode);
-		this.element.setAttribute('anigen:additive', this.additive);
-		this.element.setAttribute('anigen:accumulate', this.accumulate);
-		this.element.setAttribute('anigen:fill', this.fill);
+		this.element.setAttribute('anigen:additive', this.additive ? 'sum' : 'replace');
+		this.element.setAttribute('anigen:accumulate', this.accumulate ? 'sum' : 'none');
+		this.element.setAttribute('anigen:fill', this.fill ? 'freeze' : 'replace');
 		this.element.generateId(true);
 		
 		if(attributes) {
 			for(var i = 0; i < attributes.length; i++) {
 				this.animate(attributes[i], true);
 			}
-			
 			this.commit(true);
 		}
 		
@@ -161,9 +158,6 @@ animationGroup.prototype.animate = function(attribute, noCommit) {
 	
 	if(!noCommit) {
 		this.commit(true);
-		// no longer necessary, since the animations are hidden anyway
-		//window.dispatchEvent(new Event("treeSeed"));
-		//svg.select();
 	}
 }
 
@@ -178,6 +172,112 @@ animationGroup.prototype.unanimate = function(attribute) {
 	svg.select();
 }
 
+
+animationGroup.prototype.check = function() {
+	if(svg.animationStates[this.groupName] && svg.animationStates[this.groupName][0]) {
+		var thisStructure = this.element.getStructure(
+			function(target) { if(target instanceof SVGAnimateElement || target.getAttribute('anigen:insensitive')) { return false; } return true; }
+		).join('');
+		var thatStructure = svg.animationStates[this.groupName][0].element.getStructure(
+			function(target) { if(target instanceof SVGAnimateElement || target.getAttribute('anigen:insensitive')) { return false; } return true; }
+		).join('');
+		return (thisStructure == thatStructure);
+	}
+	return false;
+}
+
+animationGroup.prototype.rebuild = function(noHistory) {
+	if(!svg.animationStates[this.groupName] || !svg.animationStates[this.groupName][0]) { return; }
+	
+	var attrs = [];
+	for(var i in this.animations) {
+		attrs.push(i);
+	}
+	
+	var pretender = new animationGroup(svg.animationStates[this.groupName][0], 
+		{ 	'dur': this.element.getAttribute('anigen:dur'),
+			'begin': this.element.getAttribute('anigen:begin'),
+			'repeatCount': this.element.getAttribute('anigen:repeatcount'),
+			'values': this.element.getAttribute('anigen:values'),
+			'intensity': this.element.getAttribute('anigen:intensity'),
+			'keysplines': this.element.getAttribute('anigen:keysplines'),
+			'keytimes': this.element.getAttribute('anigen:keytimes')
+		}, {
+			'additive': this.element.getAttribute('anigen:additive') == 'sum',
+			'accumulate': this.element.getAttribute('anigen:accumulate') == 'sum',
+			'fill': this.element.getAttribute('anigen:fill') == 'freeze',
+			'calcMode': this.element.getAttribute('anigen:calcmode')
+		}, attrs
+	);
+	
+	if(!pretender) { return; }
+	
+	for(var i in this.animations) {
+		this.unanimate(i);
+	}
+	
+	var otherAnimations = this.element.getElementsByTagName('animate', true, true);
+	
+	var relativePaths = [];
+	for(var i = 0; i < otherAnimations.length; i++) {
+		var path = [];
+		var current = otherAnimations[i];
+		do {
+			var candidates = current.parentNode.getElementsByTagName(current.nodeName.toLowerCase());
+			
+			path.push({ 'nodeName': current.nodeName.toLowerCase(), 'index': candidates.indexOf(current)});
+			current = current.parentNode;
+		} while(current != this.element);
+		path.reverse();
+		relativePaths.push({'element': otherAnimations[i], 'position': path.splice(-1)[0]['index'], 'path': path });
+	}
+	
+	for(var i = 0; i < relativePaths.length; i++) {
+		var current = pretender.element;
+		for(var j = 0; j < relativePaths[i].path.length; j++) {
+			var candidates = current.getElementsByTagName(relativePaths[i].path[j].nodeName);
+			if(candidates[relativePaths[i].path[j].index]) {
+				current = candidates[relativePaths[i].path[j].index];
+			} else {
+				break;
+			}
+		}
+		if(current.children[relativePaths[i].position]) {
+			current.insertBefore(relativePaths[i].element, current.children[relativePaths[i].position]);
+		} else {
+			current.appendChild(relativePaths[i].element);
+		}
+	}
+	
+	pretender.element.setAttribute('id', this.element.getAttribute('id'));
+	pretender.element.setAttribute('transform', this.element.getAttribute('transform'));
+	if(this.element.getAttribute('anigen:sync')) {
+		pretender.element.setAttribute('anigen:sync', 'true');
+	}
+		
+	var par = this.element.parentNode;
+	var nex = this.element.nextElementSibling;
+	
+	this.element.parentNode.removeChild(this.element);
+	
+	if(!noHistory || !svg || !svg.history) {
+		svg.history.add(new historyCreation(
+			this.element.cloneNode(true), par.getAttribute('id'), nex ? nex.getAttribute('id') : null, true, true));
+		svg.history.add(new historyCreation(
+			pretender.element.cloneNode(true), par.getAttribute('id'), nex ? nex.getAttribute('id') : null, false, true));
+	}
+	
+	if(nex) {
+		par.insertBefore(pretender.element, nex);
+	} else {
+		par.appendChild(pretender);
+	}
+	
+	window.dispatchEvent(new Event('treeSeed'));
+	window.dispatchEvent(new Event('rootSelect'));
+	
+	return pretender;
+}
 
 animationGroup.prototype.commit = function(noHistory, noWipe) {
 	if(noHistory && !noWipe) { this.wipe(); }
@@ -261,13 +361,6 @@ animationGroup.prototype.commit = function(noHistory, noWipe) {
 		if(!grp) { return false;};
 		this.getKeyframes();
 		
-		/*
-		var firstState;
-		if(this.keyframes.length >= 1) {
-			firstState = grp[this.keyframes.getItem(0).value];
-		}
-		*/
-		
 		for(var i in this.animations) {		// for all groups of animations attributes animated
 			for(var j = 0; j < this.animations[i].length; j++) { // for each animation itself
 				var lastValue = null;
@@ -277,17 +370,6 @@ animationGroup.prototype.commit = function(noHistory, noWipe) {
 				var childIndex = this.animations[i][j].getAttribute('anigen:childindex');
 				if(!childIndex) { continue; }
 				childIndex = parseInt(childIndex);
-				
-				// overwrite initial values to reflect those of first keyframe
-				/*
-				if(firstState) {
-					if(this.animations[i][j].parentNode.style.hasNativeProperty(i)) {
-						this.animations[i][j].parentNode.style[i] = firstState.children[childIndex].style[i];
-					} else {
-						this.animations[i][j].parentNode.setAttribute(i, firstState.children[childIndex].getAttribute(i));
-					}
-				}
-				*/
 				
 				var lastChange = null;
 				for(k = 0; k < this.keyframes.length; k++) { // for each keyFrame
@@ -346,7 +428,7 @@ animationGroup.prototype.commit = function(noHistory, noWipe) {
 		count++;
 	}
 	
-	if(noHistory || (newRepeatCount != this.getAttribute('anigen:repeatcount') && newRepeatCount.length != 0 && this.getAttribute('anigen:repeatcount'))) {
+	if(noHistory || (newRepeatCount != this.getAttribute('anigen:repeatcount') && newRepeatCount.length != 0)) {
 		histFrom['anigen:repeatcount'] = this.getAttribute('anigen:repeatcount');
 		histTo['anigen:repeatcount'] = newRepeatCount;
 		this.setAttribute('anigen:repeatcount', newRepeatCount);
@@ -357,7 +439,7 @@ animationGroup.prototype.commit = function(noHistory, noWipe) {
 		}
 		count++;
 	}
-	if(noHistory || (newCalcMode != this.getAttribute('anigen:calcmode') && newCalcMode.length != 0 && this.getAttribute('anigen:calcmode'))) {
+	if(noHistory || (newCalcMode != this.getAttribute('anigen:calcmode') && newCalcMode.length != 0)) {
 		histFrom['anigen:calcmode'] = this.getAttribute('anigen:calcmode');
 		histTo['anigen:calcmode'] = newCalcMode;
 		this.setAttribute('anigen:calcmode', newCalcMode);
@@ -368,7 +450,7 @@ animationGroup.prototype.commit = function(noHistory, noWipe) {
 		}
 		count++;
 	}
-	if(noHistory || (newFill != this.getAttribute('anigen:fill') && newFill.length != 0 && this.getAttribute('anigen:fill'))) {
+	if(noHistory || (newFill != this.getAttribute('anigen:fill') && newFill.length != 0)) {
 		histFrom['anigen:fill'] = this.getAttribute('anigen:fill');
 		histTo['anigen:fill'] = newFill;
 		this.setAttribute('anigen:fill', newFill);
@@ -379,7 +461,7 @@ animationGroup.prototype.commit = function(noHistory, noWipe) {
 		}
 		count++;
 	}
-	if(noHistory || (newAdditive != this.getAttribute('anigen:additive') && newAdditive.length != 0 && this.getAttribute('anigen:additive'))) {
+	if(noHistory || (newAdditive != this.getAttribute('anigen:additive') && newAdditive.length != 0)) {
 		histFrom['anigen:additive'] = this.getAttribute('anigen:additive');
 		histTo['anigen:additive'] = newAdditive;
 		this.setAttribute('anigen:additive', newAdditive);
@@ -390,7 +472,7 @@ animationGroup.prototype.commit = function(noHistory, noWipe) {
 		}
 		count++;
 	}
-	if(noHistory || (newAccumulate != this.getAttribute('anigen:accumulate') && newAccumulate.length != 0 && this.getAttribute('anigen:accumulate'))) {
+	if(noHistory || (newAccumulate != this.getAttribute('anigen:accumulate') && newAccumulate.length != 0)) {
 		histFrom['anigen:accumulate'] = this.getAttribute('anigen:accumulate');
 		histTo['anigen:accumulate'] = newAccumulate;
 		this.setAttribute('anigen:accumulate', newAccumulate);
@@ -422,13 +504,6 @@ animationGroup.prototype.commit = function(noHistory, noWipe) {
 				}
 			}
 		}
-		
-		// not necessary since animations are hidden, and the actual element doesn't get pulled out and reinserted
-		/*
-		window.dispatchEvent(new Event("treeSeed"));
-		anigenManager.classes.tree.select(svg.selected);
-		svg.select();
-		*/
 		
 		count++;
 	}
@@ -519,6 +594,14 @@ animationGroup.prototype.inbetween = function(one, two, ratio) {
 			
 	} catch(err) {
 		throw err;
+	}
+}
+
+animationGroup.prototype.setUpdate = function(boo) {
+	if(boo) {
+		this.setAttribute('anigen:sync', 'true');
+	} else {
+		this.removeAttribute('anigen:sync');
 	}
 }
 

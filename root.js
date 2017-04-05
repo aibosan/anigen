@@ -478,6 +478,8 @@ root.prototype.evaluateEditOverlay = function(tableAttr, tableCSS) {
 	var attrFrom = {};
 	var attrTo = {};
 	
+	var idChanged = false;
+	
 	for(var i = 0; i < tableAttr.children.length; i++) {
 		if(tableAttr.children[i].children[0].nodeName.toLowerCase() == 'th') { continue; }
 		
@@ -494,6 +496,7 @@ root.prototype.evaluateEditOverlay = function(tableAttr, tableCSS) {
 			} else {
 				if(aName == 'id') {
 					this.changeId(this.selected, aValue, true);
+					idChanged = true;
 				} else {
 					attrFrom[aName] = this.selected.getAttribute(aName);
 					this.selected.setAttribute(aName, aValue);
@@ -543,6 +546,10 @@ root.prototype.evaluateEditOverlay = function(tableAttr, tableCSS) {
 	
 	if(this.selected.shepherd && typeof this.selected.shepherd.rebuild === 'function') {
 		this.selected.shepherd.rebuild();
+	}
+	
+	if(idChanged) {
+		window.dispatchEvent(new Event("treeSeed"));
 	}
 	this.select();
 }
@@ -1236,19 +1243,66 @@ root.prototype.seek = function(offset) {
 	this.gotoTime(this.svgElement.getCurrentTime() + offset);
 }
 
-root.prototype.rebuildAnimationStates = function(target) {
+root.prototype.rebuildAnimationStates = function(target, inDefs, enforce) {
 	if(target == this.defs) {
-		this.animationStates = null;
+		this.animationStates = {};
+		this.reservedStates = {};
 	}
 	if(target instanceof SVGGElement) {
-		if(target.getAttribute('anigen:type') == 'animationState') {
-			new animationState(target);
+		if(target.getAttribute('anigen:type') == 'animationState' || enforce) {
+			if(inDefs) {
+				this.reservedStates[new animationState(target).group] = true;
+				return;
+			} else {
+				var groupName;
+				var stateName;
+				
+				if(target.getAttribute('inkscape:groupmode') == 'layer') {
+					// is layer: go down a level with "enforce" flag
+					enforce = true;
+				} else {
+					// is not a layer (it's the state itself)
+					if(target.parentNode.getAttribute('inkscape:groupmode') == 'layer') {
+						// has layer parent
+						if(target.parentNode.parentNode.getAttribute('inkscape:groupmode') == 'layer') {
+							// that layer parent also has layer parent
+							//	-> groupName = parent.parent.name || parent.parent.id
+							//  -> stateName = parent.name || parent.id
+							groupName = target.parentNode.parentNode.getAttribute('inkscape:label') || target.parentNode.parentNode.getAttribute('id');
+							stateName = target.parentNode.getAttribute('inkscape:label') || target.parentNode.getAttribute('id');
+						} else {
+							// doesn't have further layer parent
+							//  -> groupName = parent.name || parent.id
+							//	-> stateName = target.name || target.id
+							groupName = target.parentNode.getAttribute('inkscape:label') || target.parentNode.getAttribute('id');
+							stateName = target.getAttribute('anigen:name') || target.getAttribute('inkscape:label') || target.getAttribute('id');
+						}
+					} else {
+						// doesn't have layer parent
+						// -> groupName = target.groupName || target.parentNode.id
+						// -> stateName = target.name || target.id
+						groupName = target.parentNode.getAttribute('anigen:name') || target.getAttribute('anigen:group') || target.parentNode.getAttribute('id');
+						stateName = target.getAttribute('anigen:name') || target.getAttribute('inkscape:label') || target.getAttribute('id');
+					}
+					
+					if(this.reservedStates[groupName] && this.animationStates[groupName]) {
+						console.log(this.animationStates[groupName]);
+						for(var i = 0; this.animationStates[groupName] && i < this.animationStates[groupName].length; i++) {
+							this.animationStates[groupName][i].destroy();
+						}
+						delete this.animationStates[groupName];
+						delete this.reservedStates[groupName];
+					}
+					new animationState(target, stateName, groupName);
+					return;
+				}
+			}
 		}
 	}
 	
 	if(target.children) {
 		for(var i = 0; i < target.children.length; i++) {
-			this.rebuildAnimationStates(target.children[i]);
+			this.rebuildAnimationStates(target.children[i], inDefs || target == this.defs, enforce);
 		}
 	}
 }
@@ -1298,12 +1352,12 @@ root.prototype.transferIn = function() {
 	if(this.namedView.getAttribute('inkscape:cx') != null) { this.posX = parseFloat(this.namedView.getAttribute('inkscape:cx')); }
 	if(this.namedView.getAttribute('inkscape:cy') != null) { this.posY = -1*parseFloat(this.namedView.getAttribute('inkscape:cy')); }
 	if(this.namedView.getAttribute('inkscape:zoom') != null) { this.zoom = parseFloat(this.namedView.getAttribute('inkscape:zoom')); }
-
+	
 	this.svgElement.setAttribute("preserveAspectRatio", "xMidYMid");
-
+	
 	this.svgElement.setAttribute("width", "100%");
 	this.svgElement.setAttribute("height", "100%");
-
+	
 	for(var i = 0; i < this.svgElement.children.length; i++) {
 		if(this.svgElement.children[i] instanceof SVGAnimateElement &&
 			this.svgElement.children[i].getAttribute('attributeName') == 'viewBox') {
@@ -1652,7 +1706,17 @@ root.prototype.fileIn = function(fileElement, filename, isNew) {
 		this.svgElement.setCurrentTime(0);
 		anigenManager.classes.editor.refreshPause();
 		
-		this.rebuildAnimationStates(this.defs);
+		this.rebuildAnimationStates(
+			anigenActual.settings.get('loadDocumentStates') ? this.svgElement : this.defs
+		);
+		
+		var updatable = this.svgElement.getElementsByAttribute('anigen:sync', 'true', true);
+		for(var i = 0; i < updatable.length; i++) {
+			if(updatable[i].getAttribute('anigen:type') == 'animationGroup') {
+				var grp = new animationGroup(updatable[i]);
+					grp.rebuild(true);
+			}
+		}
 		
 		this.history.clear();
 		

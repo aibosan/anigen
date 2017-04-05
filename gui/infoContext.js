@@ -185,8 +185,7 @@ infoContext.prototype.refreshButtons = function() {
 				this.toolButtons.element.toPath.enable();
 			}
 		case 1:		// group selection
-		
-			if(svg.selected instanceof SVGSVGElement || !svg.selected.isVisualElement()) {
+			if(svg.selected instanceof SVGSVGElement) {
 				for(var i in this.toolButtons.group) {
 					this.toolButtons.group[i].disable();
 				}
@@ -194,6 +193,14 @@ infoContext.prototype.refreshButtons = function() {
 				for(var i in this.toolButtons.group) {
 					this.toolButtons.group[i].enable();
 				}
+				
+				if(!svg.selected.isVisualElement()) {
+					this.toolButtons.group.rotateLeft.disable();
+					this.toolButtons.group.rotateRight.disable();
+					this.toolButtons.group.flipH.disable();
+					this.toolButtons.group.flipV.disable();
+				}
+				
 				var viable = typeof target.parentNode.getViableChildren === 'function' ? target.parentNode.getViableChildren() : [];
 				var i = viable.indexOf(target);
 				if(i == 0) {
