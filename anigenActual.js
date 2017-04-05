@@ -108,6 +108,8 @@ anigenActual.prototype.eventKeyDown = function(event) {
 	
 	if(event.key == 'F5' && (event.ctrlKey || event.altKey || event.shiftKey)) {		// F5
 		location.reload();
+		event.preventDefault ? event.preventDefault() : event.returnValue = false;
+		event.stopPropagation ? event.stopPropagation() : event.cancelBubble = true;
 		return;
 	}
 	
