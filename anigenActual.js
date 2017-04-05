@@ -27,7 +27,9 @@ function anigenActual() {
 		new toolGroup(),
 		new toolElement(),
 		new toolZoom(),
-		new toolPicker()
+		new toolPicker(),
+		new toolRectangle(),
+		new toolEllipse()
 	];
 	
 	this.settings = new settings();
@@ -102,17 +104,18 @@ anigenActual.prototype.eventNavigation = function(event) {
 
 // keyboard event handler
 anigenActual.prototype.eventKeyDown = function(event) {
+	if(event.key == 'F12') { return true; }		// F12
 	
-	if(event.keyCode == 116) {		// F5
-		//event.preventDefault ? event.preventDefault() : event.returnValue = false;
+	event.preventDefault ? event.preventDefault() : event.returnValue = false;
+	event.stopPropagation ? event.stopPropagation() : event.cancelBubble = true;
+	
+	if(event.key == 'F5' && (event.ctrlKey || event.altKey || event.shiftKey)) {		// F5
+		location.reload();
 		return;
 	}
 	
-	if(event.keyCode == 123) { return true; }		// F12
-	
 	// prevents keystrokes on exporting
 	if(!svg.svgElement || anigenActual.exporting) {
-		event.preventDefault ? event.preventDefault() : event.returnValue = false;
 		return false;
 	}
 	
@@ -139,20 +142,16 @@ anigenActual.prototype.eventKeyDown = function(event) {
 	
 	// current tool's key handler is fired first
 	if(!anigenActual.tools[anigenActual.tool].keyDown(event)) {
-		event.preventDefault ? event.preventDefault() : event.returnValue = false;
 		return false;
 	}
 	
 	// if window is focused (hovered over) and its KeyDown event handler exists, passes event on
 	if(anigenActual.focused && anigenActual.focused.shepherd && typeof anigenActual.focused.shepherd.eventKeyDown === 'function') {
 		if(anigenActual.focused.shepherd.eventKeyDown(event)) {
-			event.preventDefault ? event.preventDefault() : event.returnValue = false;
-			return;
+			return false;
 		}
 	}
-	
-	var response = true;		// the event should be passed to the browser
-	
+		
 	switch(event.key) {
 		case 'Enter':		// enter (return) key
 			if(svg.svgElement != null) {
@@ -176,7 +175,6 @@ anigenActual.prototype.eventKeyDown = function(event) {
 		case ' ':		// spacebar
 			if(event.target != document.body) { return; }
 			svg.pauseToggle();
-			response = false;
 			break;
 		case 'Escape':		// escape
 			if(svg.svgElement != null) {
@@ -187,7 +185,6 @@ anigenActual.prototype.eventKeyDown = function(event) {
 				}
 				overlay.hide();
 			}
-			response = false;
 			break;
 		case 'PageUp':		// page up
 			if((svg.selected == anigenManager.classes.windowAnimation.animation || svg.selected.shepherd && svg.selected.shepherd == anigenManager.classes.windowAnimation.animation) &&
@@ -262,7 +259,6 @@ anigenActual.prototype.eventKeyDown = function(event) {
 			}
 			if(event.altKey && !event.ctrlKey) {
 				svg.select(svg.selected.getViablePreviousSibling());
-				response = false;
 			}
 			if(!event.altKey && !event.ctrlKey) {
 				if(svg.selected && !(svg.selected instanceof SVGSVGElement)) {
@@ -274,7 +270,6 @@ anigenActual.prototype.eventKeyDown = function(event) {
 		case 'ArrowUp':		// up arrow key
 			if(event.altKey) {
 				svg.select(svg.selected.getViableParent());
-				response = false;
 			}
 			if(!event.altKey && !event.ctrlKey) {
 				if(svg.selected && !(svg.selected instanceof SVGSVGElement)) {
@@ -295,7 +290,6 @@ anigenActual.prototype.eventKeyDown = function(event) {
 			}
 			if(event.altKey && !event.ctrlKey) {
 				svg.select(svg.selected.getViableNextSibling());
-				response = false;
 			}
 			if(!event.altKey && !event.ctrlKey) {
 				if(svg.selected && !(svg.selected instanceof SVGSVGElement)) {
@@ -315,7 +309,6 @@ anigenActual.prototype.eventKeyDown = function(event) {
 				}
 			} else if(event.altKey && svg.selected.getViableChildren().length > 0) {
 				svg.select(svg.selected.getViableChildren()[0]);
-				response = false;
 			} else if(!event.altKey && !event.ctrlKey) {
 				if(svg.selected && !(svg.selected instanceof SVGSVGElement)) {
 					svg.selected.translateBy(0, 1, true);
@@ -330,7 +323,6 @@ anigenActual.prototype.eventKeyDown = function(event) {
 			} else {
 				svg.delete(svg.selected);
 			}
-			response = false;
 			break;
 		case 'a':		// a
 		case 'A':
@@ -349,7 +341,6 @@ anigenActual.prototype.eventKeyDown = function(event) {
 		case 'C':
 			if(event.ctrlKey) {
 				svg.copy(svg.selected);
-				response = false;
 			}
 			break;
 		case 'd':		// d
@@ -371,7 +362,6 @@ anigenActual.prototype.eventKeyDown = function(event) {
 		case 'E':
 			if(event.ctrlKey && event.shiftKey) {
 				overlay.macroExport();
-				response = false;
 			} else {
 				var ratio = svg.svgElement.animationsPaused() ? 1 : 10;
 				if(event.shiftKey) {
@@ -387,7 +377,6 @@ anigenActual.prototype.eventKeyDown = function(event) {
 		case 'F':
 			if(event.ctrlKey) {
 				popup.macroReplace();
-				response = false;
 			}
 			break;
 		case 'g':		// g
@@ -400,7 +389,6 @@ anigenActual.prototype.eventKeyDown = function(event) {
 		case 'K':
 			if(event.ctrlKey && event.shiftKey) {
 				anigenManager.classes.context.buttons.animate.click();
-				response = false;
 			}
 			break;
 		case 'l':		// l
@@ -445,7 +433,6 @@ anigenActual.prototype.eventKeyDown = function(event) {
 				if(svg.selected instanceof SVGAnimationElement || (svg.selected.shepherd && svg.selected.shepherd instanceof animationGroup)) {
 					popup.macroSetCurrentValue();
 				}
-				response = false;
 			}
 			break;
 		case 's':		// s
@@ -458,7 +445,6 @@ anigenActual.prototype.eventKeyDown = function(event) {
 				} else {
 					svg.save(true);
 				}
-				response = false;
 			}
 			break;
 		case 't':    	// t
@@ -479,7 +465,6 @@ anigenActual.prototype.eventKeyDown = function(event) {
 				}
 				var evaluated = svg.evaluateEventPosition(anigenActual.lastEvent);
 				svg.paste((event.altKey ? null : evaluated), svg.selected);
-				response = false;
 			}
 			break;
 		case 'w':
@@ -539,18 +524,15 @@ anigenActual.prototype.eventKeyDown = function(event) {
 			if((event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) && !event.target.isChildOf(document.getElementById('layout_layout_panel_left'))) { return; }
 			if(event.ctrlKey && !event.shiftKey && svg.selected != svg.svgElement) {
 				svg.cut(svg.selected);
-				response = false;
 			}
-			if(event.ctrlKey && event.shiftKey) 
-				anigenManager.classes.context.buttons.tree.click();{
-				response = false;
+			if(event.ctrlKey && event.shiftKey) {
+				anigenManager.classes.context.buttons.tree.click();
 			}
 			break;
 		case 'y':		// y (history forward)
 		case 'Y':
 			if(event.ctrlKey) {
 				svg.history.redo();
-				response = false;
 			}
 			break;
 		case 'z':		// z (history back, history forward)
@@ -561,14 +543,12 @@ anigenActual.prototype.eventKeyDown = function(event) {
 				} else {
 					svg.history.undo();
 				}
-				response = false;
 			}
 			break; 
 		case '-':		// minus
 			if(event.ctrlKey) {
 				var evaluated = svg.evaluateEventPosition();
 				svg.zoomAround(evaluated.x, evaluated.y, false);
-				response = false;
 			} else {
 				var ratio = svg.svgElement.animationsPaused() ? 1 : 10;
 				if(event.shiftKey) {
@@ -584,7 +564,6 @@ anigenActual.prototype.eventKeyDown = function(event) {
 			if(event.ctrlKey) {
 				var evaluated = svg.evaluateEventPosition();
 				svg.zoomAround(evaluated.x, evaluated.y, true);
-				response = false;
 			} else {
 				var ratio = svg.svgElement.animationsPaused() ? 1 : 10;
 				if(event.shiftKey) {
@@ -598,40 +577,29 @@ anigenActual.prototype.eventKeyDown = function(event) {
 			break;
 		case 'F1':		// F1
 			anigenActual.setTool(1);
-			response = false;
 			break;
 		case 'F2':		// F2
 			anigenActual.setTool(2);
-			response = false;
 			break;
 		case 'F3':		// F3
 			anigenActual.setTool(3);
-			response = false;
-			break;		
-		case 'F5':		// F5
-			response = false;
-			break;
-		case 'F6':		//	F6
-			response = false;
 			break;
 		case 'F4':		//	F4
+			anigenActual.setTool(5);
+			break;
+		case 'F5':		//	F5
+			anigenActual.setTool(6);
+			break;
+		case 'F6':		//	F6
+			break;
 		case 'F7':		//	F7
 			anigenActual.setTool(4);
-			response = false;
 			break;
 		default:
-			response = true;
 			break;
 	}
 	
-	response = false;		// I mean, what could go wrong?
-	
-	if(!response) {
-		event.preventDefault ? event.preventDefault() : event.returnValue = false;
-		event.stopPropagation ? event.stopPropagation() : event.cancelBubble = true;
-		return false;
-	}
-	return true;
+	return false;
 }
 
 anigenActual.prototype.eventKeyUp = function(event) {
@@ -673,6 +641,16 @@ anigenActual.prototype.setTool = function(index, noSet) {
 			this.tool = 4;	// picker
 			if(!noSet) { anigenManager.classes.context.buttons.pickerTool.setState(1); }
 			anigenManager.setCursor('url(_cursors/picker.png) 5 5');
+			break;
+		case 5:
+			this.tool = 5;	// rectangle
+			if(!noSet) { anigenManager.classes.context.buttons.rectTool.setState(1); }
+			anigenManager.setCursor('url(_cursors/rectangle.png) 5 5');
+			break;
+		case 6:
+			this.tool = 6;	// ellipse
+			if(!noSet) { anigenManager.classes.context.buttons.ellipseTool.setState(1); }
+			anigenManager.setCursor('url(_cursors/ellipse.png) 5 5');
 			break;
 	}
 	svg.select();

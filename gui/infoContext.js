@@ -16,6 +16,9 @@ infoContext.prototype.seed = function() {
 	this.buttons.elementTool = new uiButton('edit', 'anigenActual.setTool(2, true);', 'Element selection (F2)', { 'state': anigenActual.tool == 2 ? 1 : 0, 'radio': true, 'toggle': true, 'class': 'flip-v floatLeft' }).shepherd;
 	this.buttons.zoomTool = new uiButton('search', 'anigenActual.setTool(3, true);', 'Zoom (F3)', { 'state': anigenActual.tool == 3 ? 1 : 0, 'radio': true, 'toggle': true, 'class': 'floatLeft' }).shepherd;
 	this.buttons.pickerTool = new uiButton('colorize', 'anigenActual.setTool(4, true);', 'Attribute picker (F7)', { 'state': anigenActual.tool == 4 ? 1 : 0, 'radio': true, 'toggle': true, 'class': 'flip-v floatLeft' }).shepherd;
+
+	this.buttons.rectTool = new uiButton('crop_din', 'anigenActual.setTool(5, true);', 'Rectangle (F4)', { 'state': anigenActual.tool == 5 ? 1 : 0, 'radio': true, 'toggle': true, 'class': 'floatLeft' }).shepherd;
+	this.buttons.ellipseTool = new uiButton('panorama_fish_eye', 'anigenActual.setTool(6, true);', 'Ellipse (F5)', { 'state': anigenActual.tool == 5 ? 1 : 0, 'radio': true, 'toggle': true, 'class': 'floatLeft' }).shepherd;
 	
 	this.buttons.animate = new uiButton('power_settings_new', 'popup.macroAnimateMenu(anigenManager.classes.context.buttons.animate.container);', 'Animate element...', { 'toggle': true, 'class': 'floatLeft turn-90' }).shepherd;
 	this.buttons.edit = new uiButton('reorder', 'overlay.macroEdit(svg.selected);', 'Edit attributes', { 'class': 'floatLeft' }).shepherd;
@@ -41,13 +44,11 @@ infoContext.prototype.seed = function() {
 	this.toolGroups[4] = document.createElement('div');
 	
 	this.toolButtons = {};
-	/*
 	this.toolButtons.element = {};
 	this.toolButtons.element.toPath = new uiButton('gesture', 'svg.toPath(svg.selected);', 'Convert selected element to paths', { 'class': 'floatLeft' }).shepherd;
 	
 	this.toolGroups[2].appendChild(new uiBreak('floatLeft'));
 	this.toolGroups[2].appendChild(this.toolButtons.element.toPath.container);
-	*/
 	
 	this.toolButtons.group = {};
 	
@@ -99,14 +100,22 @@ infoContext.prototype.seed = function() {
 	this.buttons.groupTool.setRadioChain(this.buttons.elementTool);
 	this.buttons.elementTool.setRadioChain(this.buttons.zoomTool);
 	this.buttons.zoomTool.setRadioChain(this.buttons.pickerTool);
-	this.buttons.pickerTool.setRadioChain(this.buttons.groupTool);
+	this.buttons.pickerTool.setRadioChain(this.buttons.rectTool);
+	
+	this.buttons.rectTool.setRadioChain(this.buttons.ellipseTool);
+	this.buttons.ellipseTool.setRadioChain(this.buttons.groupTool);
 	
 	
 	// container fill
 	this.container.appendChild(this.buttons.groupTool.container);
 	this.container.appendChild(this.buttons.elementTool.container);
 	this.container.appendChild(this.buttons.zoomTool.container);
+	
+	this.container.appendChild(this.buttons.rectTool.container);
+	this.container.appendChild(this.buttons.ellipseTool.container);
+	
 	this.container.appendChild(this.buttons.pickerTool.container);
+	
 	this.container.appendChild(new uiBreak('floatLeft'));
 	this.container.appendChild(this.buttons.animate.container);
 	this.container.appendChild(this.buttons.edit.container);
@@ -170,13 +179,11 @@ infoContext.prototype.refreshButtons = function() {
 		case 0:		// anchor tool (not selectable)
 			break;
 		case 2:		// element selection
-		/*
 			if(typeof svg.selected.toPath !== 'function' || svg.selected instanceof SVGSVGElement || svg.selected instanceof SVGDefsElement) {
 				this.toolButtons.element.toPath.disable();
 			} else {
 				this.toolButtons.element.toPath.enable();
 			}
-		*/
 		case 1:		// group selection
 		
 			if(svg.selected instanceof SVGSVGElement || !svg.selected.isVisualElement()) {
