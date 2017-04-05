@@ -106,9 +106,6 @@ anigenActual.prototype.eventNavigation = function(event) {
 anigenActual.prototype.eventKeyDown = function(event) {
 	if(event.key == 'F12') { return true; }		// F12
 	
-	event.preventDefault ? event.preventDefault() : event.returnValue = false;
-	event.stopPropagation ? event.stopPropagation() : event.cancelBubble = true;
-	
 	if(event.key == 'F5' && (event.ctrlKey || event.altKey || event.shiftKey)) {		// F5
 		location.reload();
 		return;
@@ -116,6 +113,8 @@ anigenActual.prototype.eventKeyDown = function(event) {
 	
 	// prevents keystrokes on exporting
 	if(!svg.svgElement || anigenActual.exporting) {
+		event.preventDefault ? event.preventDefault() : event.returnValue = false;
+		event.stopPropagation ? event.stopPropagation() : event.cancelBubble = true;
 		return false;
 	}
 	
@@ -130,6 +129,9 @@ anigenActual.prototype.eventKeyDown = function(event) {
 			return;
 		}
 	}
+	
+	event.preventDefault ? event.preventDefault() : event.returnValue = false;
+	event.stopPropagation ? event.stopPropagation() : event.cancelBubble = true;
 	
 	// hides/shows selction box pivot
 	if(event.shiftKey && svg.ui.selectionBox.origin) {
