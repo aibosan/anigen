@@ -26,7 +26,7 @@ historyParentage.prototype.undo = function() {
 		}
 		return false;
 	}
-	if(siblingIds[0]) {
+	if(this.siblingIds[0]) {
 		var sibling = document.getElementById(this.siblingIds[0]);
 		if(!sibling) {
 			log.error('<span class="tab"></span>Failed to move element <strong>'+this.targetId+'</strong>:', 1);
@@ -55,7 +55,7 @@ historyParentage.prototype.redo = function() {
 		}
 		return false;
 	}
-	if(siblingIds[1]) {
+	if(this.siblingIds[1]) {
 		var sibling = document.getElementById(this.siblingIds[1]);
 		if(!sibling) {
 			log.error('<span class="tab"></span>Failed to move element <strong>'+this.targetId+'</strong>:', 1);
