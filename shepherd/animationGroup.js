@@ -497,6 +497,7 @@ animationGroup.prototype.commit = function(noHistory, noWipe) {
 				var nex = this.animations[i][j].nextElementSibling;
 				var par = this.animations[i][j].parentNode;
 				par.removeChild(this.animations[i][j]);
+				this.animations[i][j] = this.animations[i][j].cloneNode(true);
 				
 				if(nex) {
 					par.insertBefore(this.animations[i][j], nex);
