@@ -798,7 +798,7 @@ SVGAnimationElement.prototype.pasteTiming = function(donor) {
 //	this.setAdditive(donor.getAdditive());
 	this.setFill(donor.getFill());
 	
-	this.commit();
+//	return this.commit();
 }
 
 // returns current value this animation imposes upon its parent
