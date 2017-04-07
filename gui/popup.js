@@ -1214,6 +1214,15 @@ popup.prototype.macroMenuObject = function(target) {
 	tArray.push([ build.icon("power_settings_new", "turn-90"), "Create animated group...", "" ]);
 	tArray.push([ build.icon("settings_applications"), "Manage animation states...", "" ]);
 	
+	if(!(svg.selected instanceof SVGSVGElement)) {
+		tArray.push([ "", "", "" ]);
+		if(svg.selected.getAttribute('anigen:note') == 'true') {
+			tArray.push([ build.icon("bookmark_border"), "Remove note flag", "" ]);
+		} else {
+			tArray.push([ build.icon("bookmark"), "Flag as note", "" ]);
+		}
+	}
+	
 	rAttributes.push({ 'onclick': 'popup.hide();svg.group();' });
 	if(svg.selected instanceof SVGGElement) {
 		rAttributes.push({ 'onclick': 'popup.hide();svg.ungroup();' });
@@ -1224,6 +1233,11 @@ popup.prototype.macroMenuObject = function(target) {
 	rAttributes.push({ 'onclick': 'popup.hide();anigenManager.classes.menu.refresh();popup.macroToAnimationState(document.getElementById("anigenMenu"), svg.selected);' });
 	rAttributes.push({ 'onclick': 'popup.hide();anigenManager.classes.menu.refresh();popup.macroNewAnimationGroup(document.getElementById("anigenMenu"));' });
 	rAttributes.push({ 'onclick': 'popup.hide();overlay.macroAnimationStatesManager();' });
+	
+	if(!(svg.selected instanceof SVGSVGElement)) {
+		rAttributes.push({ 'class': 'hr' });
+		rAttributes.push({ 'onclick': 'popup.hide();svg.selected.setAttributeHistory({"anigen:note": svg.selected.getAttribute("anigen:note")=="true" ? null : "true"});', 'title': 'Elements flagged as "note" will be removed during rendering.' });
+	}
 	
 	if(svg.selected == svg.svgElement) {
 		rAttributes[0] = { 'class': 'disabled' };

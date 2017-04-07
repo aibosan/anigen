@@ -1464,6 +1464,15 @@ root.prototype.transferOut = function(scale, flags) {
 		}
 	}
 	
+	if(flags.wipeNotes) {
+		var toClean = clone.getElementsByAttribute('anigen:note', 'true', true);
+		for(var i = 0; i < toClean.length; i++) {
+			if(toClean[i].parentNode) {
+				toClean[i].parentNode.removeChild(toClean[i]);
+			}
+		}
+	}
+	
 	if(flags.unlink) {
 		var svgArea = document.getElementById('svgArea');
 			svgArea.appendChild(clone);
@@ -1582,7 +1591,7 @@ root.prototype.export = function(options) {
 	
 	anigenActual.exporting = true;
 	
-	var clone = this.transferOut(options.scale, { 'clean': options.clean, 'unlink': options.unlink });
+	var clone = this.transferOut(options.scale, { 'clean': options.clean, 'unlink': options.unlink, 'wipeNotes': true });
 	clone.setAttribute('preserveAspectRatio', 'none');
 	
 	if(options.crispedges) {

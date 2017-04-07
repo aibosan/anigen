@@ -88,6 +88,16 @@ infoSelection.prototype.refresh = function() {
 	this.container.appendChild(bVis);
 	
 	
+	var bNote = new uiButton(
+		[ 'bookmark', 'bookmark_border' ],
+		[ 'svg.selected.setAttributeHistory({"anigen:note": svg.selected.getAttribute("anigen:note")=="true" ? null : "true"});', 0 ],
+		[ 'Flag element as a note - notes are not rendered', 'Remove note flag' ],
+		{ 'state': (svg.selected.getAttribute('anigen:note') == 'true' ? 1 : 0) }
+	);
+	if(svg.selected instanceof SVGSVGElement) { bNote.shepherd.disable(); }
+	this.container.appendChild(bNote);
+	
+	
 	var linkList = element.getLinkList();
 	
 	for(var i = 0; i < linkList.length; i++) {

@@ -125,7 +125,7 @@ overlay.prototype.macroAbout = function() {
 	
 	this.add(build.p("Third-party libraries:"));
 	
-	this.add(build.a("Open Sans", "https://fonts.google.com/specimen/Open+Sans"));
+	this.add(build.a("Open Sans font", "https://fonts.google.com/specimen/Open+Sans"));
 	this.add(build.br());
 	this.add(build.a("SVGRender", "https://github.com/adasek/svg-render"));
 	this.add(build.br());
