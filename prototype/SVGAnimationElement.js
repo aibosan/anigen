@@ -809,18 +809,25 @@ SVGAnimationElement.prototype.getCurrentValue = function(time) {
 		var closest = this.getClosest(true, time);
 		
 		if(!closest.running || !closest.next.frame) {
-			if(!closest.previous.frame || this.getAttribute('fill') != 'freeze') {		// hasn't started
-				var temp = document.createElementNS("http://www.w3.org/2000/svg", "path");
-					temp.setAttribute('d', this.parentNode.getAttribute('d'));
-					return temp.getPathData().baseVal;
-			} else {	// ended already
-				return;
+			var temp = document.createElementNS("http://www.w3.org/2000/svg", "path");
+			if(!closest.previous.frame || this.getAttribute('fill') != 'freeze') {		// hasn't started or ended with fill=replace
+				temp.setAttribute('d', this.parentNode.getAttribute('d'));
+				return temp.getPathData().baseVal;
+			} else {	// ended with fill=freeze
+				temp.setAttribute('d', this.keyframes.getItem(this.keyframes.length-1).value);
+				return temp.getPathData().baseVal;
 			}
 		}
 		
 		if(closest.closest.frame.time == closest.progress || closest.perfect) {
 			var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
 				path.setAttribute('d', closest.closest.frame.value);
+			return path.getPathData().baseVal;
+		}
+		
+		if(this.getAttribute('calcMode') == 'discrete') {
+			var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+				path.setAttribute('d', closest.previous.frame.value);
 			return path.getPathData().baseVal;
 		}
 		
