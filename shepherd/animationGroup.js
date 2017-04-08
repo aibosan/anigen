@@ -71,7 +71,7 @@ function animationGroup(target, numeric, flags, attributes) {
 		this.element.setAttribute('anigen:calcmode', this.calcMode);
 		this.element.setAttribute('anigen:additive', this.additive ? 'sum' : 'replace');
 		this.element.setAttribute('anigen:accumulate', this.accumulate ? 'sum' : 'none');
-		this.element.setAttribute('anigen:fill', this.fill ? 'freeze' : 'replace');
+		this.element.setAttribute('anigen:fill', this.fill ? 'freeze' : 'remove');
 		this.element.generateId(true);
 		
 		if(attributes) {

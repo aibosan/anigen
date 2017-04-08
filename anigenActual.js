@@ -45,8 +45,8 @@ function anigenActual() {
 	
 	this.hasClock = false;
 	
-	window.addEventListener("keydown", this.eventKeyDown, false);
-	window.addEventListener("keyup", this.eventKeyUp, false);
+	window.addEventListener("keydown", this.eventKeyDown.bind(this), false);
+	window.addEventListener("keyup", this.eventKeyUp.bind(this), false);
 	window.addEventListener("mouseup", this.eventMouseUp, false);
 	
 	window.addEventListener("resize", this.eventResize, false);
@@ -114,7 +114,7 @@ anigenActual.prototype.eventKeyDown = function(event) {
 	}
 	
 	// prevents keystrokes on exporting
-	if(!svg.svgElement || anigenActual.exporting) {
+	if(!svg.svgElement || this.exporting) {
 		event.preventDefault ? event.preventDefault() : event.returnValue = false;
 		event.stopPropagation ? event.stopPropagation() : event.cancelBubble = true;
 		return false;
@@ -145,13 +145,13 @@ anigenActual.prototype.eventKeyDown = function(event) {
 	}
 	
 	// current tool's key handler is fired first
-	if(!anigenActual.tools[anigenActual.tool].keyDown(event)) {
+	if(!this.tools[this.tool].keyDown(event)) {
 		return false;
 	}
 	
 	// if window is focused (hovered over) and its KeyDown event handler exists, passes event on
-	if(anigenActual.focused && anigenActual.focused.shepherd && typeof anigenActual.focused.shepherd.eventKeyDown === 'function') {
-		if(anigenActual.focused.shepherd.eventKeyDown(event)) {
+	if(this.focused && this.focused.shepherd && typeof this.focused.shepherd.eventKeyDown === 'function') {
+		if(this.focused.shepherd.eventKeyDown(event)) {
 			return false;
 		}
 	}
@@ -464,10 +464,10 @@ anigenActual.prototype.eventKeyDown = function(event) {
 		case 'V':
 			if((event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) && !event.target.isChildOf(document.getElementById('layout_layout_panel_left'))) { return; }
 			if(event.ctrlKey) {
-				if(!anigenActual.lastEvent) {
-					anigenActual.lastEvent = { clientX: window.innerWidth/2, clientY: window.innerHeight/2 }
+				if(!this.lastEvent) {
+					this.lastEvent = { clientX: window.innerWidth/2, clientY: window.innerHeight/2 }
 				}
-				var evaluated = svg.evaluateEventPosition(anigenActual.lastEvent);
+				var evaluated = svg.evaluateEventPosition(this.lastEvent);
 				svg.paste((event.altKey ? null : evaluated), svg.selected);
 			}
 			break;
@@ -580,24 +580,24 @@ anigenActual.prototype.eventKeyDown = function(event) {
 			}
 			break;
 		case 'F1':		// F1
-			anigenActual.setTool(1);
+			this.setTool(1);
 			break;
 		case 'F2':		// F2
-			anigenActual.setTool(2);
+			this.setTool(2);
 			break;
 		case 'F3':		// F3
-			anigenActual.setTool(3);
+			this.setTool(3);
 			break;
 		case 'F4':		//	F4
-			anigenActual.setTool(5);
+			this.setTool(5);
 			break;
 		case 'F5':		//	F5
-			anigenActual.setTool(6);
+			this.setTool(6);
 			break;
 		case 'F6':		//	F6
 			break;
 		case 'F7':		//	F7
-			anigenActual.setTool(4);
+			this.setTool(4);
 			break;
 		default:
 			break;
@@ -615,7 +615,7 @@ anigenActual.prototype.eventKeyUp = function(event) {
 		}
 	}
 	// current tool's key handler is fired first
-	if(!anigenActual.tools[anigenActual.tool].keyUp(event)) {
+	if(!this.tools[this.tool].keyUp(event)) {
 		event.preventDefault ? event.preventDefault() : event.returnValue = false;
 		return false;
 	}

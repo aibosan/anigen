@@ -14,33 +14,26 @@ windowPreview.prototype.seed = function(soft) {
 	if(!svg) { return; }
 	if(soft && (!this.popup || this.popup.closed)) { return; }
 	
-	this.svg = svg.transferOut();
+	this.svg = svg.transferOut(null, { 'clean': false, 'unlink': false, 'wipeNotes': true, 'regenerate': true });
 	
 	if(!this.popup || this.popup.closed) {
 		var specs = "";
 			specs += 'width='+this.svgWidth+',height='+this.svgHeight+',';
 			specs += 'left='+window.screenX+',top='+window.screenY;
 		
-		this.popup = window.open(null, "AniGenPreview", specs);
-		this.popup.manager = this;
+		this.popup = window.open('', "AniGenPreview", specs);
 		
 		this.popup.document.title = svg.fileName+' preview';
 		
-		/* doesn't work - it's relative to "nothing"
-		var styleSheet = this.popup.document.createElement('link');
-			styleSheet.setAttribute('rel', 'stylesheet');
-			styleSheet.setAttribute('type', 'text/css');
-			styleSheet.setAttribute('href', '_css/preview.css');
-		this.popup.document.head.appendChild(styleSheet);
-		*/
-		this.popup.document.body.style.margin = "0 auto";
+		this.popup.document.body.style.margin = "0";
+		this.popup.document.body.style.padding = "0";
 		this.popup.document.body.style.backgroundColor = "black";
 		this.popup.document.body.style.position = "relative";
+		this.popup.document.body.style.width = "100%";
+		this.popup.document.body.style.height = "100%";
 		
-		
-		this.popup.addEventListener('keydown', this.eventKeyDown, false);
-		this.popup.addEventListener('mousewheel', this.eventWheel, false);
-		this.popup.addEventListener('wheel', this.eventWheel, false);
+		this.popup.addEventListener('keydown', this.eventKeyDown.bind(this), false);
+		this.popup.addEventListener('wheel', this.eventWheel.bind(this), false);
 	} else {
 		while(this.popup.document.body.children[0]) {
 			this.popup.document.body.removeChild(this.popup.document.body.children[0]);
@@ -93,63 +86,69 @@ windowPreview.prototype.refresh = function(soft, resizeWindow) {
 
 windowPreview.prototype.eventWheel = function(event) {
 	if(event.ctrlKey) {
+		event.preventDefault ? event.preventDefault() : event.returnValue = false;
+		
 		if(event.deltaY < 0) {
-			this.manager.ratio *= Math.sqrt(2);
+			this.ratio *= Math.sqrt(2);
 		} else {
-			this.manager.ratio *= 1/Math.sqrt(2);
+			this.ratio *= 1/Math.sqrt(2);
 		}
-		if(Math.abs(this.manager.ratio - 1) < 0.1) { this.manager.ratio = 1; }
-		this.manager.refresh(null, event.altKey);
+		if(Math.abs(this.ratio - 1) < 0.1) { this.ratio = 1; }
+		this.refresh(null, event.altKey);
 	}
 }
 
 windowPreview.prototype.eventKeyDown = function(event) {
-	if(event.keyCode == 116) {
-		event.preventDefault ? event.preventDefault() : event.returnValue = false;
-		this.manager.paused = false;
-		this.manager.seed();
+	if(event.key == 'F12') {
 		return;
 	}
+	
 	switch(event.key) {
 		case 'Pause':
 		case ' ':
 			if(event.altKey) {
-				this.manager.svg.setCurrentTime(0);
+				this.svg.setCurrentTime(0);
 			} else {
-				if(this.manager.svg.animationsPaused()) {
-					this.manager.svg.unpauseAnimations()
-					this.manager.paused = true;
+				if(this.svg.animationsPaused()) {
+					this.svg.unpauseAnimations()
+					this.paused = true;
 				} else {
-					this.manager.svg.pauseAnimations()
-					this.manager.paused = false;
+					this.svg.pauseAnimations()
+					this.paused = false;
 				}
 			}
 			break;
 		case 'Enter':
 			if(event.altKey) {
-				this.manager.ratio = 1;
+				this.ratio = 1;
 			}
-			this.manager.refresh(null, true);
+			this.refresh(null, true);
 			break;
 		case '+':		// plus
-			var ratio = this.manager.svg.animationsPaused() ? 1 : 10;
+			var ratio = this.svg.animationsPaused() ? 1 : 10;
 			if(event.shiftKey) {
-				this.manager.svg.setCurrentTime(this.manager.svg.getCurrentTime()+1*ratio);
+				this.svg.setCurrentTime(this.svg.getCurrentTime()+1*ratio);
 			} else if(event.altKey) {
-				this.manager.svg.setCurrentTime(this.manager.svg.getCurrentTime()+0.01*ratio);
+				this.svg.setCurrentTime(this.svg.getCurrentTime()+0.01*ratio);
 			} else {
-				this.manager.svg.setCurrentTime(this.manager.svg.getCurrentTime()+0.1*ratio);
+				this.svg.setCurrentTime(this.svg.getCurrentTime()+0.1*ratio);
 			}
 			break;
 		case '-':		// minus
-			var ratio = this.manager.svg.animationsPaused() ? 1 : 10;
+			var ratio = this.svg.animationsPaused() ? 1 : 10;
 			if(event.shiftKey) {
-				this.manager.svg.setCurrentTime(this.manager.svg.getCurrentTime()-1*ratio);
+				this.svg.setCurrentTime(this.svg.getCurrentTime()-1*ratio);
 			} else if(event.altKey) {
-				this.manager.svg.setCurrentTime(this.manager.svg.getCurrentTime()-0.01*ratio);
+				this.svg.setCurrentTime(this.svg.getCurrentTime()-0.01*ratio);
 			} else {
-				this.manager.svg.setCurrentTime(this.manager.svg.getCurrentTime()-0.1*ratio);
+				this.svg.setCurrentTime(this.svg.getCurrentTime()-0.1*ratio);
 			}
 			break;
+		case 'F5':
+			this.paused = false;
+			this.seed();
+			break;
 	}
+	
+	event.preventDefault ? event.preventDefault() : event.returnValue = false;
 }

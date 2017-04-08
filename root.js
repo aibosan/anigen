@@ -853,13 +853,13 @@ root.prototype.createAnimation = function(owner, type, numeric, flags, other) {
 		if(!owner) { return; }
 	}
 	
-	numeric = numeric || { dur: 10, begin: 0, repeatCount: 0 };
+	numeric = numeric || { dur: 10, begin: 0, repeatCount: 1 };
 	flags = flags || { additive: false, accumulate: false, freeze: false, select: false };
 	other = other || {};
 	
 	numeric.dur = numeric.dur || 10;
 	numeric.begin = numeric.begin || 0;
-	numeric.repeatCount = numeric.repeatCount || 0;
+	numeric.repeatCount = numeric.repeatCount || 1;
 	if(!flags.additive) { flags.additive = type == 0 ? false : true; }
 	flags.accumulate = flags.accumulate || false;
 	flags.freeze = flags.freeze == null ? true : flags.freeze;
@@ -1486,6 +1486,16 @@ root.prototype.transferOut = function(scale, flags) {
 		clone.stripId(true);
 	}
 	
+	if(flags.regenerate) {
+		var tempContainer = document.createElement('div');
+		tempContainer.style['display'] = 'none !important';
+		document.body.insertBefore(tempContainer, document.body.children[0]);
+		tempContainer.appendChild(clone);
+		clone.regenerateId();
+		tempContainer.removeChild(clone);
+		document.body.removeChild(tempContainer);
+	}
+	
 	return clone;
 }
 
@@ -1733,6 +1743,7 @@ root.prototype.fileIn = function(fileElement, filename, isNew) {
 		this.refreshUI(true);
 		
 		document.activeElement.blur();
+		document.body.focus();
 		overlay.hide();
 	} else {
 		this.mergeWith(fileElement);
@@ -1774,17 +1785,7 @@ root.prototype.mergeWith = function(other) {
 		tempContainer.style['display'] = 'none !important';
 	document.body.insertBefore(tempContainer, document.body.children[0]);
 	tempContainer.appendChild(other);
-	var links = other.getLinkList(true);
-	other.generateId(true);
-	
-	for(var i = 0; i < links.length; i++) {
-		if(!links[i].owner || !links[i].target || !links[i].owner.isChildOf(tempContainer) || !links[i].target.isChildOf(tempContainer)) { continue; }
-		if(links[i].css) {
-			links[i].owner.style[links[i].attribute] = links[i].type == 1 ? '#'+links[i].target.getAttribute('id') : 'url("#'+links[i].target.getAttribute('id')+'")';
-		} else {
-			links[i].owner.setAttribute(links[i].attribute, links[i].type == 1 ? '#'+links[i].target.getAttribute('id') : 'url("#'+links[i].target.getAttribute('id')+'")');
-		}
-	}
+	other.regenerateId();
 	tempContainer.removeChild(other);
 	document.body.removeChild(tempContainer);
 	

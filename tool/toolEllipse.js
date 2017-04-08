@@ -25,6 +25,7 @@ toolEllipse.prototype.mouseDown = function(event) {
 	coords = CTM.toUserspace(coords.x, coords.y);
 	
 	this.target = document.createElementNS(svgNS, 'ellipse');
+	this.target.generateId();
 	this.downEvent = coords;
 	
 	targ.appendChild(this.target);
@@ -38,6 +39,15 @@ toolEllipse.prototype.mouseUp = function(event) {
 		this.target.parentNode.removeChild(this.target);
 		return;
 	}
+	
+	if(svg && svg.history) {
+		svg.history.add(new historyCreation(this.target.cloneNode(),
+			this.target.parentNode.getAttribute('id'),
+			this.target.nextElementSibling ? this.target.nextElementSibling.getAttribute('id') : null,
+			false, true
+		));
+	}
+	
 	window.dispatchEvent(new Event('treeSeed'));
 	svg.select(this.target);
 	this.target = null;

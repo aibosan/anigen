@@ -810,7 +810,7 @@ SVGAnimationElement.prototype.getCurrentValue = function(time) {
 		
 		if(!closest.running || !closest.next.frame) {
 			var temp = document.createElementNS("http://www.w3.org/2000/svg", "path");
-			if(!closest.previous.frame || this.getAttribute('fill') != 'freeze') {		// hasn't started or ended with fill=replace
+			if(!closest.previous.frame || this.getAttribute('fill') != 'freeze') {		// hasn't started or ended with fill=remove
 				temp.setAttribute('d', this.parentNode.getAttribute('d'));
 				return temp.getPathData().baseVal;
 			} else {	// ended with fill=freeze

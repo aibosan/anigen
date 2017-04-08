@@ -13,10 +13,10 @@ function uiManager() {
 	this.named = {};
 	this.classes = {};
 	
-	window.addEventListener("mousedown", this.eventMouseDown, false);
-	window.addEventListener("mouseup", this.eventMouseUp, false);
-	window.addEventListener("mousemove", this.eventMouseMove, false);
-	window.addEventListener("resize", this.eventResize, false);
+	window.addEventListener("mousedown", this.eventMouseDown.bind(this), false);
+	window.addEventListener("mouseup", this.eventMouseUp.bind(this), false);
+	window.addEventListener("mousemove", this.eventMouseMove.bind(this), false);
+	window.addEventListener("resize", this.eventResize.bind(this), false);
 	
 	window.anigenManager = this;
 }
@@ -159,14 +159,14 @@ uiManager.prototype.unregister = function(target) {
 }
 
 uiManager.prototype.eventMouseDown = function(event) {
-	anigenManager.downEvent = event;
+	this.downEvent = event;
 	if(event.target.hasClass('resizer') && !event.target.hasClass('disabled')) {
 		var owner = event.target.parentNode.shepherd;
 		if(!owner) { return; }
-		if(window.anigenManager.sections.indexOf(owner) == -1) {
-			window.anigenManager.activeSection = null;
+		if(this.sections.indexOf(owner) == -1) {
+			this.activeSection = null;
 		}
-		window.anigenManager.activeSection = owner;
+		this.activeSection = owner;
 		
 		if(event.target.hasClass('top')) { owner.beingResized = 1; }
 		if(event.target.hasClass('right')) { owner.beingResized = 2; }
@@ -176,19 +176,19 @@ uiManager.prototype.eventMouseDown = function(event) {
 }
 
 uiManager.prototype.eventMouseUp = function(event) {
-	anigenManager.downEvent = null;
-	anigenManager.activeSection = null;
-	anigenManager.classes.timeline.downEvent = null;
-	if(!event.target.isChildOf(anigenManager.classes.windowAnimation.tab1) && 
+	this.downEvent = null;
+	this.activeSection = null;
+	this.classes.timeline.downEvent = null;
+	if(!event.target.isChildOf(this.classes.windowAnimation.tab1) && 
 		!event.target.isChildOf(popup.container)
 	) {
-		anigenManager.classes.windowAnimation.lastClicked = null;
+		this.classes.windowAnimation.lastClicked = null;
 	}
 }
 
 uiManager.prototype.eventMouseMove = function(event) {
-	if(anigenManager.classes.timeline.downEvent) {
-		anigenManager.classes.timeline.eventMouseMove(event);
+	if(this.classes.timeline.downEvent) {
+		this.classes.timeline.eventMouseMove(event);
 	}
 	if(popup.lastEvent) {
 		popup.moveBy(event.clientX-popup.lastEvent.clientX, event.clientY-popup.lastEvent.clientY);
@@ -196,18 +196,18 @@ uiManager.prototype.eventMouseMove = function(event) {
 		popup.lastPosition.y = popup.y;
 		popup.lastEvent = event;
 	}
-	if(window.anigenManager.activeSection) {
-		window.anigenManager.activeSection.eventResizerAction(event);
+	if(this.activeSection) {
+		this.activeSection.eventResizerAction(event);
 	}
 }
 
 uiManager.prototype.refresh = 
 uiManager.prototype.eventResize = function(event) {
-	window.anigenManager.named['right'].setX(window.innerWidth-window.anigenManager.named['right'].width);
-	window.anigenManager.named['bottom'].setY(window.innerHeight-window.anigenManager.named['bottom'].height);
+	this.named['right'].setX(window.innerWidth-this.named['right'].width);
+	this.named['bottom'].setY(window.innerHeight-this.named['bottom'].height);
 	
-	for(var i = 0; i < window.anigenManager.sections.length; i++) {
-		window.anigenManager.sections[i].refresh();
+	for(var i = 0; i < this.sections.length; i++) {
+		this.sections[i].refresh();
 	}
 }
 

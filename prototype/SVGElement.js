@@ -280,9 +280,11 @@ SVGElement.prototype.getStructure = function(exclude) {
 }
 
 
-SVGElement.prototype.getLinkList = function(deep, references) {
+SVGElement.prototype.getLinkList = function(deep, references, inDocument) {
 	// references flag should be preceeded by clearing references in the SVG tree to be useful
 	var candidates = [];
+	
+	inDocument = inDocument || document;
 	
 	for(var i = 0; i < this.attributes.length; i++) {
 		if(this.attributes[i].name == 'style') { continue; }
@@ -296,7 +298,7 @@ SVGElement.prototype.getLinkList = function(deep, references) {
 		} else {
 			continue;
 		}
-		linked = document.getElementById(val);
+		linked = inDocument.getElementById(val);
 		candidates.push({ 'owner': this, 'attribute': name, 'css': false, 'type': name == 'xlink:href' ? 1 : 2, 'value': val, 'target': linked });
 		
 		if(linked && references) {
@@ -317,7 +319,7 @@ SVGElement.prototype.getLinkList = function(deep, references) {
 		} else {
 			continue;
 		}
-		linked = document.getElementById(val);
+		linked = inDocument.getElementById(val);
 		candidates.push({ 'owner': this, 'attribute': name, 'css': true, 'type': name == 'xlink:href' ? 1 : 2, 'value': val, 'target': linked });
 		
 		if(linked && references) {
@@ -329,7 +331,7 @@ SVGElement.prototype.getLinkList = function(deep, references) {
 	
 	if(deep) {
 		for(var i = 0; i < this.children.length; i++) {
-			candidates = candidates.concat(this.children[i].getLinkList(deep, references));
+			candidates = candidates.concat(this.children[i].getLinkList(deep, references, inDocument));
 		}
 	}
 	
