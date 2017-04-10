@@ -75,6 +75,16 @@ pathSegList.prototype.sum = function(other) {
 	return this;
 }
 
+
+pathSegList.prototype.transform = function(matrix) {
+	if(!matrix || !(matrix instanceof SVGMatrix)) { return; }
+	for(var i = 0; i < this.arr.length; i++) {
+		this.arr[i] = this.arr[i].transform(matrix);
+	}
+	return this;
+}
+
+
 // returns string path data ("d")
 pathSegList.prototype.toString = function() {
 	return this.arr.join(' ');

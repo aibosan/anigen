@@ -563,6 +563,12 @@ SVGPathElement.prototype.generateAnchors = function(offset) {
 SVGPathElement.prototype.setStartAtZero = function() {
 	this.getPathData();
 	if(!this.pathData.baseVal.getItem(0)) { return; }
+	/*
+	var matrix = document.createElementNS("http://www.w3.org/2000/svg", "svg").createSVGMatrix();
+		matrix.e = -1*this.pathData.baseVal.getItem(0).x;
+		matrix.f = -1*this.pathData.baseVal.getItem(0).y;
+	this.setPathData(this.pathData.baseVal.transform(matrix));
+	*/
 	this.moveAllBy(-1*this.pathData.baseVal.getItem(0).x, -1*this.pathData.baseVal.getItem(0).y);
 }
 
@@ -842,21 +848,42 @@ SVGPathElement.prototype.toPath = function() {
 
 SVGPathElement.prototype.isVisualElement = function() { return true; }
 
-
-
-
-/*
-SVGEllipseElement.prototype.getAbsoluteRectangle = function() {
-	var matrix = this.getCTMBase();
-	
-	var topLeft = matrix.toViewport(this.cx.baseVal.value-this.rx.baseVal.value, this.cy.baseVal.value-this.ry.baseVal.value);
-	var botRight = matrix.toViewport(this.cx.baseVal.value+this.rx.baseVal.value, this.cy.baseVal.value+this.ry.baseVal.value);
-	
-	return {
-		'left': Math.min(topLeft.x, botRight.x),
-		'right': Math.max(topLeft.x, botRight.x),
-		'top': Math.min(topLeft.y, botRight.y),
-		'bottom': Math.max(topLeft.y, botRight.y)
-	};
+// based on code made by Mike Bostock (mbostock)
+SVGPathElement.prototype.closestPoint = function(point) {
+  var pathLength = this.getTotalLength(),
+      precision = 8,
+      best,
+      bestLength,
+      bestDistance = Infinity;
+  // linear scan for coarse approximation
+  for (var scan, scanLength = 0, scanDistance; scanLength <= pathLength; scanLength += precision) {
+    if ((scanDistance = distance2(scan = this.getPointAtLength(scanLength))) < bestDistance) {
+      best = scan, bestLength = scanLength, bestDistance = scanDistance;
+    }
+  }
+  // binary search for precise estimate
+  precision /= 2;
+  while (precision > 0.5) {
+    var before,
+        after,
+        beforeLength,
+        afterLength,
+        beforeDistance,
+        afterDistance;
+    if ((beforeLength = bestLength - precision) >= 0 && (beforeDistance = distance2(before = this.getPointAtLength(beforeLength))) < bestDistance) {
+      best = before, bestLength = beforeLength, bestDistance = beforeDistance;
+    } else if ((afterLength = bestLength + precision) <= pathLength && (afterDistance = distance2(after = this.getPointAtLength(afterLength))) < bestDistance) {
+      best = after, bestLength = afterLength, bestDistance = afterDistance;
+    } else {
+      precision /= 2;
+    }
+  }
+  return { 'x': best.x, 'y': best.y, 
+	'distance': bestDistance, 'length': bestLength/this.getTotalLength() };
+  function distance2(p) {
+    var dx = p.x - point[0],
+        dy = p.y - point[1];
+    return dx * dx + dy * dy;
+  }
 }
-*/
+

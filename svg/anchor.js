@@ -273,10 +273,13 @@ anchor.prototype.moveTo = function(inX, inY, keys) {
 		CTMelement.f = 0;
 	}
 	
+	var length;
+	
 	if(this.constraint) {
 		var tmp = this.constraint.resolve(inX, inY, keys);
 		inX = tmp.x;
 		inY = tmp.y;
+		length = tmp.length;
 	}
 	
 	var absolute = { 'x': inX-this.offset.x, 'y': inY-this.offset.y };
@@ -299,8 +302,8 @@ anchor.prototype.moveTo = function(inX, inY, keys) {
 		this.children[i].refreshPosition();
 	}
 	
-	this.evaluate(absolute, dAbsolute, relative, dRelative);
-	this.evaluateLocal(absolute, dAbsolute, relative, dRelative);
+	this.evaluate(absolute, dAbsolute, relative, dRelative, length);
+	this.evaluateLocal(absolute, dAbsolute, relative, dRelative, length);
 }
 
 anchor.prototype.moveBy = function(dAX, dAY, keys) {
@@ -309,10 +312,17 @@ anchor.prototype.moveBy = function(dAX, dAY, keys) {
 	this.moveTo(abs.x+dAX, abs.y+dAY, keys);
 }
 
-anchor.prototype.evaluate = function(absolute, dAbsolute, relative, dRelative) {
+anchor.prototype.evaluate = function(absolute, dAbsolute, relative, dRelative, length) {
 	if(this.actions != null && this.actions.move) {
 		var bound = this.bound;
-		eval(this.actions.move);
+		if(Array.isArray(this.actions.move)) {
+			for(var i = 0; i < this.actions.move.length; i++) {
+				eval(this.actions.move[i]);
+			}
+		} else {
+			eval(this.actions.move);
+		}
+		
 		try {
 			svg.gotoTime();
 			if(svg.ui.path) { svg.ui.path.commit(); }
@@ -320,10 +330,16 @@ anchor.prototype.evaluate = function(absolute, dAbsolute, relative, dRelative) {
 	}
 }
 
-anchor.prototype.evaluateLocal = function(absolute, dAbsolute, relative, dRelative) {
+anchor.prototype.evaluateLocal = function(absolute, dAbsolute, relative, dRelative, length) {
 	if(this.actions != null && this.actions.moveLocal) {
 		var bound = this.bound;
-		eval(this.actions.moveLocal);
+		if(Array.isArray(this.actions.moveLocal)) {
+			for(var i = 0; i < this.actions.moveLocal.length; i++) {
+				eval(this.actions.moveLocal[i]);
+			}
+		} else {
+			eval(this.actions.moveLocal);
+		}
 		try {
 			svg.gotoTime();
 			if(svg.ui.path) { svg.ui.path.commit(); }

@@ -25,6 +25,48 @@ pathSeg.prototype.sum = function(other) {
 	if(this.y2 != null && other.y2 != null) { this.y2 += other.y2; }
 }
 
+pathSeg.prototype.transform = function(matrix) {
+	if(!matrix || !(matrix instanceof SVGMatrix)) { return; }
+	
+	// this is for horizontal and vertical lineto; it should actually convert them to regular (x,y) lineto if necessary (pass that on?)
+	if(this instanceof pathSegLinetoVertical) {
+		var mul = matrix.multiply(0, this.y);
+		if(mul.x != 0) {
+			return new pathSegLineto(mul.x, mul.y);
+		}
+		this.y = mul.y;
+		return this;
+	}
+	if(this instanceof pathSegLinetoHorizontal) {
+		var mul = matrix.multiply(this.x, 0);
+		if(mul.y != 0) {
+			return new pathSegLineto(mul.x, mul.y);
+		}
+		this.x = mul.x;
+		return this;
+	}
+	
+	if(this.x != null && this.y != null) {
+		var mul = matrix.multiply(this.x, this.y);
+		this.x = mul.x;
+		this.y = mul.y;
+	}
+	
+	if(this.x1 != null && this.y1 != null) {
+		var mul = matrix.multiply(this.x1, this.y1);
+		this.x1 = mul.x;
+		this.y1 = mul.y;
+	}
+	
+	if(this.x2 != null && this.y2 != null) {
+		var mul = matrix.multiply(this.x2, this.y2);
+		this.x2 = mul.x;
+		this.y2 = mul.y;
+	}
+	
+	return this;
+}
+
 pathSeg.prototype.getMin = function(begin) {
 	if(!begin || begin.x == null || begin.y == null) { return; }
 	

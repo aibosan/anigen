@@ -6,7 +6,6 @@
  */
  
 SVGAnimateMotionElement.prototype.getPath = function() {
-	if(this.path) { return this.path; }
 	this.path = null;
 	for(var i = 0; i < this.children.length; i++) {
 		if(this.children[i] instanceof SVGMPathElement) {
@@ -26,10 +25,17 @@ SVGAnimateMotionElement.prototype.getPath = function() {
 	this.path.setD(this.getAttribute('path'));
 	var center = this.getCenter(true);
 	
-	//var CTMBase = this.parentNode.getCTMBase();
-	//this.path.setAttribute('transform', CTMBase.toString()+' translate('+center.x+', '+center.y+')');
+	var transform;
+	if(this.parentNode.parentNode instanceof SVGElement) {
+		transform = this.parentNode.parentNode.getCTMBase();
+		transform.e = center.x;
+		transform.f = center.y;
+		transform = transform.toString();
+	} else {
+		transform = 'translate('+center.x+','+center.y+')';
+	}
 	
-	this.path.setAttribute('transform', 'translate('+center.x+', '+center.y+')');
+	this.path.setAttribute('transform', transform);
 	return this.path;
 }
 
@@ -229,16 +235,54 @@ SVGAnimateMotionElement.prototype.setRotate = function(value) {
 
 SVGAnimateMotionElement.prototype.generateAnchors = function() {
 	this.getPath();
+	if(!this.path) { return; }
 	var generated = this.path.generateAnchors();
 	if(!this.xlink) {
+		var constraint = new constraintPath(this.path.getAttribute('d'));
+		
 		for(var i = 0; i < generated.anchors[0].length; i++) {
 			generated.anchors[0][i].animation = this;
-			generated.anchors[0][i].actions.move += 'this.animation.setPathData(this.element.pathData.baseVal.toString(), true);';
+			generated.anchors[0][i].actions.move += 'var pData=this.element.pathData.baseVal.toString();';
+			generated.anchors[0][i].actions.move += 'this.animation.setPathData(pData, true);';
+			generated.anchors[0][i].actions.mouseup = 'svg.select();';
+			
 			if(generated.anchors[0][i].actions.click) {
 				generated.anchors[0][i].actions.click += 'if(this.element.getAttribute("sodipodi:nodetypes") != null) { this.animation.setAttributeHistory({"sodipodi:nodetypes": this.element.getAttribute("sodipodi:nodetypes")}); }'
 				generated.anchors[0][i].actions.click += 'this.animation.setPathData(this.element.pathData.baseVal.toString(), true);';
 			}
 		}
+		
+		var totalLength = this.path.getTotalLength();
+		generated.anchors[1] = [];
+		var CTM = this.getCTMBase();
+		this.getKeyframes();
+		var center = this.getCenter(true) || { 'x': 0, 'y': 0 };
+		
+		var adjust = this.path.getTransformBase();
+			constraint.path.setAttribute('d', constraint.path.getPathData().baseVal.transform(adjust));
+		
+		var lastAnchor, lastValue;
+		var threshold = 0.0001;
+		
+		for(var i = 0; i < this.keyframes.length; i++) {
+			// condense
+			if(lastAnchor && Math.abs(lastValue-this.keyframes.getItem(i).value) < threshold) {
+				lastAnchor.actions.move.splice(0,0, 'this.element.setValue('+i+', length);');
+				continue;
+			}
+			
+			var coords = this.path.getPointAtLength(this.keyframes.getItem(i).value * totalLength);
+			var adjusted = adjust.toViewport(coords.x, coords.y);
+			var newAnchor = new anchor(adjusted, this, 'circle', {
+							'move': [ 'this.element.setValue('+i+', length);', 'this.element.commit();' ],
+							'mouseup': 'svg.select();'
+							}, constraint);
+			
+			lastValue = this.keyframes.getItem(i).value;
+			lastAnchor = newAnchor;
+			generated.anchors[1].push(newAnchor);
+		}
+		
 		this.path.style.stroke = '#aa0000';
 		this.path.style.fill = 'none';
 		this.path.setAttribute('stroke-width', 1.5/svg.zoom+"px");

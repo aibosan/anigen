@@ -113,6 +113,8 @@ toolPicker.prototype.mouseMove = function(event) {
 			if(event.target.hasAnimation()) {
 			// target has animation - TIMING
 				anigenManager.setCursor('url(_cursors/picker_time.png) 5 5');
+			} else if(svg.selected instanceof SVGAnimateMotionElement && event.target instanceof SVGPathElement) {
+				anigenManager.setCursor('url(_cursors/picker_path.png) 5 5');
 			} else {
 			// target has no animation - NO PICK
 				anigenManager.setCursor('url(_cursors/picker_none.png) 5 5');

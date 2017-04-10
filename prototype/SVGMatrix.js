@@ -15,22 +15,52 @@ SVGMatrix.prototype.toString = function() {
 	return "matrix("+this.a+" "+this.b+" "+this.c+" "+this.d+" "+this.e+" "+this.f+")";
 }
 
-// or "initial viewport"
-SVGMatrix.prototype.toViewport = function(x, y) {
-	var vector = document.createElementNS("http://www.w3.org/2000/svg", "svg").createSVGMatrix();
-	vector.e = x;
-	vector.f = y;
-	var out = this.multiply(vector);
-	return { x: out.e, y: out.f };
+SVGMatrix.prototype.multiplyMatrix = SVGMatrix.prototype.multiply;
+
+SVGMatrix.prototype.multiply = function() {
+	if(arguments.length == 0 || (arguments.length == 1 && arguments[0] instanceof SVGMatrix)) {
+		return this.multiplyMatrix(arguments[0]);
+	}
+	
+	if(arguments.length == 1) {
+		if(Array.isArray(arguments[0])) {
+			if((typeof arguments[0][0] !== 'number') || (typeof arguments[0][1] !== 'number')) {
+				throw new TypeError("Failed to execture 'multiply' on 'SVGMatrix': parameter 1 is not of supported type; 'SVGMatrix', Array with two numbers, or any Object with numeric 'x' and 'y' attributes.");
+			}
+			return { 
+				'x': arguments[0][0]*this.a+arguments[0][1]*this.c+this.e,
+				'y': arguments[0][0]*this.b+arguments[0][1]*this.d+this.f
+			};
+		}
+		if(arguments[0].x != null && arguments[0].y != null) {
+			if((typeof arguments[0].x !== 'number') || (typeof arguments[0].y !== 'number')) {
+				throw new TypeError("Failed to execture 'multiply' on 'SVGMatrix': parameter 1 is not of supported type; 'SVGMatrix', Array with two numbers, or any Object with numeric 'x' and 'y' attributes.");
+			}
+			return { 
+				'x': arguments[0].x*this.a+arguments[0].y*this.c+this.e,
+				'y': arguments[0].x*this.b+arguments[0].y*this.d+this.f
+			};
+		}
+		throw new TypeError("Failed to execture 'multiply' on 'SVGMatrix': parameter 1 is not of supported type; 'SVGMatrix', Array with two numbers, or any Object with numeric 'x' and 'y' attributes.");
+	} else {
+		if((typeof arguments[0] !== 'number') || (typeof arguments[1] !== 'number')) {
+			throw new TypeError("Failed to execture 'multiply' on 'SVGMatrix': parameter 1 is not of supported type; 'SVGMatrix', Array with two numbers, or any Object with numeric 'x' and 'y' attributes.");
+		}
+		return { 
+			'x': arguments[0]*this.a+arguments[1]*this.c+this.e,
+			'y': arguments[0]*this.b+arguments[1]*this.d+this.f
+		};
+	}
 }
 
+// or "initial viewport"
+// for given (x,y) vector, returns (M x (x,y))
+SVGMatrix.prototype.toViewport = SVGMatrix.prototype.multiply;
+
 // or "element's userspace"
+// for given (x,y) vector, returns (M^-1 x (x,y))
 SVGMatrix.prototype.toUserspace = function(x, y) {
-	var vector = document.createElementNS("http://www.w3.org/2000/svg", "svg").createSVGMatrix();
-	vector.e = x;
-	vector.f = y;
-	var out = this.inverse().multiply(vector);
-	return { x: out.e, y: out.f };
+	return this.inverse().multiply(x,y);
 }
 
 SVGMatrix.prototype.deltaTransformPoint = function(point) {

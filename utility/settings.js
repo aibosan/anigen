@@ -182,6 +182,7 @@ settings.prototype.apply = function() {
 	anigenManager.named.left.setWidth(this.data.treeWidth);
 	anigenManager.named.right.setX(window.innerWidth - this.data.windowsWidth);
 	
+	if(this.data.bottomHeight < 24) { this.data.bottomHeight = 24; }
 	anigenManager.named.bottom.setY(window.innerHeight - this.data.bottomHeight);
 	anigenManager.named.bottom.refresh();
 	
