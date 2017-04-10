@@ -787,6 +787,7 @@ anigenActual.prototype.eventMouseMove = function(event) {
 	anigenActual.tools[anigenActual.tool].mouseMove(event);
 }
 anigenActual.prototype.eventContextMenu = function(event) {
+	if(event.target.isChildOf(popup.container) || event.target.isChildOf(overlay.container) || event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) { return; }
 	event.preventDefault ? event.preventDefault() : event.returnValue = false;
 	if(event.target.isChildOf(popup.container)) { return; }
 	if(anigenActual.tools[0].target) { anigenActual.tools[0].mouseContextMenu(event); return; }
