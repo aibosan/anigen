@@ -18,7 +18,10 @@ SVGMatrix.prototype.toString = function() {
 SVGMatrix.prototype.multiplyMatrix = SVGMatrix.prototype.multiply;
 
 SVGMatrix.prototype.multiply = function() {
-	if(arguments.length == 0 || (arguments.length == 1 && arguments[0] instanceof SVGMatrix)) {
+	if(arguments.length == 0 || arguments[0] == null) {
+		return this;
+	}
+	if(arguments.length == 1 && arguments[0] instanceof SVGMatrix) {
 		return this.multiplyMatrix(arguments[0]);
 	}
 	
