@@ -133,7 +133,7 @@ overlay.prototype.macroAbout = function() {
 	
 	this.add(build.p("Created by Ondřej 'Aibo' Benda."));
 	
-	this.addButtonOk(null, true);
+	this.addButtonOk('if(!svg.svgElement){overlay.macroOpen();}', true);
 
 	this.show();
 }
@@ -200,7 +200,9 @@ overlay.prototype.macroOpen = function() {
 		this.add(new uiLink('delete', 'svg.removeLocal();overlay.macroOpen();', 'Delete', { 'title': 'Delete local file' }));
 		this.add(build.br());
 	}
-	this.add(new uiLink('import_contacts', 'window.open("manual.html", "_blank");', 'Open manual'));
+	
+	this.add(new uiLink('info_outline', 'overlay.macroAbout();', 'About'));
+	this.add(new uiLink('import_contacts', 'window.open("manual.html", "_blank");', 'Manual'));
 	
 	if(!window.location.href.match(/^file:/)) {
 		if(svg.svgElement) {
