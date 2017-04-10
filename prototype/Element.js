@@ -127,9 +127,9 @@ Element.prototype.hasAnimation = function(onlyViable) {
 	return false;
 }
 
-Element.prototype.isChildOf = function(element) {
+Element.prototype.isChildOf = function(element, inclusive) {
     var node = this;
-	node = node.parentNode;
+	if(!inclusive) { node = node.parentNode; }
     while(node != null) {
         if(node == element) {
             return true;
