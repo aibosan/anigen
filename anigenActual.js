@@ -321,7 +321,18 @@ anigenActual.prototype.eventKeyDown = function(event) {
 			}
 			break;
 		case 'Delete':		// delete
-			if(!anigenManager.classes.windowAnimation.isHidden() && (svg.selected == anigenManager.classes.windowAnimation.animation || svg.selected.shepherd && svg.selected.shepherd == anigenManager.classes.windowAnimation.animation) &&
+			if(svg.selected instanceof SVGPathElement &&
+				svg.ui.selectedCustomIndexes.length > 0
+			) {
+				svg.selected.removeSegments(svg.ui.selectedCustomIndexes, true);
+				if(svg.selected.pathData.baseVal.length == 0) {
+					svg.history.undo();
+					svg.delete(svg.selected);
+				} else {
+					svg.ui.clearSelect();
+					svg.select();
+				}
+			} else if(!anigenManager.classes.windowAnimation.isHidden() && (svg.selected == anigenManager.classes.windowAnimation.animation || svg.selected.shepherd && svg.selected.shepherd == anigenManager.classes.windowAnimation.animation) &&
 				anigenManager.classes.windowAnimation.selected.length > 0) {
 				anigenManager.classes.windowAnimation.contextMenuEvaluate('delete', anigenManager.classes.windowAnimation.selected[0]);
 			} else {

@@ -8,8 +8,8 @@ function pathSegMoveto(x, y) {
 	this.pathSegType = 2;
 	this.pathSegTypeAsLetter = 'M';
 	
-	this.x = x;
-	this.y = y;
+	this.x = isNaN(x) ? 0 : x;
+	this.y = isNaN(y) ? 0 : y;
 }
 
 pathSegMoveto.prototype = Object.create(pathSeg.prototype);
@@ -64,3 +64,17 @@ pathSegMoveto.prototype.clone = function() {
 pathSegMoveto.prototype.getMin = pathSegMoveto.prototype.getMax = function() {
 	return { 'x': this.x, 'y': this.y };
 }
+
+pathSegMoveto.prototype.split = function(ratio, fromPoint) {
+	return [ this ];
+}
+
+pathSegMoveto.prototype.getValue = function(ratio, fromPoint) {
+	return { 'x': this.x, 'y': this.y };
+}
+
+pathSegMoveto.prototype.getLength = function() {
+	return 0;
+}
+
+

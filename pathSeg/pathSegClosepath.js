@@ -36,3 +36,26 @@ pathSegClosepath.prototype.clone = function() {
 pathSegClosepath.prototype.getMin = pathSegClosepath.prototype.getMax = function() {
 	return null;
 }
+
+pathSegClosepath.prototype.split = function(ratio, fromPoint, lastM) {
+	if(!lastM || !fromPoint) { return; }
+	
+	return [
+		new pathSegLineto(fromPoint.x+ratio*(lastM.x-fromPoint.x), fromPoint.y+ratio*(lastM.y-fromPoint.y)),
+		this
+	];
+}
+
+pathSegClosepath.prototype.getValue = function(ratio, fromPoint, lastM) {
+	if(!fromPoint || fromPoint.x == null || fromPoint.y == null ||
+		!lastM || lastM.x == null || lastM.y == null) {
+		return 0;
+	}
+	return distance(lastM, fromPoint)*ratio;
+}
+
+pathSegClosepath.prototype.getLength = function(fromPoint, segments, lastM) {
+	return this.getValue(1, fromPoint, lastM);
+}
+
+

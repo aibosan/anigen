@@ -8,7 +8,7 @@ function pathSegLinetoHorizontal(x) {
 	this.pathSegType = 12;
 	this.pathSegTypeAsLetter = 'H';
 	
-	this.x = x;
+	this.x = isNaN(x) ? 0 : x;
 }
 
 pathSegLinetoHorizontal.prototype = Object.create(pathSeg.prototype);
@@ -73,3 +73,25 @@ pathSegLinetoHorizontal.prototype.getMax = function(begin) {
 	
 	return { 'x': Math.max(begin.x, this.x), 'y': begin.y };
 }
+
+pathSegLinetoHorizontal.prototype.split = function(ratio, fromPoint) {
+	return [ new pathSegLinetoHorizontal(fromPoint.x+ratio*(this.x-fromPoint.x)), this ];
+}
+
+pathSegLinetoHorizontal.prototype.getValue = function(ratio, fromPoint) {
+	if(!fromPoint || fromPoint.x == null || fromPoint.y == null) { return; }
+	if(ratio < 0) { ratio = 0; }
+	if(ratio > 1) { ratio = 1; }
+	
+	return { 'x': fromPoint.x+ratio*(this.x-fromPoint.x), 'y': fromPoint.y,
+		'dX': ratio, 'dY': 0
+	};
+}
+
+pathSegLinetoHorizontal.prototype.getLength = function(fromPoint) {
+	if(!fromPoint || fromPoint.x == null) { return 0; }
+	return Math.abs(this.x-fromPoint.x);
+}
+
+
+

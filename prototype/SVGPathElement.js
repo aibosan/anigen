@@ -17,6 +17,15 @@ SVGPathElement.prototype.getPathData = function() {
 	this.pathData.baseVal = new pathSegList();
 	
 	var path = this.getAttribute('d') || '';
+	
+	path = path.split('');
+	for(var i = 0; i < path.length; i++) {
+		if(path[i].match(/[a-zA-Z]/)) {
+			path[i] = ' '+path[i]+' ';
+		}
+	}
+	path = path.join('');
+	
 	path = path.replace(/,/g, ' ').replace(/^\s+|\s+$/g, '').replace(/\s+/g, ' ');
 	path = path.split(' ');
 	
@@ -32,7 +41,10 @@ SVGPathElement.prototype.getPathData = function() {
 			absolute = (path[i].toUpperCase() == path[i]);
 			i++;
 		}
-		if(!lastLetter) { error = true; break; }
+		if(!lastLetter) {
+			error = true;
+			break;
+		}
 		
 		var segment = [];
 		var pathSegment = null;
@@ -204,33 +216,49 @@ SVGPathElement.prototype.getPathData = function() {
 		
 		switch(segment[0].toLowerCase()) {
 			case 'm':		// moveto
+				if(isNaN(segment[1])) { segment[1] = lastAbsolute.x; error=true; }
+				if(isNaN(segment[2])) { segment[2] = lastAbsolute.y; error=true; }
 				pathSegment = new pathSegMoveto(segment[1], segment[2]);
 				break;
 			case 'l':		// lineto
+				if(isNaN(segment[1])) { segment[1] = lastAbsolute.x; error=true; }
+				if(isNaN(segment[2])) { segment[2] = lastAbsolute.y; error=true; }
 				pathSegment = new pathSegLineto(segment[1], segment[2]);
 				break;
 			case 't':		// shorthand quadratic
+				if(isNaN(segment[1])) { segment[1] = lastAbsolute.x; error=true; }
+				if(isNaN(segment[2])) { segment[2] = lastAbsolute.y; error=true; }
 				pathSegment = new pathSegCurvetoQuadraticSmooth(segment[1], segment[2]);
 				break;
 			case 'z':		// closepath
 				pathSegment = new pathSegClosepath();
 				break;
 			case 'h':		// horizontal lineto
+				if(isNaN(segment[1])) { segment[1] = lastAbsolute.x; error=true; }
 				pathSegment = new pathSegLinetoHorizontal(segment[1]);
 				break;
 			case 'v':		// vertical lineto
+				if(isNaN(segment[1])) { segment[1] = lastAbsolute.y; error=true; }
 				pathSegment = new pathSegLinetoVertical(segment[1]);
 				break;
 			case 'c':		// curveto
+				if(isNaN(segment[5])) { segment[5] = lastAbsolute.x; error=true; }
+				if(isNaN(segment[6])) { segment[6] = lastAbsolute.y; error=true; }
 				pathSegment = new pathSegCurvetoCubic(segment[1], segment[2], segment[3], segment[4], segment[5], segment[6]);
 				break;
 			case 's':		// shorthand curveto
+				if(isNaN(segment[3])) { segment[3] = lastAbsolute.x; error=true; }
+				if(isNaN(segment[4])) { segment[4] = lastAbsolute.y; error=true; }
 				pathSegment = new pathSegCurvetoCubicSmooth(segment[1], segment[2], segment[3], segment[4]);
 				break;
 			case 'q':		// quadratic curveto
+				if(isNaN(segment[3])) { segment[3] = lastAbsolute.x; error=true; }
+				if(isNaN(segment[4])) { segment[4] = lastAbsolute.y; error=true; }
 				pathSegment = new pathSegCurvetoQuadratic(segment[1], segment[2], segment[3], segment[4]);
 				break;
 			case 'a':		// elliptical arc
+				if(isNaN(segment[1])) { segment[1] = lastAbsolute.x; error=true; }
+				if(isNaN(segment[2])) { segment[2] = lastAbsolute.y; error=true; }
 				pathSegment = new pathSegArc(segment[1], segment[2], segment[3], segment[4], segment[5], segment[6], segment[7]);
 				break;
 		}
@@ -408,6 +436,7 @@ SVGPathElement.prototype.generateAnchors = function(offset) {
 			segmentAnchors.point = new anchor({'x': adjustedXY.x, 'y': adjustedXY.y }, this, nodeShape,
 				{ 'move': 'this.element.moveTo('+i+', relative.x, relative.y, true, false, true, true);',
 					'click': 'if(keys.ctrlKey){this.element.cycleNodeType('+(i-zCounter)+', true);};svg.select();' });
+			segmentAnchors.point.customIndex = i;
 		}
 		
 		if(lastPoint && segmentAnchors.handle1) {
@@ -425,7 +454,9 @@ SVGPathElement.prototype.generateAnchors = function(offset) {
 					lastPoint = segmentAnchors[j];
 					
 					if(pData.pathSegTypeAsLetter.toLowerCase() == 'l' || pData.pathSegTypeAsLetter.toLowerCase() == 'z' || 
-						pData.pathSegTypeAsLetter.toLowerCase() == 'h' || pData.pathSegTypeAsLetter.toLowerCase() == 'v') {
+						pData.pathSegTypeAsLetter.toLowerCase() == 'h' || pData.pathSegTypeAsLetter.toLowerCase() == 'v' || 
+						pData.pathSegTypeAsLetter.toLowerCase() == 't' || pData.pathSegTypeAsLetter.toLowerCase() == 'q'
+						) {
 							lastH1 = null;
 							lastH2 = null;
 							break;
@@ -434,7 +465,6 @@ SVGPathElement.prototype.generateAnchors = function(offset) {
 					if(lastH2) {		// if previous handle 2 exists, it is added to point's children (but action already exists)
 						var slave = new connector(lastPoint, lastH2);
 						lastPoint.addChild(lastH2);
-						//lastPoint.actions.move += 'this.element.moveBy('+(i)+', dRelative.x, dRelative.y, false, false, true, true);';
 						connectors.push(slave);
 					}
 					break;
@@ -487,9 +517,9 @@ SVGPathElement.prototype.generateAnchors = function(offset) {
 			anchors.push(segmentAnchors[j]);
 		}
 		
-		
 		// resets to prevent skipping over a node
 		if(!segmentAnchors.point) { lastPoint = null; }
+		if(!segmentAnchors.handle1) { lastH1 = null; }
 		if(!segmentAnchors.handle2) { lastH2 = null; }
 		
 		
@@ -525,12 +555,13 @@ SVGPathElement.prototype.generateAnchors = function(offset) {
 						break;	
 				}
 			}
-			zCounter++;
-			
 			
 			if(lastM.point && lastPoint && lastM.point != lastPoint && Math.abs(lastM.point.x-lastPoint.x) < threshold && Math.abs(lastM.point.y-lastPoint.y) < threshold) {
 				lastM.point.actions.move += lastPoint.actions.move;
 				lastM.point.actions.click += lastPoint.actions.click;
+				
+				lastM.point.customIndex = [ lastM.point.customIndex, i ];
+				
 				for(var k = 0; k < lastPoint.children.length; k++) {
 					lastM.point.addChild(lastPoint.children[k]);
 				}
@@ -546,6 +577,8 @@ SVGPathElement.prototype.generateAnchors = function(offset) {
 				}
 				i++;
 			}
+			
+			zCounter++;
 			
 			lastMIndex = null;
 			lastM = null;
@@ -697,8 +730,14 @@ SVGPathElement.prototype.cycleNodeType = function(index, makeHistory) {
 			nodeTypes += 'c';
 		}
 	}
-	if(index < 0 || index >= nodeTypes.length) { throw new DOMException(1); }
-	nodeTypes = nodeTypes.split('');
+	while(nodeTypes.length < this.pathData.baseVal.length-1) {
+		nodeTypes += 'c';
+	}
+	
+	this.setAttribute('sodipodi:nodetypes', nodeTypes);
+	
+	if(!nodeTypes[index]) { throw new DOMException(1); }
+	
 	switch(nodeTypes[index]) {
 		case 'c':
 			this.setNodeType(index, 's', makeHistory);
@@ -881,9 +920,186 @@ SVGPathElement.prototype.closestPoint = function(point) {
   return { 'x': best.x, 'y': best.y, 
 	'distance': bestDistance, 'length': bestLength/this.getTotalLength() };
   function distance2(p) {
-    var dx = p.x - point[0],
-        dy = p.y - point[1];
+    var dx = p.x - (point.x || point[0]),
+        dy = p.y - (point.y || point[1]);
     return dx * dx + dy * dy;
   }
 }
+
+SVGPathElement.prototype.getBoundaryPoints = function(point) {
+	this.getPathData();
+	
+	var closest = this.closestPoint(point);
+	
+	var previous, next;
+	
+	var lastM;
+	for(var i = 0; i < this.pathData.baseVal.length; i++) {
+		var currentPoint = this.pathData.baseVal.getItem(i);
+		
+		if(currentPoint instanceof pathSegMoveto) {
+			lastM = currentPoint;
+			lastM.index = i;
+		}
+		
+		var currentClosest;
+		
+		if(currentPoint instanceof pathSegClosepath) {
+			currentClosest = this.closestPoint(lastM);
+			if(i == this.pathData.baseVal.length-1) {
+				currentClosest.length = 1;
+			} else {
+				var tempClosest = this.closestPoint(this.pathData.baseVal.getItem(i+1));
+				currentClosest.length = tempClosest.length;
+			}
+			
+			if(currentClosest.length < closest.length) {
+				previous = currentClosest;
+				previous.index = i;
+			} else {
+				next = currentClosest;
+				next.index = i;
+				break;
+			}
+			continue;
+		}
+		
+		if(currentPoint.x == null || currentPoint.y == null) { continue; }
+		
+		currentClosest = this.closestPoint(currentPoint);
+		if(currentClosest.length < closest.length) {
+			previous = currentClosest;
+			previous.index = i;
+		} else {
+			next = currentClosest;
+			next.index = i;
+			break;
+		}
+	}
+	
+	if(!previous || !next) { return; }
+	
+	return {
+		'previous': previous,
+		'next': next,
+		'closest': closest,
+		'lastM': lastM,
+		'ratio': (closest.length-previous.length)/(next.length-previous.length)
+	}
+}
+
+SVGPathElement.prototype.split = function(position, makeHistory) {
+	var closest = this.getBoundaryPoints(position);
+	
+	if(!closest) { return; }
+	
+	var pData = this.pathData.baseVal;
+	var next = pData.getItem(closest.next.index);
+	var prev = pData.getItem(closest.previous.index);
+	var lastM = closest.lastM ? pData.getItem(closest.lastM.index) : null;
+	
+	var additions = next.split(closest.ratio, prev, lastM);
+	if(!additions) { return; }
+	
+	if(pData.length > closest.next.index+1) {
+		var following = pData.getItem(closest.next.index+1);
+		if(typeof following.getRegular === 'function') {
+			pData.arr[closest.next.index+1] = pData.arr[closest.next.index+1].getRegular(pData.arr[closest.next.index]);
+		}
+	}
+	
+	var nodeTypes = this.getAttribute('sodipodi:nodetypes');
+	
+	if(!nodeTypes) {
+		nodeTypes = [];
+		for(var i = 0; i < pData.length-1; i++) {
+			nodeTypes.push('c');
+		}
+	} else {
+		nodeTypes = nodeTypes.split('');
+		while(nodeTypes.length < pData.length-1) {
+			nodeTypes.push('c');
+		}
+	}
+	
+	pData.arr.splice(closest.next.index, 1);
+	//nodeTypes.splice(closest.next.index-1, 1);
+	
+	var letterAdd =
+		(next instanceof pathSegLinetoHorizontal || next instanceof pathSegLinetoVertical ||
+		next instanceof pathSegLineto || next instanceof pathSegClosepath) ? 'c' : 's';
+	
+	for(var i = 0; i < additions.length; i++) {
+		pData.arr.splice(closest.next.index, 0, additions[i]);
+		if(i > 0) {
+			nodeTypes.splice(closest.next.index-1, 0, letterAdd);
+		}
+		closest.next.index++;
+	}
+	pData.length = pData.arr.length;
+	
+	if(makeHistory) {
+		this.setAttributeHistory({
+			'd': pData.toString(),
+			'sodipodi:nodetypes': nodeTypes.join('')
+		});
+	} else {
+		this.setAttribute('d', pData.toString());
+		this.setAttribute('sodipodi:nodetypes', nodeTypes.join(''));
+	}
+}
+
+SVGPathElement.prototype.removeSegments = function(array, makeHistory) {
+	if(!array) { return; }
+	
+	if(typeof array === 'number') { array = [ array ]; }
+	
+	array.sort();
+	array.reverse();
+	
+	this.getPathData();
+	var nodeTypes = this.getAttribute('sodipodi:nodetypes');
+	if(nodeTypes) { nodeTypes = nodeTypes.split(''); }
+	
+	for(var i = 0; i < array.length; i++) {
+		try {
+			if(this.pathData.baseVal.getItem(array[i]) instanceof pathSegMoveto)  {
+				try {
+					var next = this.pathData.baseVal.getItem(array[i]+1);
+					if(next instanceof pathSegClosepath) {
+						// next is closepath - can delete it and this one
+						this.pathData.baseVal.removeItem(array[i]+1);
+						this.pathData.baseVal.removeItem(array[i]);
+						if(nodeTypes && nodeTypes[i]) { nodeTypes.splice(array[i], 2); }
+					} else if(next instanceof pathSegMoveto) {
+						// next is moveto - can delete (empty path)
+						this.pathData.baseVal.removeItem(array[i]);
+						if(nodeTypes && nodeTypes[i]) { nodeTypes.splice(array[i], 1); }
+					}
+				} catch(err) {
+					// no subsequent - can delete
+					this.pathData.baseVal.removeItem(array[i]);
+					if(nodeTypes && nodeTypes[i]) { nodeTypes.splice(array[i], 1); }
+				}
+				continue;
+			}
+			this.pathData.baseVal.removeItem(array[i]);
+			if(nodeTypes && nodeTypes[i]) { nodeTypes.splice(array[i], 1); }
+		} catch(err) {
+			// out of bounds
+			continue;
+		}
+	}
+	
+	if(makeHistory) {
+		this.setAttributeHistory({
+			'd': this.pathData.baseVal.toString(),
+			'sodipodi:nodetypes': nodeTypes ? nodeTypes.join('') : null
+		});
+	} else {
+		this.setAttribute('d', this.pathData.baseVal.toString());
+		if(nodeTypes) { this.setAttribute('sodipodi:nodetypes', nodeTypes.join('')) };
+	}
+}
+
 

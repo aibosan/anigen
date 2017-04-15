@@ -8,10 +8,10 @@ function pathSegCurvetoCubicSmooth(x2, y2, x, y) {
 	this.pathSegType = 16;
 	this.pathSegTypeAsLetter = 'S';
 	
-	this.x2 = x2;
-	this.y2 = y2;
-	this.x = x;
-	this.y = y;
+	this.x = isNaN(x) ? 0 : x;
+	this.y = isNaN(y) ? 0 : y;
+	this.x2 = isNaN(x2) ? 0 : x2;
+	this.y2 = isNaN(y2) ? 0 : y2;
 }
 
 pathSegCurvetoCubicSmooth.prototype = Object.create(pathSeg.prototype);
@@ -20,14 +20,14 @@ pathSegCurvetoCubicSmooth.prototype.toString = function() {
 	return 'S ' + this.x2 + ' ' + this.y2 + ' ' + this.x + ' ' + this.y;
 }
 	
-pathSegCurvetoCubicSmooth.prototype.moveTo = function(toX, toY, point, handle) {
+pathSegCurvetoCubicSmooth.prototype.moveTo = function(toX, toY, point, handle1, handle2) {
 	var dX = toX - this.x;
 	var dY = toY - this.y;
 	if(point) {
 		this.x = toX;
 		this.y = toY;
 	}
-	if(handle) {
+	if(handle2) {
 		if(point) {
 			this.x2 += dX;
 			this.y2 += dY;
@@ -38,12 +38,12 @@ pathSegCurvetoCubicSmooth.prototype.moveTo = function(toX, toY, point, handle) {
 	}
 }
 	
-pathSegCurvetoCubicSmooth.prototype.moveBy = function(byX, byY, point, handle) {
+pathSegCurvetoCubicSmooth.prototype.moveBy = function(byX, byY, point, handle1, handle2) {
 	if(point) {
 		this.x += byX;
 		this.y += byY;
 	}
-	if(handle) {
+	if(handle2) {
 		this.x2 += byX;
 		this.y2 += byY;
 	}
@@ -83,5 +83,77 @@ pathSegCurvetoCubicSmooth.prototype.inbetween = function(other, ratio) {
 
 pathSegCurvetoCubicSmooth.prototype.clone = function() {
 	return new pathSegCurvetoCubicSmooth(this.x2, this.y2, this.x, this.y);
+}
+
+pathSegCurvetoCubicSmooth.prototype.split = function(ratio, fromPoint) {
+	var val = this.getValue(ratio, fromPoint);
+	
+	var tX = fromPoint.x2 != null ? fromPoint.x2 : fromPoint.x1 != null ? fromPoint.x1 : fromPoint.x;
+	var tY = fromPoint.y2 != null ? fromPoint.y2 : fromPoint.y1 != null ? fromPoint.y1 : fromPoint.y;
+	var x1 = fromPoint.x-(tX-fromPoint.x);
+	var y1 = fromPoint.y-(tY-fromPoint.y);
+	
+	var middle = new pathSegCurvetoCubic(
+		fromPoint.x+(x1-fromPoint.x)*ratio, fromPoint.y+(y1-fromPoint.y)*ratio,
+		-1*val.dX*ratio/3+val.x, -1*val.dY*ratio/3+val.y,
+		val.x, val.y
+		);
+	
+	ratio = 1-ratio;
+		
+	var end = new pathSegCurvetoCubic(
+		val.dX*ratio/3+val.x, val.dY*ratio/3+val.y,
+		this.x+(this.x2-this.x)*ratio, this.y+(this.y2-this.y)*ratio,
+		this.x, this.y
+		);
+	
+	return [ middle, end ];
+}
+
+
+pathSegCurvetoCubicSmooth.prototype.getValue = function(ratio, fromPoint) {
+	if(!fromPoint || fromPoint.x == null || fromPoint.y == null) { return; }
+	
+	if(ratio < 0) { ratio = 0; }
+	if(ratio > 1) { ratio = 1; }
+	
+	var tX = fromPoint.x2 != null ? fromPoint.x2 : fromPoint.x1 != null ? fromPoint.x1 : fromPoint.x;
+	var tY = fromPoint.y2 != null ? fromPoint.y2 : fromPoint.y1 != null ? fromPoint.y1 : fromPoint.y;
+	var x1 = fromPoint.x-(tX-fromPoint.x);
+	var y1 = fromPoint.y-(tY-fromPoint.y);
+	
+	var x = Math.pow((1-ratio), 3)*fromPoint.x + 
+		3*Math.pow((1-ratio), 2)*ratio*x1 + 
+		3*(1-ratio)*Math.pow(ratio,2)*this.x2 + 
+		Math.pow(ratio, 3)*this.x;
+	
+	var y = Math.pow((1-ratio), 3)*fromPoint.y + 
+		3*Math.pow((1-ratio), 2)*ratio*y1 + 
+		3*(1-ratio)*Math.pow(ratio,2)*this.y2 + 
+		Math.pow(ratio, 3)*this.y;
+	
+	var dX = 3*Math.pow((1-ratio), 2)*(x1-fromPoint.x) + 
+		6*(1-ratio)*ratio*(this.x2-x1) + 
+		3*Math.pow(ratio, 2)*(this.x-this.x2);
+		
+	var dY = 3*Math.pow((1-ratio), 2)*(y1-fromPoint.y) + 
+		6*(1-ratio)*ratio*(this.y2-y1) + 
+		3*Math.pow(ratio, 2)*(this.y-this.y2);
+	
+	return {
+		'x': x,
+		'y': y,
+		'dX': dX,
+		'dY': dY
+	};
+}
+
+pathSegCurvetoCubicSmooth.prototype.getRegular = function(fromPoint) {
+	var tX = fromPoint.x2 != null ? fromPoint.x2 : fromPoint.x1 != null ? fromPoint.x1 : fromPoint.x;
+	var tY = fromPoint.y2 != null ? fromPoint.y2 : fromPoint.y1 != null ? fromPoint.y1 : fromPoint.y;
+	var x1 = fromPoint.x-(tX-fromPoint.x);
+	var y1 = fromPoint.y-(tY-fromPoint.y);
+	
+	return new pathSegCurvetoCubic(x1, y1, this.x2, this.y2, this.x, this.y);
 }
 

@@ -170,3 +170,10 @@ function mmc(o){
         }
     return r;
 };
+
+// euclidean distance between two points with coordinates x,y
+function distance(a,b) {
+	if(!a || a.x == null || a.y == null || !b || b.x == null || b.y == null) { return; }
+	return Math.sqrt(Math.pow(a.x-b.x,2)+Math.pow(a.y-b.y,2));
+}
+

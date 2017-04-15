@@ -8,8 +8,8 @@ function pathSegLineto(x, y) {
 	this.pathSegType = 4;
 	this.pathSegTypeAsLetter = 'L';
 	
-	this.x = x;
-	this.y = y;
+	this.x = isNaN(x) ? 0 : x;
+	this.y = isNaN(y) ? 0 : y;
 }
 
 pathSegLineto.prototype = Object.create(pathSeg.prototype);
@@ -59,4 +59,23 @@ pathSegLineto.prototype.inbetween = function(other, ratio) {
 
 pathSegLineto.prototype.clone = function() {
 	return new pathSegLineto(this.x, this.y);
+}
+
+pathSegLineto.prototype.split = function(ratio, fromPoint) {
+	return [ new pathSegLineto(fromPoint.x+ratio*(this.x-fromPoint.x), fromPoint.y+ratio*(this.y-fromPoint.y)), this ];
+}
+
+pathSegLineto.prototype.getValue = function(ratio, fromPoint) {
+	if(!fromPoint || fromPoint.x == null || fromPoint.y == null) { return; }
+	if(ratio < 0) { ratio = 0; }
+	if(ratio > 1) { ratio = 1; }
+	
+	return { 'x': fromPoint.x+ratio*(this.x-fromPoint.x), 'y': fromPoint.y+ratio*(this.y-fromPoint.y)
+		
+	};
+}
+
+pathSegLineto.prototype.getLength = function(fromPoint) {
+	if(!fromPoint || fromPoint.x == null || fromPoint.y == null) { return 0; }
+	return distance(this, fromPoint);
 }

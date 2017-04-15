@@ -8,13 +8,13 @@ function pathSegArc(rx, ry, rotation, largeArc, sweep, x, y) {
 	this.pathSegType = 10;
 	this.pathSegTypeAsLetter = 'A';
 	
-	this.rx = rx;
-	this.ry = ry;
-	this.rotation = rotation;
-	this.largeArc = largeArc;
-	this.sweep = sweep;
-	this.x = x;
-	this.y = y;
+	this.rx = isNaN(rx) ? 0 : Math.abs(rx);
+	this.ry = isNaN(ry) ? 0 : Math.abs(ry);
+	this.rotation = isNaN(rotation) ? 0 : rotation%360;
+	this.largeArc = isNaN(largeArc) ? 0 : largeArc;
+	this.sweep = isNaN(sweep) ? 0 : sweep;
+	this.x = isNaN(x) ? 0 : x;
+	this.y = isNaN(y) ? 0 : y;
 }
 
 pathSegArc.prototype = Object.create(pathSeg.prototype);
@@ -100,11 +100,74 @@ pathSegArc.prototype.inbetween = function(other, ratio) {
 	return new pathSegArc(rx, ry, rotation, largeArc, sweep, x, y);
 }
 
-pathSegArc.prototype.clone = function() {
-	return new pathSegArc(this.rx, this.ry, this.rotation, this.largeArc, this.sweep, this.x, this.y);
+pathSegArc.prototype.split = function(ratio, fromPoint) {
+	if(!fromPoint || fromPoint.x == null || fromPoint.y == null) { return [this]; }
+	var val = this.getValue(ratio, fromPoint);
+	
+	var arc1 = this.largeArc;
+	var arc2 = this.largeArc;
+	
+	var absD = Math.abs(val.dAngle);
+	
+	if((absD >= Math.PI && absD*ratio < Math.PI) || (absD < Math.PI && absD*ratio > Math.PI)) {
+		arc1 = this.largeArc == 1 ? 0 : 1;
+	}
+	
+	if((absD >= Math.PI && absD*(1-ratio) < Math.PI) || (absD < Math.PI && absD*(1-ratio) > Math.PI)) {
+		arc2 = this.largeArc == 1 ? 0 : 1;
+	}
+	
+	
+	var middle = new pathSegArc(this.rx, this.ry, this.rotation, arc1, this.sweep, val.x, val.y);
+	var end = new pathSegArc(this.rx, this.ry, this.rotation, arc2, this.sweep, this.x, this.y);
+	
+	return [ middle, end ];
 }
 
-//pathSegArc.prototype.
+pathSegArc.prototype.getValue = function(ratio, fromPoint) {
+	if(!fromPoint || fromPoint.x == null || fromPoint.y == null) { return 0; }
+	
+	var angle = Math.PI*this.rotation/180;
+	
+	var x1S = Math.cos(angle)*(fromPoint.x-this.x)/2+Math.sin(angle)*(fromPoint.y-this.y)/2;
+	var y1S = -1*Math.sin(angle)*(fromPoint.x-this.x)/2+Math.cos(angle)*(fromPoint.y-this.y)/2;
+	
+	var k = this.largeArc == this.sweep ? -1 : +1;
+	
+	var cS = k*Math.sqrt(
+		(this.rx*this.rx*this.ry*this.ry - this.rx*this.rx*y1S*y1S - this.ry*this.ry*x1S*x1S)/
+		(this.rx*this.rx*y1S*y1S + this.ry*this.ry*x1S*x1S)
+	);
+	var cxS = cS*(this.rx*y1S/this.ry);
+	var cyS = -1*cS*(this.ry*x1S/this.rx);
+	
+	var cx = Math.cos(angle)*cxS-Math.sin(angle)*cyS + (fromPoint.x+this.x)/2;
+	var cy = Math.sin(angle)*cxS+Math.cos(angle)*cyS + (fromPoint.y+this.y)/2;
+	
+	var vectorLength = function(u) {
+		return Math.sqrt(Math.pow(u[0],2)+Math.pow(u[1],2));
+	}
+	
+	var vectorAngle = function(u,v) {
+		return ((u[0]*v[1]-u[1]*v[0])<0?-1:1)*Math.acos((u[0]*v[0]+u[1]*v[1])/vectorLength(u)*vectorLength(v));
+	}
+	
+	var the1 = vectorAngle([1,0],[(x1S-cxS)/this.rx,(y1S-cyS)/this.ry]);
+	var dthe1 = vectorAngle([(x1S-cxS)/this.rx,(y1S-cyS)/this.ry],[(-1*x1S-cxS)/this.rx,(-1*y1S-cyS)/this.ry])%(2*Math.PI);
+	
+	if(this.sweep == 0 && dthe1 > 0) { dthe1 -= 2*Math.PI; }
+	if(this.sweep == 1 && dthe1 < 0) { dthe1 += 2*Math.PI; }
+	
+	var x = Math.cos(angle)*this.rx*Math.cos(the1+ratio*dthe1) - Math.sin(angle)*this.ry*Math.sin(the1+ratio*dthe1) + cx;
+	var y = Math.sin(angle)*this.rx*Math.cos(the1+ratio*dthe1) + Math.cos(angle)*this.ry*Math.sin(the1+ratio*dthe1) + cy;
+	
+	return { 
+		'x': x,
+		'y': y,
+		'angle': the1,
+		'dAngle': dthe1
+	};
+}
 
 
 

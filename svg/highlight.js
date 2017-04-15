@@ -39,31 +39,43 @@ highlight.prototype.refresh = function() {
 		this.color = '#ff0000';
 	}
 	
-	this.clone = this.element.cloneNode(false);
+	this.cloneDrawn = this.element.cloneNode(false);
 		
 	var transform = this.element.getCTMBase();
-	this.clone.setAttribute('transform', transform);
-    this.clone.setAttribute("anigen:lock", "interface");
-	this.clone.style.fill = 'none';
-	this.clone.style.stroke = this.color;
-	this.clone.style.strokeDasharray = null;
-	this.clone.style.filter = null;
-	this.clone.removeAttribute('filter');
-	this.clone.style.clipPath = null;
-	this.clone.removeAttribute('clip-path');
+	this.cloneDrawn.setAttribute('transform', transform);
+    this.cloneDrawn.setAttribute("anigen:lock", "interface");
+	this.cloneDrawn.style.fill = 'none';
+	this.cloneDrawn.style.stroke = this.color;
 	
-	this.container.appendChild(this.clone);
+	this.cloneDrawn.style.strokeDasharray = null;
+	this.cloneDrawn.style.strokeLinecap = 'round';
+	this.cloneDrawn.style.filter = null;
+	this.cloneDrawn.removeAttribute('filter');
+	this.cloneDrawn.style.clipPath = null;
+	this.cloneDrawn.removeAttribute('clip-path');
+	
+	this.cloneDrawn.style.marker = null;
+	this.cloneDrawn.style.markerStart = null;
+	this.cloneDrawn.style.markerMid = null;
+	this.cloneDrawn.style.markerEnd = null;
+	
+	this.cloneHidden = this.cloneDrawn.cloneNode(false);
+	this.cloneHidden.style.strokeOpacity = '0';
+	
+	this.container.appendChild(this.cloneHidden);
+	this.container.appendChild(this.cloneDrawn);
 	this.adjustZoom();
 }
 
 highlight.prototype.adjustZoom = function() {
-	if(!this.clone) { return; }
-	var transform = this.clone.getCTMBase();
+	if(!this.cloneDrawn || !this.cloneHidden) { return; }
+	var transform = this.cloneDrawn.getCTMBase();
 	var zero = transform.toViewport(0,0);
 	var one = transform.toViewport(1,1);
 	var ratio = Math.sqrt((one.x-zero.x)*(one.x-zero.x)+(one.y-zero.y)*(one.y-zero.y));
 	
-	this.clone.style.strokeWidth = 2/(ratio*svg.zoom)+"px";
+	this.cloneDrawn.style.strokeWidth = 2/(ratio*svg.zoom)+"px";
+	this.cloneHidden.style.strokeWidth = 8/(ratio*svg.zoom)+"px";
 }
 
 highlight.prototype.hide = function() {

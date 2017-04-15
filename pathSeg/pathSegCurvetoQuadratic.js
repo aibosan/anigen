@@ -8,10 +8,10 @@ function pathSegCurvetoQuadratic(x1, y1, x, y) {
 	this.pathSegType = 8;
 	this.pathSegTypeAsLetter = 'Q';
 	
-	this.x1 = x1;
-	this.y1 = y1;
-	this.x = x;
-	this.y = y;
+	this.x = isNaN(x) ? 0 : x;
+	this.y = isNaN(y) ? 0 : y;
+	this.x1 = isNaN(x1) ? 0 : x1;
+	this.y1 = isNaN(y1) ? 0 : y1;
 }
 
 pathSegCurvetoQuadratic.prototype = Object.create(pathSeg.prototype);
@@ -77,6 +77,50 @@ pathSegCurvetoQuadratic.prototype.inbetween = function(other, ratio) {
 	return new pathSegCurvetoQuadratic(x1, y1, x, y);
 }
 
-pathSegCurvetoQuadratic.prototype.clone = function() {
-	return new pathSegCurvetoQuadratic(this.x1, this.y1, this.x, this.y);
+pathSegCurvetoQuadratic.prototype.split = function(ratio, fromPoint) {
+	var val = this.getValue(ratio, fromPoint);
+	
+	var middle = new pathSegCurvetoQuadratic(
+		fromPoint.x+(this.x1-fromPoint.x)*ratio, fromPoint.y+(this.y1-fromPoint.y)*ratio,
+		val.x, val.y
+		);
+	
+	ratio = 1-ratio;
+		
+	var end = new pathSegCurvetoQuadratic(
+		this.x+(this.x1-this.x)*ratio, this.y+(this.y1-this.y)*ratio,
+		this.x, this.y
+		);
+	
+	return [ middle, end ];
 }
+
+
+pathSegCurvetoQuadratic.prototype.getValue = function(ratio, fromPoint) {
+	if(!fromPoint || fromPoint.x == null || fromPoint.y == null) { return; }
+	
+	if(ratio < 0) { ratio = 0; }
+	if(ratio > 1) { ratio = 1; }
+	
+	var x = Math.pow((1-ratio), 2)*fromPoint.x + 
+		2*(1-ratio)*ratio*this.x1 + 
+		Math.pow(ratio,2)*this.x;
+	
+	var y = Math.pow((1-ratio), 2)*fromPoint.y + 
+		2*(1-ratio)*ratio*this.y1 + 
+		Math.pow(ratio,2)*this.y;
+	
+	var dX = 2*(1-ratio)*(this.x1-fromPoint.x) + 
+		2*ratio*(this.x-this.x1);
+		
+	var dY = 2*(1-ratio)*(this.y1-fromPoint.y) + 
+		2*ratio*(this.y-this.y1);
+	
+	return {
+		'x': x,
+		'y': y,
+		'dX': dX,
+		'dY': dY
+	};
+}
+

@@ -84,3 +84,31 @@ pathSeg.prototype.getMax = function(begin) {
 		'y': Math.max(begin.y, this.y, this.y1, this.y2)
 	}
 }
+
+pathSeg.prototype.split = function(ratio, fromPoint) {
+	return;
+}
+
+pathSeg.prototype.getValue = function(ratio, fromPoint) {
+	return;
+}
+
+pathSeg.prototype.getLength = function(fromPoint, segments) {
+	if(!fromPoint || fromPoint.x == null || fromPoint.y == null) { return 0; }
+	
+	segments = segments || 32;
+	
+	var step = 1/segments;
+	var previous = { 'x': fromPoint.x, 'y': fromPoint.y };
+	var sum = 0;
+	
+	for(var i = 0; i < segments; i++) {
+		var current = this.getValue(step*i, fromPoint)
+		sum += distance(previous, current);
+		previous = current;
+	}
+	
+	return sum;
+}
+
+

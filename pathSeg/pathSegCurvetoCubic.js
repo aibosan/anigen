@@ -8,12 +8,12 @@ function pathSegCurvetoCubic(x1, y1, x2, y2, x, y) {
 	this.pathSegType = 6;
 	this.pathSegTypeAsLetter = 'C';
 	
-	this.x1 = x1;
-	this.y1 = y1;
-	this.x2 = x2;
-	this.y2 = y2;
-	this.x = x;
-	this.y = y;
+	this.x = isNaN(x) ? 0 : x;
+	this.y = isNaN(y) ? 0 : y;
+	this.x1 = isNaN(x1) ? 0 : x1;
+	this.y1 = isNaN(y1) ? 0 : y1;
+	this.x2 = isNaN(x2) ? 0 : x2;
+	this.y2 = isNaN(y2) ? 0 : y2;
 }
 
 pathSegCurvetoCubic.prototype = Object.create(pathSeg.prototype);
@@ -102,4 +102,55 @@ pathSegCurvetoCubic.prototype.clone = function() {
 	return new pathSegCurvetoCubic(this.x1, this.y1, this.x2, this.y2, this.x, this.y);
 }
 
+pathSegCurvetoCubic.prototype.split = function(ratio, fromPoint) {
+	var val = this.getValue(ratio, fromPoint);
+	
+	var middle = new pathSegCurvetoCubic(
+		fromPoint.x+(this.x1-fromPoint.x)*ratio, fromPoint.y+(this.y1-fromPoint.y)*ratio,
+		-1*val.dX*ratio/3+val.x, -1*val.dY*ratio/3+val.y,
+		val.x, val.y
+		);
+	
+	ratio = 1-ratio;
+		
+	var end = new pathSegCurvetoCubic(
+		val.dX*ratio/3+val.x, val.dY*ratio/3+val.y,
+		this.x+(this.x2-this.x)*ratio, this.y+(this.y2-this.y)*ratio,
+		this.x, this.y
+		);
+		
+	return [ middle, end ];
+}
 
+pathSegCurvetoCubic.prototype.getValue = function(ratio, fromPoint) {
+	if(!fromPoint || fromPoint.x == null || fromPoint.y == null) { return; }
+	
+	if(ratio < 0) { ratio = 0; }
+	if(ratio > 1) { ratio = 1; }
+	
+	var x = Math.pow((1-ratio), 3)*fromPoint.x + 
+		3*Math.pow((1-ratio), 2)*ratio*this.x1 + 
+		3*(1-ratio)*Math.pow(ratio,2)*this.x2 + 
+		Math.pow(ratio, 3)*this.x;
+	
+	var y = Math.pow((1-ratio), 3)*fromPoint.y + 
+		3*Math.pow((1-ratio), 2)*ratio*this.y1 + 
+		3*(1-ratio)*Math.pow(ratio,2)*this.y2 + 
+		Math.pow(ratio, 3)*this.y;
+	
+	
+	var dX = 3*Math.pow((1-ratio), 2)*(this.x1-fromPoint.x) + 
+		6*(1-ratio)*ratio*(this.x2-this.x1) + 
+		3*Math.pow(ratio, 2)*(this.x-this.x2);
+		
+	var dY = 3*Math.pow((1-ratio), 2)*(this.y1-fromPoint.y) + 
+		6*(1-ratio)*ratio*(this.y2-this.y1) + 
+		3*Math.pow(ratio, 2)*(this.y-this.y2);
+	
+	return {
+		'x': x,
+		'y': y,
+		'dX': dX,
+		'dY': dY
+	};
+}

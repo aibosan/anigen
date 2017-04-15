@@ -15,6 +15,8 @@ function uiSVG() {
 	this.target = null;
 	
 	this.selectedIndexes = [];
+	this.selectedCustomIndexes = [];
+	
 	this.allSelected = false;
 	
 	this.anchorOffset = { 'x': 0, 'y': 0 };
@@ -41,6 +43,23 @@ uiSVG.prototype.addSelect = function(target) {
 			if(this.selectedIndexes.indexOf(i) != -1) { return; }	// already selected
 			this.selectedIndexes.push(i);
 			this.selectedIndexes.sort();
+			
+			if(this.anchorContainer.children[i].shepherd.customIndex != null) {
+				var custom = this.anchorContainer.children[i].shepherd.customIndex;
+				
+				if(Array.isArray(custom)) {
+					for(var j = 0; j < custom.length; j++) {
+						if(this.selectedCustomIndexes.indexOf(custom[j]) == -1) {
+							this.selectedCustomIndexes.push(custom[j]);	
+						}
+					}
+					this.selectedCustomIndexes.sort();
+				} else if(this.selectedCustomIndexes.indexOf(custom) == -1) {
+					this.selectedCustomIndexes.push(custom);
+					this.selectedCustomIndexes.sort();
+				}
+			}
+			
 			target.select(true);
 			break;
 		}
@@ -53,6 +72,20 @@ uiSVG.prototype.removeSelect = function(target) {
 		if(this.anchorContainer.children[i] == target.container) {
 			this.selectedIndexes.splice(this.selectedIndexes.indexOf(i), 1);
 			var index = this.selected.indexOf(target);
+			
+			if(this.anchorContainer.children[i].shepherd.customIndex != null) {
+				var custom = this.anchorContainer.children[i].shepherd.customIndex;
+				
+				if(Array.isArray(custom)) {
+					for(var j = 0; j < custom.length; j++) {
+						this.selectedCustomIndexes.splice(this.selectedCustomIndexes.indexOf(custom[j]), 1);
+					}
+					this.selectedCustomIndexes.sort();
+				} else if(this.selectedCustomIndexes.indexOf(custom) == -1) {
+					this.selectedCustomIndexes.splice(this.selectedCustomIndexes.indexOf(custom), 1);
+				}
+			}
+			
 			target.select(false);
 			break;
 		}
@@ -62,6 +95,7 @@ uiSVG.prototype.removeSelect = function(target) {
 
 uiSVG.prototype.clearSelect = function() {
 	this.selectedIndexes = [];
+	this.selectedCustomIndexes = [];
 	this.allSelected = false;
 	this.refreshSelection();
 }
@@ -71,6 +105,17 @@ uiSVG.prototype.selectAll = function() {
 	for(var i = 0; i < this.anchorContainer.children.length; i++) {
 		if(this.anchorContainer.children[i].shepherd && this.anchorContainer.children[i].shepherd.selectable) {
 			this.selectedIndexes.push(i);
+			var custom = this.anchorContainer.children[i].shepherd.customIndex;
+			if(custom != null) {
+				if(Array.isArray(custom)) {
+					for(var j = 0; j < custom.length; j++) {
+						this.selectedCustomIndexes.push(custom[j]);
+					}
+					this.selectedCustomIndexes.sort();
+				} else if(this.selectedCustomIndexes.indexOf(custom) == -1) {
+					this.selectedCustomIndexes.push(custom);
+				}
+			}
 		}
 	}
 	this.allSelected = true;

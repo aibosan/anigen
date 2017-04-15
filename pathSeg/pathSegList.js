@@ -89,3 +89,56 @@ pathSegList.prototype.transform = function(matrix) {
 pathSegList.prototype.toString = function() {
 	return this.arr.join(' ');
 }
+
+// returns total length
+pathSegList.prototype.getLength = function(lastPoint, segments) {
+	segments = segments || 10000;	// why not
+	var sum = 0;
+	var last = null;
+	var lastM = null;
+	for(var i = 0; i < this.arr.length; i++) {
+		if(this.arr[i] instanceof pathSegMoveto) { lastM = this.arr[i]; }
+		if(!last) {
+			last = { 'x': (this.arr[i].x || 0), 'y': (this.arr[i].y || 0) };
+			continue;
+		}
+		sum += this.arr[i].getLength(last, segments, lastM);
+		
+		if(lastPoint != null && lastPoint == i) { return sum; }
+		
+		if(this.arr[i].x != null) { last.x = this.arr[i].x; }
+		if(this.arr[i].y != null) { last.y = this.arr[i].y; }
+	}
+	return sum;
+}
+
+pathSegList.prototype.getPointAtLength = function(distance, segments) {
+	var index = this.getPathSegAtLength(distance, segments);
+	
+	if(index == 0) { 
+		return { 'x': this.arr[0].x, 'y': this.arr[0].y };
+	}
+	
+	distance -= this.getLength(index-1);
+	var segLength = this.arr[index].getLength(this.arr[index-1], segments);
+	return this.arr[index].getValue((distance/segLength), this.arr[index-1]);
+}
+
+pathSegList.prototype.getPathSegAtLength = function(distance, segments) {
+	var sum = 0;
+	var last = null;
+	var lastM;
+	for(var i = 0; i < this.arr.length; i++) {
+		if(sum > distance) { return i; }
+		if(this.arr[i] instanceof pathSegMoveto) { lastM = this.arr[i]; }
+		if(!last) {
+			last = { 'x': this.arr[i].x || 0, 'y': this.arr[i].y || 0 };
+			continue;
+		}
+		sum += this.arr[i].getLength(last, segments, lastM);
+		
+		if(this.arr[i].x != null) { last.x = this.arr[i].x; }
+		if(this.arr[i].y != null) { last.y = this.arr[i].y; }
+	}
+	return (this.arr.length-1);
+}
