@@ -10,11 +10,9 @@ function anigenActual() {
     this.iconHeight = 24;
 	this.versionNumeric = "0.8.1";
     this.version = this.versionNumeric + " " + "Quality of Life";
-	
+    
     this.tool = 1;
-	
 	this.notify = false;
-	
 	this.threshold = {
 		'position': 2,
 		'time': 250,
