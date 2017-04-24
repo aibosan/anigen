@@ -20,7 +20,7 @@ SVGPathElement.prototype.getPathData = function() {
 	
 	path = path.split('');
 	for(var i = 0; i < path.length; i++) {
-		if(path[i].match(/[a-zA-Z]/)) {
+		if(path[i].match(/[mMzZlLhHvVcCsSqQtTaA]/)) {
 			path[i] = ' '+path[i]+' ';
 		}
 	}
@@ -33,7 +33,7 @@ SVGPathElement.prototype.getPathData = function() {
 	var lastAbsolute = { x: 0, y: 0 };
 	var lastMCoordinate = { x: 0, y: 0 };
 	var lastLetter = null;
-	var error = false;
+	var error = null;
 	
 	for(var i = 0; i < path.length; i++) {
 		if(isNaN(path[i])) {
@@ -42,7 +42,7 @@ SVGPathElement.prototype.getPathData = function() {
 			i++;
 		}
 		if(!lastLetter) {
-			error = true;
+			error = 'No last letter; index: '+i;
 			break;
 		}
 		
@@ -52,7 +52,10 @@ SVGPathElement.prototype.getPathData = function() {
 		switch(lastLetter.toLowerCase()) {
 			case 'm':		// moveto
 				//lastAbsolute = lastMCoordinate;
-				if(i+1 >= path.length) { error = true; break; }
+				if(i+1 >= path.length) {
+					error = 'Path data exceeds expected length; index: '+i+', last letter: '+lastLetter;
+					break;
+				}
 				if(absolute || i == 1) {
 					segment = [
 						'M',
@@ -73,7 +76,10 @@ SVGPathElement.prototype.getPathData = function() {
 				break;
 			case 'l':		// lineto
 			case 't':		// shorthand quadratic
-				if(i+1 >= path.length) { error = true; break; }
+				if(i+1 >= path.length) {
+					error = 'Path data exceeds expected length; index: '+i+', last letter: '+lastLetter;
+					break;
+				}
 				if(absolute) {
 					segment = [
 						lastLetter.toUpperCase(),
@@ -129,7 +135,10 @@ SVGPathElement.prototype.getPathData = function() {
 				lastAbsolute = { 'x': segment[1], 'y': segment[2] };
 				break;
 			case 'c':		// curveto
-				if(i+5 >= path.length) { error = true; break; }
+				if(i+5 >= path.length) {
+					error = 'Path data exceeds expected length; index: '+i+', last letter: '+lastLetter;
+					break;
+				}
 				if(absolute) {
 					segment = [
 						'C',
@@ -157,7 +166,10 @@ SVGPathElement.prototype.getPathData = function() {
 				break;
 			case 's':		// shorthand curveto
 			case 'q':		// quadratic curveto
-				if(i+3 >= path.length) { error = true; break; }
+				if(i+3 >= path.length) {
+					error = 'Path data exceeds expected length; index: '+i+', last letter: '+lastLetter;
+					break;
+				}
 				if(absolute) {
 					segment = [
 						lastLetter.toUpperCase(),
@@ -179,7 +191,10 @@ SVGPathElement.prototype.getPathData = function() {
 				i += 3;
 				break;
 			case 'a':		// elliptical arc
-				if(i+6 >= path.length) { error = true; break; }
+				if(i+6 >= path.length) {
+					error = 'Path data exceeds expected length; index: '+i+', last letter: '+lastLetter;
+					break;
+				}
 				if(absolute) {
 					segment = [
 						lastLetter.toUpperCase(),
@@ -208,7 +223,7 @@ SVGPathElement.prototype.getPathData = function() {
 				i += 6;
 				break;
 			default:
-				error = true;
+				error = 'Unrecognized path command; index: '+i+', last letter: '+lastLetter;
 				break;
 		}
 		
@@ -216,53 +231,53 @@ SVGPathElement.prototype.getPathData = function() {
 		
 		switch(segment[0].toLowerCase()) {
 			case 'm':		// moveto
-				if(isNaN(segment[1])) { segment[1] = lastAbsolute.x; error=true; }
-				if(isNaN(segment[2])) { segment[2] = lastAbsolute.y; error=true; }
+				if(isNaN(segment[1])) { segment[1] = lastAbsolute.x; error = 'NaN value of segment 1; index: '+i+', last letter: '+lastLetter+' (non-fatal)'; }
+				if(isNaN(segment[2])) { segment[2] = lastAbsolute.y; error = 'NaN value of segment 2; index: '+i+', last letter: '+lastLetter+' (non-fatal)'; }
 				pathSegment = new pathSegMoveto(segment[1], segment[2]);
 				break;
 			case 'l':		// lineto
-				if(isNaN(segment[1])) { segment[1] = lastAbsolute.x; error=true; }
-				if(isNaN(segment[2])) { segment[2] = lastAbsolute.y; error=true; }
+				if(isNaN(segment[1])) { segment[1] = lastAbsolute.x; error = 'NaN value of segment 1; index: '+i+', last letter: '+lastLetter+' (non-fatal)'; }
+				if(isNaN(segment[2])) { segment[2] = lastAbsolute.y; error = 'NaN value of segment 2; index: '+i+', last letter: '+lastLetter+' (non-fatal)'; }
 				pathSegment = new pathSegLineto(segment[1], segment[2]);
 				break;
 			case 't':		// shorthand quadratic
-				if(isNaN(segment[1])) { segment[1] = lastAbsolute.x; error=true; }
-				if(isNaN(segment[2])) { segment[2] = lastAbsolute.y; error=true; }
+				if(isNaN(segment[1])) { segment[1] = lastAbsolute.x; error = 'NaN value of segment 1; index: '+i+', last letter: '+lastLetter+' (non-fatal)'; }
+				if(isNaN(segment[2])) { segment[2] = lastAbsolute.y; error = 'NaN value of segment 2; index: '+i+', last letter: '+lastLetter+' (non-fatal)'; }
 				pathSegment = new pathSegCurvetoQuadraticSmooth(segment[1], segment[2]);
 				break;
 			case 'z':		// closepath
 				pathSegment = new pathSegClosepath();
 				break;
 			case 'h':		// horizontal lineto
-				if(isNaN(segment[1])) { segment[1] = lastAbsolute.x; error=true; }
+				if(isNaN(segment[1])) { segment[1] = lastAbsolute.x; error = 'NaN value of segment 1; index: '+i+', last letter: '+lastLetter+' (non-fatal)'; }
 				pathSegment = new pathSegLinetoHorizontal(segment[1]);
 				break;
 			case 'v':		// vertical lineto
-				if(isNaN(segment[1])) { segment[1] = lastAbsolute.y; error=true; }
+				if(isNaN(segment[1])) { segment[1] = lastAbsolute.y; error = 'NaN value of segment 1; index: '+i+', last letter: '+lastLetter+' (non-fatal)'; }
 				pathSegment = new pathSegLinetoVertical(segment[1]);
 				break;
 			case 'c':		// curveto
-				if(isNaN(segment[5])) { segment[5] = lastAbsolute.x; error=true; }
-				if(isNaN(segment[6])) { segment[6] = lastAbsolute.y; error=true; }
+				if(isNaN(segment[5])) { segment[5] = lastAbsolute.x; error = 'NaN value of segment 1; index: '+i+', last letter: '+lastLetter+' (non-fatal)'; }
+				if(isNaN(segment[6])) { segment[6] = lastAbsolute.y; error = 'NaN value of segment 2; index: '+i+', last letter: '+lastLetter+' (non-fatal)'; }
 				pathSegment = new pathSegCurvetoCubic(segment[1], segment[2], segment[3], segment[4], segment[5], segment[6]);
 				break;
 			case 's':		// shorthand curveto
-				if(isNaN(segment[3])) { segment[3] = lastAbsolute.x; error=true; }
-				if(isNaN(segment[4])) { segment[4] = lastAbsolute.y; error=true; }
+				if(isNaN(segment[3])) { segment[3] = lastAbsolute.x; error = 'NaN value of segment 1; index: '+i+', last letter: '+lastLetter+' (non-fatal)'; }
+				if(isNaN(segment[4])) { segment[4] = lastAbsolute.y; error = 'NaN value of segment 2; index: '+i+', last letter: '+lastLetter+' (non-fatal)'; }
 				pathSegment = new pathSegCurvetoCubicSmooth(segment[1], segment[2], segment[3], segment[4]);
 				break;
 			case 'q':		// quadratic curveto
-				if(isNaN(segment[3])) { segment[3] = lastAbsolute.x; error=true; }
-				if(isNaN(segment[4])) { segment[4] = lastAbsolute.y; error=true; }
+				if(isNaN(segment[3])) { segment[3] = lastAbsolute.x; error = 'NaN value of segment 1; index: '+i+', last letter: '+lastLetter+' (non-fatal)'; }
+				if(isNaN(segment[4])) { segment[4] = lastAbsolute.y; error = 'NaN value of segment 2; index: '+i+', last letter: '+lastLetter+' (non-fatal)'; }
 				pathSegment = new pathSegCurvetoQuadratic(segment[1], segment[2], segment[3], segment[4]);
 				break;
 			case 'a':		// elliptical arc
-				if(isNaN(segment[1])) { segment[1] = lastAbsolute.x; error=true; }
-				if(isNaN(segment[2])) { segment[2] = lastAbsolute.y; error=true; }
+				if(isNaN(segment[1])) { segment[1] = lastAbsolute.x; error = 'NaN value of segment 1; index: '+i+', last letter: '+lastLetter+' (non-fatal)'; }
+				if(isNaN(segment[2])) { segment[2] = lastAbsolute.y; error = 'NaN value of segment 2; index: '+i+', last letter: '+lastLetter+' (non-fatal)'; }
 				pathSegment = new pathSegArc(segment[1], segment[2], segment[3], segment[4], segment[5], segment[6], segment[7]);
 				break;
 		}
-		if(!pathSegment) { error = true; break; }
+		if(!pathSegment) { error = 'Path segment could not be created; index: '+i; break; }
 		this.pathData.baseVal.appendItem(pathSegment);
 	}
 	this.setAttribute('d', this.pathData.baseVal);
@@ -285,6 +300,7 @@ SVGPathElement.prototype.getPathData = function() {
 		this.pathData.animVal = this.pathData.baseVal;
 	}
 	
+	if(error) { console.warn(error) };
 	return this.pathData;
 }
 
