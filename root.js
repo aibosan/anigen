@@ -2008,6 +2008,9 @@ root.prototype.getAnimatableAttributes = function(nodeName) {
 		case "fegaussianblur":
 			response = [ 'stdDeviation' ];
 			break;
+		case "fecolormatrix":
+			response = [ 'values' ];
+			break;
 		default:
 			response = false;
 			break;
