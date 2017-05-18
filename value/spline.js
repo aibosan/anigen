@@ -108,11 +108,16 @@ spline.prototype.getValue = function(x) {
 	var lX = [ x, x ];
 	var lY = [ 0, 1 ];
 	
-	var intersection = computeIntersections(pX,pY,lX,lY);
+	var intersections = computeIntersections(pX,pY,lX,lY);
+	var dX, outY;
 	
-	if(intersection[0].y >= 0 && intersection[0].y <= 1) { return intersection[0].y; }
-	if(intersection[1].y >= 0 && intersection[1].y <= 1) { return intersection[1].y; }
-	if(intersection[2].y >= 0 && intersection[2].y <= 1) { return intersection[2].y; }
+	for(var i = 0; i < intersections.length; i++) {
+       if(dX == null || Math.abs(intersections[i].x-t) < dX) {
+           dX = Math.abs(intersections[i].x-t);
+		   outY = intersections[i].y;
+       }
+	}
+	if(outY != null) { return outY; }
 	
 	// something something precision TODO
 	if(x < 0.01) {
