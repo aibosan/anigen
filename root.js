@@ -1876,7 +1876,7 @@ root.prototype.getAttributeValues = function(attribute) {
 		case "opacity": return [ "<fraction>" ];
 	// filters
 		case "enable-background": return [ "accumulate", "<new>" ];
-		case "filter": return [ "none", "<iri>" ];
+		case "filter": return [ "<string>" ];		// should be "none" or "<iri>", but parsing IRIs isn't a thing yet
 		case "flood-color": return [ "currentColor", "<color>" ];
 		case "flood-opacity": return [ "<fraction>" ];
 		case "lighting-color": return [ "currentColor", "<color>" ];
@@ -1965,7 +1965,7 @@ root.prototype.getAttributeValues = function(attribute) {
 }
 
 root.prototype.getAnimatableAttributes = function(nodeName) {	
-	var attrsGroup = [ "display", "visibility", "opacity", "clip-path" ];
+	var attrsGroup = [ "display", "visibility", "opacity", "clip-path", "filter" ];
 	var attrsNonGroup = [ "fill", "fill-opacity", "stroke", "stroke-width", "stroke-opacity", "stroke-dasharray", "stroke-dashoffset", "stroke-linecap", "stroke-linejoin", "stroke-miterlimit", "marker", "marker-end", "marker-mid", "marker-start" ];
 	
 	var response = [];
@@ -2010,6 +2010,12 @@ root.prototype.getAnimatableAttributes = function(nodeName) {
 			break;
 		case "fecolormatrix":
 			response = [ 'values' ];
+			break;
+		case "fefuncr":
+		case "fefuncg":
+		case "fefuncb":
+		case "fefunca":
+			response = [ 'type', 'tableValues', 'slope', 'intercept', 'amplitude', 'exponent', 'offset' ];
 			break;
 		default:
 			response = false;
