@@ -725,26 +725,26 @@ SVGElement.prototype.setPivot = function(x, y, isAbsolute, makeHistory) {
 	if(makeHistory) {
 		if(x == 0) { x = null; }
 		if(y == 0) { y = null; }
-		this.setAttributeHistory({'inkscape:transform-center-x': x, 'inkscape:transform-center-y': y});
+		this.setAttributeHistory({'anigen:transform-center-x': x, 'anigen:transform-center-y': y});
 	} else {
-		if(x && !isNaN(x)) { this.setAttribute('inkscape:transform-center-x', x); } else { this.removeAttribute('inkscape:transform-center-x'); }
-		if(y && !isNaN(y)) { this.setAttribute('inkscape:transform-center-y', y); } else { this.removeAttribute('inkscape:transform-center-y'); }
+		if(x && !isNaN(x)) { this.setAttribute('anigen:transform-center-x', x); } else { this.removeAttribute('anigen:transform-center-x'); }
+		if(y && !isNaN(y)) { this.setAttribute('anigen:transform-center-y', y); } else { this.removeAttribute('anigen:transform-center-y'); }
 	}
 }
 
 SVGElement.prototype.movePivot = function(dX, dY, makeHistory) {
-	var x = parseFloat(this.getAttribute('inkscape:transform-center-x') || 0);
-	var y = parseFloat(this.getAttribute('inkscape:transform-center-y') || 0);
+	var x = parseFloat(this.getAttribute('anigen:transform-center-x') || 0);
+	var y = parseFloat(this.getAttribute('anigen:transform-center-y') || 0);
 	x += dX;
 	y += dY;
 	
 	if(makeHistory) {
 		if(x == 0) { x = null; }
 		if(y == 0) { y = null; }
-		this.setAttributeHistory({'inkscape:transform-center-x': x, 'inkscape:transform-center-y': y});
+		this.setAttributeHistory({'anigen:transform-center-x': x, 'anigen:transform-center-y': y});
 	} else {
-		if(x && !isNaN(x)) { this.setAttribute('inkscape:transform-center-x', x); } else { this.removeAttribute('inkscape:transform-center-x'); }
-		if(y && !isNaN(y)) { this.setAttribute('inkscape:transform-center-y', y); } else { this.removeAttribute('inkscape:transform-center-y'); }
+		if(x && !isNaN(x)) { this.setAttribute('anigen:transform-center-x', x); } else { this.removeAttribute('anigen:transform-center-x'); }
+		if(y && !isNaN(y)) { this.setAttribute('anigen:transform-center-y', y); } else { this.removeAttribute('anigen:transform-center-y'); }
 	}
 }
 
@@ -754,8 +754,8 @@ SVGElement.prototype.getPivot = function(justCenter) {
 		x = 0;
 		y = 0;
 	} else {
-		x = parseFloat(this.getAttribute('inkscape:transform-center-x') || 0);
-		y = parseFloat(this.getAttribute('inkscape:transform-center-y') || 0);
+		x = parseFloat(this.getAttribute('anigen:transform-center-x') || 0);
+		y = parseFloat(this.getAttribute('anigen:transform-center-y') || 0);
 	}
 	
 	if(svg) {

@@ -168,11 +168,11 @@ selectionBox.prototype.refresh = function() {
 	var originBase = {'x': this.trX+(this.blX-this.trX)/2, 'y': this.blY+(this.trY-this.blY)/2};	// for further use
 	
 	//Inkscape's pivot is absolute coordinates in relation to the center of the element.
-	if(this.element.getAttribute('inkscape:transform-center-x') && !isNaN(this.element.getAttribute('inkscape:transform-center-x'))) {
-		origin.x += parseFloat(this.element.getAttribute('inkscape:transform-center-x'));
+	if(this.element.getAttribute('anigen:transform-center-x') && !isNaN(this.element.getAttribute('anigen:transform-center-x'))) {
+		origin.x += parseFloat(this.element.getAttribute('anigen:transform-center-x'));
 	}
-	if(this.element.getAttribute('inkscape:transform-center-y') && !isNaN(this.element.getAttribute('inkscape:transform-center-y'))) {
-		origin.y += parseFloat(this.element.getAttribute('inkscape:transform-center-y'));
+	if(this.element.getAttribute('anigen:transform-center-y') && !isNaN(this.element.getAttribute('anigen:transform-center-y'))) {
+		origin.y += parseFloat(this.element.getAttribute('anigen:transform-center-y'));
 	}
 	
 	var mouseUpAction = 'svg.select();';

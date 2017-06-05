@@ -5,12 +5,26 @@
  *	@brief		Prototypes for SVG "g" (group) element
  */
 
-SVGGElement.prototype.ungroup = function(makeHistory) {
+SVGGElement.prototype.ungroup = function(makeHistory, recursive, keepAnimations) {
 	var transform = this.getTransform();
 	
+	var animations = [];
+	for(var i = 0; i < this.children.length; i++) {
+		if(this.children[i] instanceof SVGAnimationElement) {
+			var clone = this.children[i].cloneNode();
+				clone.removeAttribute('anigen:lock');
+			animations.push(clone);
+		}
+	}
+	
+	var inserted = [];
 	var children = this.children;
     for(var i = 0; i < children.length; i++) {
-	
+		if(keepAnimations && children[i] instanceof SVGAnimationElement) {
+			children[i].removeAttribute('anigen:lock');
+			continue;
+		}
+		
 		var childTransform = children[i].getTransform();
 		var toTransform = transform.multiply(childTransform);
 		
@@ -23,7 +37,22 @@ SVGGElement.prototype.ungroup = function(makeHistory) {
 		} else {
 			children[i].setAttribute('transform', toTransform);
 		}
-        this.parentNode.insertBefore(children[i].cloneNode(true), this);
+		var clone = children[i].cloneNode(true);
+		inserted.push(clone);
+        this.parentNode.insertBefore(clone, this);
+		if(keepAnimations) {
+			// TODO: CTM carry over; also, scaling animation won't keep its origin (drop?)
+			for(var j = 0; j < animations.length; j++) {
+				var clone2 = animations[j].cloneNode(true);
+					clone2.removeAttribute('id');
+					clone2.generateId();
+				clone.appendChild(clone2);
+				if(makeHistory) {
+				svg.history.add(new historyCreation(clone2.cloneNode(true),
+					children[i].id, null, false, true));
+				}
+			}
+		}
     }
 	
 	if(makeHistory && svg && svg.history) {
@@ -32,6 +61,17 @@ SVGGElement.prototype.ungroup = function(makeHistory) {
 	}
 	
     this.parentNode.removeChild(this);
+	
+	if(recursive) {
+		var arr = [];
+		for(var i = 0; i < inserted.length; i++) {
+			if(typeof inserted[i].ungroup === 'function') {
+				arr = arr.concat(inserted[i].ungroup(makeHistory, recursive, keepAnimations));
+			}
+		}
+		return arr;
+	}
+	
 	return children;
 };
 

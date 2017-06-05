@@ -6,10 +6,14 @@
  */
  
 SVGClipPathElement.prototype.validate = function() {
-    var groups = this.getElementsByTagName('g', true);
+    var groups = this.getElementsByTagName('g');
     for(var i = 0; i < groups.length; i++) {
-        groups[i].ungroup();
+        groups[i].ungroup(false, true, false);
     }
+	var animations = this.getElementsByTagName('animate', true, true);
+	for(var i = 0; i < animations.length; i++) {
+		animations[i].removeAttribute('anigen:lock');
+	}
 };
 
 SVGDefsElement.prototype.validate = function() {

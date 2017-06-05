@@ -894,8 +894,8 @@ root.prototype.createAnimation = function(owner, type, numeric, flags, other) {
 			animationElement.setAttribute('attributeName', 'transform');
 			animationElement.setAttribute('attributeType', 'auto');
 			
-			var cx = parseFloat(owner.getAttribute('inkscape:transform-center-x') || 0);
-			var cy = parseFloat(owner.getAttribute('inkscape:transform-center-y') || 0);
+			var cx = parseFloat(owner.getAttribute('anigen:transform-center-x') || 0);
+			var cy = parseFloat(owner.getAttribute('anigen:transform-center-y') || 0);
 			
 			if(typeof owner.getBBox === 'function') {
 				var box = owner.getBBox();
@@ -1447,8 +1447,8 @@ root.prototype.transferOut = function(scale, flags) {
 	// removes reference counts
 	children = clone.getChildren(true);
 	for(var i = 0; i < children.length; i++) {
-		if(isNaN(children[i].getAttribute('inkscape:transform-center-x'))) { children[i].removeAttribute('inkscape:transform-center-x'); }
-		if(isNaN(children[i].getAttribute('inkscape:transform-center-y'))) { children[i].removeAttribute('inkscape:transform-center-y'); }
+		if(isNaN(children[i].getAttribute('anigen:transform-center-x'))) { children[i].removeAttribute('anigen:transform-center-x'); }
+		if(isNaN(children[i].getAttribute('anigen:transform-center-y'))) { children[i].removeAttribute('anigen:transform-center-y'); }
 		children[i].removeAttribute('anigen:references');
 	}
 	
