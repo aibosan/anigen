@@ -1332,6 +1332,11 @@ root.prototype.transferIn = function() {
 	}
 	this.defs.validate();
 	
+        this.svgUnits = this.svgElement.getAttribute("width").replace(/[+-]?[0-9]*\.?[0-9]*/, '') || null;
+        if(!this.svgUnits || this.svgUnits.length === 0) {
+            this.svgUnits = this.namedView.getAttribute('inkscape:document-units') || "px";
+        }
+        
 	this.svgWidth = parseFloat(this.svgElement.getAttribute("width"));
 	this.svgHeight = parseFloat(this.svgElement.getAttribute("height"));
 	this.svgBox = this.svgElement.getAttribute("viewBox");
@@ -1424,8 +1429,8 @@ root.prototype.transferOut = function(scale, flags) {
 	if(!oldPaused) { this.pauseToggle(true); }
 	
 	clone.setAttribute("viewBox", this.svgBox.join(' '));
-	clone.setAttribute("width", this.svgWidth*scale.x);
-	clone.setAttribute("height", this.svgHeight*scale.y);
+	clone.setAttribute("width", this.svgWidth*scale.x+this.svgUnits);
+	clone.setAttribute("height", this.svgHeight*scale.y+this.svgUnits);
 	
 	// removes interface
 	var children = clone.getElementsByAttribute('anigen:lock', 'interface');
