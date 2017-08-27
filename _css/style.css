@@ -447,7 +447,7 @@ label.checkbox {
 .timeline {
 	position: absolute;
 	width: 100%;
-	z-index; 200;
+	z-index: 200;
 	height: 1px;
 	cursor: pointer;
 	
