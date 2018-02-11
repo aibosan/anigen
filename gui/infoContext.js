@@ -22,7 +22,8 @@ infoContext.prototype.seed = function() {
 	
 	this.buttons.animate = new uiButton('power_settings_new', 'popup.macroAnimateMenu(anigenManager.classes.context.buttons.animate.container);', 'Animate element...', { 'toggle': true, 'class': 'floatLeft turn-90' }).shepherd;
 	this.buttons.edit = new uiButton('reorder', 'overlay.macroEdit(svg.selected);', 'Edit attributes', { 'class': 'floatLeft' }).shepherd;
-	this.buttons.children = new uiButton('details', 'popup.macroChildren(anigenManager.classes.context.buttons.children.container, svg.selected);', 'Child nodes...', { 'toggle': true, 'class': 'floatLeft' }).shepherd;
+        this.buttons.editTextContent = new uiButton('title', 'popup.macroEditTextContent(this.container);', 'Edit text content', { 'class': 'floatLeft' }).shepherd;
+        this.buttons.children = new uiButton('details', 'popup.macroChildren(anigenManager.classes.context.buttons.children.container, svg.selected);', 'Child nodes...', { 'toggle': true, 'class': 'floatLeft' }).shepherd;
 	this.buttons.parent = new uiButton('change_history', 'svg.select(svg.selected.getViableParent());', 'Select parent', { 'class': 'floatLeft' } ).shepherd;
 	
 	this.buttons.keyframePrev = new uiButton('arrow_back', 'var trg = svg.selected.shepherd || svg.selected;if(typeof trg.getClosest === "function") { svg.gotoTime(trg.getClosest().previous.time); }', 'Jump to previous keyframe (1 / Ctrl+Left)', { 'class': 'floatLeft' }).shepherd;
@@ -119,6 +120,7 @@ infoContext.prototype.seed = function() {
 	this.container.appendChild(new uiBreak('floatLeft'));
 	this.container.appendChild(this.buttons.animate.container);
 	this.container.appendChild(this.buttons.edit.container);
+        this.container.appendChild(this.buttons.editTextContent.container);
 	this.container.appendChild(this.buttons.children.container);
 	this.container.appendChild(this.buttons.parent.container);
 	this.container.appendChild(new uiBreak('floatLeft'));
@@ -152,6 +154,12 @@ infoContext.prototype.refreshButtons = function() {
 		}
 	}
 	
+        if(target.children.length === 0) {
+            this.buttons.editTextContent.enable();
+        } else {
+            this.buttons.editTextContent.disable();
+        }
+        
 	if(anigenActual.tool == 2) {
 		this.toolGroups[1].style.display = null;
 	}

@@ -250,6 +250,21 @@ popup.prototype.macroClock = function(target) {
 	this.show(target);
 }
 
+popup.prototype.macroEditTextContent = function(target) {
+    if(!target) { return; }
+    this.reset();
+
+    var value = svg.selected.textContent;
+
+    this.add(build.input('text', value));
+
+    var action = "svg.selected.textContent=this.previousSibling.value;svg.select();";
+
+    this.addButtonOk(action);
+    this.addButtonCancel();
+
+    this.show(target);
+}
 
 popup.prototype.macroAnimationContextMenu = function(event, index) {
 	this.reset();
