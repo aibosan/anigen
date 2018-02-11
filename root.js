@@ -554,6 +554,15 @@ root.prototype.evaluateEditOverlay = function(tableAttr, tableCSS) {
 	this.select();
 }
 
+root.prototype.changeTextContent = function(newContent) {
+    this.history.add(new historyGeneric(svg.selected.id,
+        "target.textContent='"+this.selected.textContent+"';",
+        "target.textContent='"+newContent+"';",
+        false));
+    this.selected.textContent = newContent;
+    this.select();
+}
+
 root.prototype.evaluateStatesManager = function() {
 	var container = overlay.content;
 	

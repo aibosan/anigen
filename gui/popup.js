@@ -258,7 +258,7 @@ popup.prototype.macroEditTextContent = function(target) {
 
     this.add(build.input('text', value));
 
-    var action = "svg.selected.textContent=this.previousSibling.value;svg.select();";
+    var action = "svg.changeTextContent(this.previousSibling.value);";
 
     this.addButtonOk(action);
     this.addButtonCancel();
