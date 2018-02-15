@@ -1345,7 +1345,7 @@ root.prototype.transferIn = function() {
 	this.svgHeight = this.svgElement.getAttribute("height");
 	
         if(this.svgWidth) {
-            this.svgUnits = svgWidth.replace(/[+-]?[0-9]*\.?[0-9]*/, '') || null;
+            this.svgUnits = this.svgWidth.replace(/[+-]?[0-9]*\.?[0-9]*/, '') || null;
         }
         if(!this.svgUnits || this.svgUnits.length === 0) {
             this.svgUnits = this.namedView.getAttribute('inkscape:document-units') || "px";
