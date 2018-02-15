@@ -1341,16 +1341,36 @@ root.prototype.transferIn = function() {
 	}
 	this.defs.validate();
 	
-        this.svgUnits = this.svgElement.getAttribute("width").replace(/[+-]?[0-9]*\.?[0-9]*/, '') || null;
+	this.svgWidth = this.svgElement.getAttribute("width");
+	this.svgHeight = this.svgElement.getAttribute("height");
+	
+        if(this.svgWidth) {
+            this.svgUnits = svgWidth.replace(/[+-]?[0-9]*\.?[0-9]*/, '') || null;
+        }
         if(!this.svgUnits || this.svgUnits.length === 0) {
             this.svgUnits = this.namedView.getAttribute('inkscape:document-units') || "px";
         }
+    
+        this.svgBox = this.svgElement.getAttribute("viewBox");
         
-	this.svgWidth = parseFloat(this.svgElement.getAttribute("width"));
-	this.svgHeight = parseFloat(this.svgElement.getAttribute("height"));
-	this.svgBox = this.svgElement.getAttribute("viewBox");
-	if(!this.svgBox) { this.svgBox = "0 0 " + parseFloat(this.svgWidth) + " " + parseFloat(this.svgHeight); }
-	this.svgBox = this.svgBox.split(' ');
+        if(!this.svgBox) {
+            if(!this.svgWidth) {
+                this.svgWidth = this.svgElement.width ? this.svgElement.width.baseVal ? this.svgElement.width.baseVal.value : this.svgElement.width.value != null ? this.svgElement.width.value : null : null;
+            }
+            if(!this.svgHeight) {
+                this.svgHeight = this.svgElement.height ? this.svgElement.height.baseVal ? this.svgElement.height.baseVal.value : this.svgElement.height.value != null ? this.svgElement.height.value : null : null;
+            }
+            this.svgBox = "0 0 " + parseFloat(this.svgWidth) + " " + parseFloat(this.svgHeight);
+            this.svgBox = this.svgBox.split(' ');
+        } else {
+            this.svgBox = this.svgBox.split(' ');
+            if(!this.svgWidth) {
+                this.svgWidth = parseFloat(this.svgBox[2]);
+            }
+            if(!this.svgHeight) {
+                this.svgHeight = parseFloat(this.svgBox[3]);
+            }
+        }
 	this.svgBox[0] = parseFloat(this.svgBox[0]);
 	this.svgBox[1] = parseFloat(this.svgBox[1]);
 	this.svgBox[2] = parseFloat(this.svgBox[2]);
