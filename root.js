@@ -1350,7 +1350,10 @@ root.prototype.transferIn = function() {
         if(!this.svgUnits || this.svgUnits.length === 0) {
             this.svgUnits = this.namedView.getAttribute('inkscape:document-units') || "px";
         }
-    
+
+        this.svgWidth = parseFloat(this.svgWidth);
+    	this.svgHeight = parseFloat(this.svgHeight);
+
         this.svgBox = this.svgElement.getAttribute("viewBox");
         
         if(!this.svgBox) {
@@ -1456,7 +1459,6 @@ root.prototype.transferOut = function(scale, flags) {
 	
 	this.svgElement.setCurrentTime(oldTime);
 	if(!oldPaused) { this.pauseToggle(true); }
-	
 	clone.setAttribute("viewBox", this.svgBox.join(' '));
 	clone.setAttribute("width", this.svgWidth*scale.x+this.svgUnits);
 	clone.setAttribute("height", this.svgHeight*scale.y+this.svgUnits);
@@ -1622,7 +1624,6 @@ root.prototype.export = function(options) {
 	if(options.dur <= 0 || options.fps <= 0)  { return; }
 	
 	if(options.begin < 0)  { options.begin = 0; }
-	
 	this.exportName = options.filename = options.filename || this.fileName;
 	options.format = options.format || 'png';
 	options.scale = options.scale || { 'x': 1, 'y': 1 };
@@ -1688,19 +1689,24 @@ root.prototype.packRendered = function(format) {
 		anigenActual.exporting = false;
 		return;
 	}
-	
+
+    var digitsNum = Math.ceil(Math.log10(this.svgrender.images.length + 1));
+	var i = 0;
+	var max = this.svgrender.images.length;
+	var beginTime = new Date();
+
 	switch(format) {
 		case "svg":
-			for(var i = 0; i < this.svgrender.images.length; i++) {
-				var digitsNum = Math.ceil(Math.log10(this.svgrender.images.length + 1));
-				this.zip.file("out" + ("0000000000000000000" + i).substr(-digitsNum, digitsNum) + ".svg", this.svgrender.images[i], {base64: false, binary: false});
+			while(this.svgrender.images.length) {
+                this.zip.file("out" + ("0000000000000000000" + i).substr(-digitsNum, digitsNum) + ".svg", this.svgrender.images.shift(), {base64: false, binary: false});
+				i++;
 			}
 			break;
 		default:
-			for(var i = 0; i < this.svgrender.images.length; i++) {
-				var digitsNum = Math.ceil(Math.log10(this.svgrender.images.length + 1));
-				this.zip.file("out" + ("0000000000000000000" + i).substr(-digitsNum, digitsNum) + ".png", this.svgrender.images[i], {base64: true, binary: true});
-			}
+            while(this.svgrender.images.length) {
+                this.zip.file("out" + ("0000000000000000000" + i).substr(-digitsNum, digitsNum) + ".png", this.svgrender.images.shift(), {base64: true, binary: true});
+                i++;
+            }
 			break;
 	}
 	
