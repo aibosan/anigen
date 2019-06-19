@@ -111,7 +111,7 @@ uiManager.prototype.seedAnigen = function() {
 	this.named.right.content.appendChild(this.classes.windowColors.container);
 	this.named.right.content.appendChild(this.classes.windowLayers.container);
 	this.named.left.content.appendChild(this.classes.tree.container);
-	this.named.bottom.content.appendChild(log.container);
+	this.named.bottom.content.appendChild(logger.container);
 	
 	// overlay and popup
 	window.popup = new popup();
@@ -132,7 +132,7 @@ uiManager.prototype.seedAnigen = function() {
 	anigenActual.settings.apply();
 	anigenActual.resetTitle();
 	
-	log.report('UI built.');
+	logger.report('UI built.');
 }
 
 uiManager.prototype.register = function(target) {

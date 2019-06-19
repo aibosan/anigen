@@ -13,9 +13,7 @@ function eventLog() {
 		// recommendation:	0: necessary (copy/pasting, etc.)
 		// 					1: clustered (individual history steps in small detail)
 		// 					2: extreme (individual events)
-	
-	window.log = this;
-	
+
 	this.container.addEventListener("wheel", this.eventScroll, false);
 	
 	window.addEventListener('error', function(event) {
@@ -24,40 +22,19 @@ function eventLog() {
 			var parts = event.error.stack.split(/\r?\n/);
 				for(var i = 0; i < parts.length; i++) {
 					if(i > 0) {
-						log.error('<span class="tab"></span>' + parts[i].replace(/http.*\//, '<span class="black">').replace(/\)$/, '</span>)'));
+						logger.error('<span class="tab"></span>' + parts[i].replace(/http.*\//, '<span class="black">').replace(/\)$/, '</span>)'));
 					} else {
-						log.error(parts[i]);
+						logger.error(parts[i]);
 					}
 				}
-			log.heightTo(parts.length);
+			logger.heightTo(parts.length);
 		} else {
-			log.error(event.error.message);
-			log.error('<span class="tab"></span>at <span class="black">' + event.filename.replace(/^.*\//, '') + ':' + event.lineno + '</span>');
-			log.heightTo(2);
+			logger.error(event.error.message);
+			logger.error('<span class="tab"></span>at <span class="black">' + event.filename.replace(/^.*\//, '') + ':' + event.lineno + '</span>');
+			logger.heightTo(2);
 		}
 	  
 	}, false);
-	
-	// wrappers
-	/* 
-	var old_console_log = console.log;
-	console.log = function() {
-		old_console_log.apply(this, arguments);
-		log.report(Array.prototype.slice.call(arguments).join('<span class="tab"></span>'));
-	}
-	
-	var old_console_error = console.error;
-	console.error = function() {
-		old_console_error.apply(this, arguments);
-		log.error(Array.prototype.slice.call(arguments).join('<span class="tab"></span>'));
-	}
-	
-	var old_console_warn = console.warn;
-	console.warn = function() {
-		old_console_warn.apply(this, arguments);
-		log.warn(Array.prototype.slice.call(arguments).join('<span class="tab"></span>'));
-	}
-	*/
 }
 
 
@@ -111,17 +88,17 @@ eventLog.prototype.scrollDown = function() {
 }
 
 eventLog.prototype.eventScroll = function(event) {
-	var scrollTo = log.container.scrollTop;
+	var scrollTo = logger.container.scrollTop;
 	if((event.deltaY || event.deltaX) < 0) {
 		scrollTo -= 24;
 	} else {
 		scrollTo += 24;
 	}
 	if(scrollTo < 0) { scrollTo = 0; }
-	if(scrollTo >= log.container.scrollHeight-log.container.clientHeight) {
-		scrollTo = log.container.scrollHeight-log.container.clientHeight;
+	if(scrollTo >= logger.container.scrollHeight-logger.container.clientHeight) {
+		scrollTo = logger.container.scrollHeight-logger.container.clientHeight;
 	}
-	log.container.scrollTop = scrollTo;
+	logger.container.scrollTop = scrollTo;
 	event.preventDefault ? event.preventDefault() : event.returnValue = false;
 }
 
@@ -140,5 +117,5 @@ eventLog.prototype.heightTo = function(rows) {
 	anigenManager.named.right.refresh();
 }
 
-
+window.logger = new eventLog();
 

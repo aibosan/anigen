@@ -52,7 +52,7 @@ history.prototype.add = function(addition) {
 history.prototype.undo = function(single) {
 	if(this.index < 0) { return false; }
 	
-	log.report('Beginning history undo:', 1);
+	logger.report('Beginning history undo:', 1);
 	
 	var steps = 0;
 	var timeStart = new Date();
@@ -67,7 +67,7 @@ history.prototype.undo = function(single) {
 		Math.abs(this.histArray[this.index+1].timestamp - this.histArray[this.index].timestamp) < this.collapseConstant);
 	
 	var timeEnd = new Date();
-	log.report('History <strong>undo</strong>. Steps: '+steps+', elapsed time: '+(timeEnd.getTime()-timeStart.getTime())+' ms.');
+	logger.report('History <strong>undo</strong>. Steps: '+steps+', elapsed time: '+(timeEnd.getTime()-timeStart.getTime())+' ms.');
 	
 	svg.ui.selectionBox.origin = null;
 	if(anigenActual) { anigenActual.eventUIRefresh(); }
@@ -78,7 +78,7 @@ history.prototype.undo = function(single) {
 history.prototype.redo = function(single) {
 	if(this.index == this.histArray.length-1) { return false; }
 	
-	log.report('Beginning history redo:', 1);
+	logger.report('Beginning history redo:', 1);
 	
 	var steps = 0;
 	var timeStart = new Date();
@@ -93,7 +93,7 @@ history.prototype.redo = function(single) {
 		Math.abs(this.histArray[this.index+1].timestamp - this.histArray[this.index].timestamp) < this.collapseConstant);
 	
 	var timeEnd = new Date();
-	log.report('History <strong>redo</strong>. Steps: '+steps+', elapsed time: '+(timeEnd.getTime()-timeStart.getTime())+' ms.');
+	logger.report('History <strong>redo</strong>. Steps: '+steps+', elapsed time: '+(timeEnd.getTime()-timeStart.getTime())+' ms.');
 	
 	svg.ui.selectionBox.origin = null;
 	if(anigenActual) { anigenActual.eventUIRefresh(); }

@@ -87,15 +87,15 @@ root.prototype.addLayer = function(name, position) {
 				} else {
 					currentLayer.parentNode.appendChild(newLayer);
 				}
-				log.report('New layer <strong>'+name+'</strong> was created above layer <strong>'+currentLayer.getAttribute('inkscape:label')+'</strong>.');
+				logger.report('New layer <strong>'+name+'</strong> was created above layer <strong>'+currentLayer.getAttribute('inkscape:label')+'</strong>.');
 				break;
 			case 'below':
 				currentLayer.parentNode.insertBefore(newLayer, currentLayer);
-				log.report('New layer <strong>'+name+'</strong> was created below layer <strong>'+currentLayer.getAttribute('inkscape:label')+'</strong>.');
+				logger.report('New layer <strong>'+name+'</strong> was created below layer <strong>'+currentLayer.getAttribute('inkscape:label')+'</strong>.');
 				break;
 			case 'sublayer':
 				currentLayer.appendChild(newLayer);
-				log.report('New layer <strong>'+name+'</strong> was created as a sublayer of <strong>'+currentLayer.getAttribute('inkscape:label')+'</strong>.');
+				logger.report('New layer <strong>'+name+'</strong> was created as a sublayer of <strong>'+currentLayer.getAttribute('inkscape:label')+'</strong>.');
 				break;
 		}
 	}
@@ -117,7 +117,7 @@ root.prototype.renameLayer = function(targetId, newName) {
 		{ 'inkscape:label': newName },
 	true));
 	
-	log.report('Layer <strong>'+target.getAttribute('inkscape:label')+'</strong> was renamed to <strong>'+newName+'</strong>.');
+	logger.report('Layer <strong>'+target.getAttribute('inkscape:label')+'</strong> was renamed to <strong>'+newName+'</strong>.');
 	
 	target.setAttribute('inkscape:label', newName);
 	
@@ -246,7 +246,7 @@ root.prototype.duplicate = function(target) {
 		target.parentNode.appendChild(clone);
 	}
 	
-	log.report('Element <strong>'+target.getAttribute('id')+'</strong> was duplicated. Duplicate id is <strong>'+clone.getAttribute('id')+'</strong>.');
+	logger.report('Element <strong>'+target.getAttribute('id')+'</strong> was duplicated. Duplicate id is <strong>'+clone.getAttribute('id')+'</strong>.');
 	
 	this.history.add(new historyCreation(clone.cloneNode(true), clone.parentNode.id, clone.nextElementSibling ? clone.nextElementSibling.id : null, false));
 	
@@ -279,7 +279,7 @@ root.prototype.copy = function(target) {
 		if(this.elementTemp.shepherd instanceof animatedViewbox) { additional = '(camera)'; }
 		
 	}
-	log.report('Element <strong>'+target.getAttribute('id')+'</strong> '+additional+' was copied to clipboard.');
+	logger.report('Element <strong>'+target.getAttribute('id')+'</strong> '+additional+' was copied to clipboard.');
 }
 
 // pastes previously copied element into the target
@@ -302,7 +302,7 @@ root.prototype.paste = function(position, target, beforeElement) {
 		to.pasteTiming(fr, true);
 		this.select(to.commit());
 		
-		log.report('Timing of element <strong>'+fr.getAttribute('id')+'</strong> was pasted into element <strong>'+target.getAttribute('id')+'</strong>.');
+		logger.report('Timing of element <strong>'+fr.getAttribute('id')+'</strong> was pasted into element <strong>'+target.getAttribute('id')+'</strong>.');
 		
 		//this.select(target.pasteTiming(this.elementTemp));
 		return;
@@ -329,19 +329,19 @@ root.prototype.paste = function(position, target, beforeElement) {
 		if(newElement.isAnimation()) { return; }
 		if(beforeElement != null) {
 			target.insertBefore(newElement, beforeElement);
-			log.report('<strong>'+newElement.getAttribute('id')+'</strong> was pasted into element <strong>'+target.getAttribute('id')+'; its next sibling is <strong>'+beforeElement.getAttribute('id')+'</strong>.');
+			logger.report('<strong>'+newElement.getAttribute('id')+'</strong> was pasted into element <strong>'+target.getAttribute('id')+'; its next sibling is <strong>'+beforeElement.getAttribute('id')+'</strong>.');
 		} else {
 			target.insertBefore(newElement, this.uiGroup);
-			log.report('<strong>'+newElement.getAttribute('id')+'</strong> was pasted into element <strong>'+target.getAttribute('id')+'; its next sibling is <strong>'+this.uiGroup.getAttribute('id')+'</strong>.');
+			logger.report('<strong>'+newElement.getAttribute('id')+'</strong> was pasted into element <strong>'+target.getAttribute('id')+'; its next sibling is <strong>'+this.uiGroup.getAttribute('id')+'</strong>.');
 		}
 	} else if(typeof target.allowsChild !== 'function' || target.allowsChild(newElement)) {
 		// appends if the target allows it
 		if(beforeElement != null) {
 			target.insertBefore(newElement, beforeElement);
-			log.report('<strong>'+newElement.getAttribute('id')+'</strong> was pasted into element <strong>'+target.getAttribute('id')+'; its next sibling is <strong>'+beforeElement.getAttribute('id')+'</strong>.');
+			logger.report('<strong>'+newElement.getAttribute('id')+'</strong> was pasted into element <strong>'+target.getAttribute('id')+'; its next sibling is <strong>'+beforeElement.getAttribute('id')+'</strong>.');
 		} else {
 			target.appendChild(newElement);
-			log.report('<strong>'+newElement.getAttribute('id')+'</strong> was pasted into element <strong>'+target.getAttribute('id')+'.');
+			logger.report('<strong>'+newElement.getAttribute('id')+'</strong> was pasted into element <strong>'+target.getAttribute('id')+'.');
 		}
 	} else {
 		// otherwise appends it to the parent
@@ -376,7 +376,7 @@ root.prototype.delete = function(target) {
 	
 	this.history.add(new historyCreation(target.cloneNode(true), target.parentNode.id, target.nextElementSibling ? target.nextElementSibling.id : null, true));
 	
-	log.report('<strong>'+target.getAttribute('id')+'</strong> was deleted from <strong>'+target.parentNode.getAttribute('id')+'</strong>.');
+	logger.report('<strong>'+target.getAttribute('id')+'</strong> was deleted from <strong>'+target.parentNode.getAttribute('id')+'</strong>.');
 	target.parentNode.removeChild(target);
 	
 	anigenManager.classes.context.refresh();
@@ -411,7 +411,7 @@ root.prototype.createLink = function(target) {
 	target.parentNode.insertBefore(use, target);
 	target.parentNode.insertBefore(target, use);
 	
-	log.report('<strong>'+use.getAttribute('id')+'</strong>, a new link of <strong>'+target.getAttribute('id')+'</strong> was created.');
+	logger.report('<strong>'+use.getAttribute('id')+'</strong>, a new link of <strong>'+target.getAttribute('id')+'</strong> was created.');
 	
 	this.history.add(new historyCreation(use.cloneNode(true), use.parentNode.id, target.id, false));
 	window.dispatchEvent(new Event("treeSeed"));
@@ -438,7 +438,7 @@ root.prototype.group = function(target) {
 	targetParent.insertBefore(newGroup, target);
 	newGroup.appendChild(target);
 	
-	log.report('<strong>'+target.getAttribute('id')+'</strong> was put into a new group, <strong>'+newGroup.getAttribute('id')+'</strong>.');
+	logger.report('<strong>'+target.getAttribute('id')+'</strong> was put into a new group, <strong>'+newGroup.getAttribute('id')+'</strong>.');
 	
 	window.dispatchEvent(new Event("treeSeed"));	// the tree is reconstructed
 	//timeline.rebuild();
@@ -453,7 +453,7 @@ root.prototype.ungroup = function(target) {
 	
 	var par = target.parentNode;
 	
-	log.report('Group <strong>'+target.getAttribute('id')+'</strong> was dispersed; it had <strong>'+target.children.length+'</strong> children.');
+	logger.report('Group <strong>'+target.getAttribute('id')+'</strong> was dispersed; it had <strong>'+target.children.length+'</strong> children.');
 	
 	target.ungroup(true);
 	
@@ -964,7 +964,7 @@ root.prototype.createAnimation = function(owner, type, numeric, flags, other) {
 	
 	owner.appendChild(animationElement);
 	
-	log.report('New animation <strong>'+animationElement.getAttribute('id')+'</strong> ('+typeText+') was created and appended to <strong>'+owner.getAttribute('id')+'</strong>.');
+	logger.report('New animation <strong>'+animationElement.getAttribute('id')+'</strong> ('+typeText+') was created and appended to <strong>'+owner.getAttribute('id')+'</strong>.');
 	
 	this.history.add(new historyCreation(animationElement.cloneNode(true), owner.id, null, false));
 	
@@ -983,7 +983,7 @@ root.prototype.createAnimationViewbox = function() {
 	window.dispatchEvent(new Event("treeSeed"));
 	this.ui.frame.refresh();
 	
-	log.report('New camera animation <strong>'+this.camera.getAttribute('id')+'</strong> was created.');
+	logger.report('New camera animation <strong>'+this.camera.getAttribute('id')+'</strong> was created.');
 	
 	this.select(this.camera.element);
 }
@@ -1118,12 +1118,12 @@ root.prototype.newAnimState = function(target, name, group, isBatch) {
 				target.children[i].getAttribute('inkscape:label') || target.children[i].getAttribute('id'),
 				group);
 			
-			log.report('New animation state <strong>'+(target.children[i].getAttribute('inkscape:label') || target.children[i].getAttribute('id'))+'</strong> was created. Its group is <strong>'+group+'</strong>.');
+			logger.report('New animation state <strong>'+(target.children[i].getAttribute('inkscape:label') || target.children[i].getAttribute('id'))+'</strong> was created. Its group is <strong>'+group+'</strong>.');
 		}
 	} else {
 		new animationState(target, name, group);
 		
-		log.report('New animation state <strong>'+name+'</strong> was created. Its group is <strong>'+group+'</strong>.');
+		logger.report('New animation state <strong>'+name+'</strong> was created. Its group is <strong>'+group+'</strong>.');
 	}
 	/*
 	if(newState) {
@@ -1183,10 +1183,10 @@ root.prototype.newAnimGroup = function(groupName) {
 	
 	if(insertBefore) {
 		insertInto.insertBefore(animGroup.element, insertBefore);
-		log.report('New animated group <strong>'+animGroup.getAttribute('id')+'</strong> was created in <strong>'+insertInto.getAttribute('id')+'</strong>, placed before <strong>'+insertBefore.getAttribute('id')+'</strong>. Its group name is <strong>'+groupName+'</strong>.');
+		logger.report('New animated group <strong>'+animGroup.getAttribute('id')+'</strong> was created in <strong>'+insertInto.getAttribute('id')+'</strong>, placed before <strong>'+insertBefore.getAttribute('id')+'</strong>. Its group name is <strong>'+groupName+'</strong>.');
 	} else {
 		insertInto.appendChild(animGroup.element);
-		log.report('New animated group <strong>'+animGroup.getAttribute('id')+'</strong> was created in <strong>'+insertInto.getAttribute('id')+'</strong>. Its group name is <strong>'+groupName+'</strong>.');
+		logger.report('New animated group <strong>'+animGroup.getAttribute('id')+'</strong> was created in <strong>'+insertInto.getAttribute('id')+'</strong>. Its group name is <strong>'+groupName+'</strong>.');
 	}
 	
 	this.elementToCoords(animGroup.element);
@@ -1213,10 +1213,10 @@ root.prototype.changeId = function(target, toId, selectAfter) {
 	if(oldOld) {
 		this.history.add(new historyGeneric(null, 'document.getElementById("'+toId+'").id="'+targetOld+'";document.getElementById("'+oldOld+'").id="'+toId+'";',
 				'document.getElementById("'+toId+'").id="'+oldOld+'";document.getElementById("'+targetOld+'").id="'+toId+'";' ));
-		log.report('<strong>'+targetOld+'</strong> was renamed to <strong>'+toId+'</strong>. Old element <strong>'+toId+'</strong> was renamed to <strong>'+oldOld+'</strong>.');
+		logger.report('<strong>'+targetOld+'</strong> was renamed to <strong>'+toId+'</strong>. Old element <strong>'+toId+'</strong> was renamed to <strong>'+oldOld+'</strong>.');
 	} else {
 		this.history.add(new historyGeneric(null, 'document.getElementById("'+toId+'").id="'+targetOld+'";', 'document.getElementById("'+targetOld+'").id="'+toId+'";' ));
-		log.report('<strong>'+targetOld+'</strong> was renamed to <strong>'+toId+'</strong>.');
+		logger.report('<strong>'+targetOld+'</strong> was renamed to <strong>'+toId+'</strong>.');
 	}
 	
 	
@@ -1568,7 +1568,7 @@ root.prototype.save = function(local) {
 			localStorage.setItem('quicksave', string);
 			localStorage.setItem('quicksaveFilename', this.fileName);
 			
-			log.report('<strong>File saved to browser storage.</strong>');
+			logger.report('<strong>File saved to browser storage.</strong>');
 			
 		} catch(ex) {
 			if(typeof(Storage) !== "undefined" && localStorage.getItem("quicksaveFilename")) {
@@ -1589,7 +1589,7 @@ root.prototype.save = function(local) {
 		linkan.click();
 		document.body.removeChild(linkan);
 		
-		log.report('<strong>File saved and downloaded.</strong>');
+		logger.report('<strong>File saved and downloaded.</strong>');
 		
 		return blobURL;
 	}
@@ -1606,7 +1606,7 @@ root.prototype.loadLocal = function() {
 	var container = document.createElement('div');
 	container.innerHTML = localStorage.getItem("quicksave");
 	var newSVG = container.getElementsByTagName('svg', true)[0];
-	log.report('Opening file from browser storage.');
+	logger.report('Opening file from browser storage.');
 	svg.fileIn(newSVG, localStorage.getItem("quicksaveFilename"), true);
 }
 
@@ -1757,7 +1757,7 @@ root.prototype.fileIn = function(fileElement, filename, isNew) {
 			anigenActual.resetTitle();
 		}
 		
-		log.report('File <strong>'+filename+'</strong> was opened.');
+		logger.report('File <strong>'+filename+'</strong> was opened.');
 		
 		this.transferIn();
 		

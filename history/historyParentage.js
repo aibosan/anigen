@@ -17,27 +17,27 @@ historyParentage.prototype.undo = function() {
 	var el = document.getElementById(this.targetId);
 	var owner = document.getElementById(this.parentIds[0]);
 	if(!el || !owner) { 
-		log.error('<span class="tab"></span>Failed to move element <strong>'+this.targetId+'</strong>:', 1);
+		logger.error('<span class="tab"></span>Failed to move element <strong>'+this.targetId+'</strong>:', 1);
 		if(!el) {
-			log.error('<span class="tab"></span><span class="tab"></span>Element does not exist.', 1);
+			logger.error('<span class="tab"></span><span class="tab"></span>Element does not exist.', 1);
 		}
 		if(!owner) {
-			log.error('<span class="tab"></span><span class="tab"></span>Parent <strong>'+this.parentIds[0]+'</strong> does not exist.', 1);
+			logger.error('<span class="tab"></span><span class="tab"></span>Parent <strong>'+this.parentIds[0]+'</strong> does not exist.', 1);
 		}
 		return false;
 	}
 	if(this.siblingIds[0]) {
 		var sibling = document.getElementById(this.siblingIds[0]);
 		if(!sibling) {
-			log.error('<span class="tab"></span>Failed to move element <strong>'+this.targetId+'</strong>:', 1);
-			log.error('<span class="tab"></span><span class="tab"></span>Sibling element <strong>'+this.siblingIds[0]+'</strong> does not exist.', 1);
+			logger.error('<span class="tab"></span>Failed to move element <strong>'+this.targetId+'</strong>:', 1);
+			logger.error('<span class="tab"></span><span class="tab"></span>Sibling element <strong>'+this.siblingIds[0]+'</strong> does not exist.', 1);
 			return false;
 		}
-		log.report('<span class="tab"></span>Element <strong>'+this.targetId+'</strong> moved into <strong>'+this.parentIds[0]+'</strong>, inserted before <strong>'+this.siblingIds[0]+'</strong>.', 1);
+		logger.report('<span class="tab"></span>Element <strong>'+this.targetId+'</strong> moved into <strong>'+this.parentIds[0]+'</strong>, inserted before <strong>'+this.siblingIds[0]+'</strong>.', 1);
 		owner.insertBefore(el, sibling);
 		return true;
 	}
-	log.report('<span class="tab"></span>Element <strong>'+this.targetId+'</strong> moved appended to <strong>'+this.parentIds[0]+'</strong>.', 1);
+	logger.report('<span class="tab"></span>Element <strong>'+this.targetId+'</strong> moved appended to <strong>'+this.parentIds[0]+'</strong>.', 1);
 	owner.appendChild(el);
 	return true;
 }
@@ -46,27 +46,27 @@ historyParentage.prototype.redo = function() {
 	var el = document.getElementById(this.targetId);
 	var owner = document.getElementById(this.parentIds[1]);
 	if(!el || !owner) {
-		log.error('<span class="tab"></span>Failed to move element <strong>'+this.targetId+'</strong>:', 1);
+		logger.error('<span class="tab"></span>Failed to move element <strong>'+this.targetId+'</strong>:', 1);
 		if(!el) {
-			log.error('<span class="tab"></span><span class="tab"></span>Element does not exist.', 1);
+			logger.error('<span class="tab"></span><span class="tab"></span>Element does not exist.', 1);
 		}
 		if(!owner) {
-			log.error('<span class="tab"></span><span class="tab"></span>Parent <strong>'+this.parentIds[1]+'</strong> does not exist.', 1);
+			logger.error('<span class="tab"></span><span class="tab"></span>Parent <strong>'+this.parentIds[1]+'</strong> does not exist.', 1);
 		}
 		return false;
 	}
 	if(this.siblingIds[1]) {
 		var sibling = document.getElementById(this.siblingIds[1]);
 		if(!sibling) {
-			log.error('<span class="tab"></span>Failed to move element <strong>'+this.targetId+'</strong>:', 1);
-			log.error('<span class="tab"></span><span class="tab"></span>Sibling element <strong>'+this.siblingIds[1]+'</strong> does not exist.', 1);
+			logger.error('<span class="tab"></span>Failed to move element <strong>'+this.targetId+'</strong>:', 1);
+			logger.error('<span class="tab"></span><span class="tab"></span>Sibling element <strong>'+this.siblingIds[1]+'</strong> does not exist.', 1);
 			return false;
 		}
-		log.report('<span class="tab"></span>Element <strong>'+this.targetId+'</strong> moved into <strong>'+this.parentIds[1]+'</strong>, inserted before <strong>'+this.siblingIds[1]+'</strong>.', 1);
+		logger.report('<span class="tab"></span>Element <strong>'+this.targetId+'</strong> moved into <strong>'+this.parentIds[1]+'</strong>, inserted before <strong>'+this.siblingIds[1]+'</strong>.', 1);
 		owner.insertBefore(el, sibling);
 		return true;
 	}
-	log.report('<span class="tab"></span>Element <strong>'+this.targetId+'</strong> moved appended to <strong>'+this.parentIds[1]+'</strong>.', 1);
+	logger.report('<span class="tab"></span>Element <strong>'+this.targetId+'</strong> moved appended to <strong>'+this.parentIds[1]+'</strong>.', 1);
 	owner.appendChild(el);
 	return true;
 }

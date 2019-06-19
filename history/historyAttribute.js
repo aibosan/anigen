@@ -17,7 +17,7 @@ function historyAttribute(targetId, attributesFrom, attributesTo, collapsible) {
 historyAttribute.prototype.undo = function() {
 	var el = document.getElementById(this.targetId);
 	if(!el) { 
-		log.error('<span class="tab"></span><span class="tab"></span>Target element <strong>'+this.targetId+'</strong> for attribute change is missing!', 1);
+		logger.error('<span class="tab"></span><span class="tab"></span>Target element <strong>'+this.targetId+'</strong> for attribute change is missing!', 1);
 		return false;
 	}
 	var allNames = [];
@@ -33,7 +33,7 @@ historyAttribute.prototype.undo = function() {
 	if(el.shepherd && el.shepherd instanceof SVGAnimationElement) {
 		el.shepherd.commit(true);
 	}
-	log.report('<span class="tab"></span><strong>'+this.targetId+'</strong> attributes <em>'+allNames.join(',')+'</em> reverted.', 1);
+	logger.report('<span class="tab"></span><strong>'+this.targetId+'</strong> attributes <em>'+allNames.join(',')+'</em> reverted.', 1);
 	
 	return true;
 }
@@ -41,7 +41,7 @@ historyAttribute.prototype.undo = function() {
 historyAttribute.prototype.redo = function() {
 	var el = document.getElementById(this.targetId);
 	if(!el) {
-		log.report('<span class="tab"></span><span class="tab"></span>Target element <strong>'+this.targetId+'</strong> for attribute change is missing!</span>', 1);
+		logger.report('<span class="tab"></span><span class="tab"></span>Target element <strong>'+this.targetId+'</strong> for attribute change is missing!</span>', 1);
 		return false;
 	}
 	var allNames = [];
@@ -57,7 +57,7 @@ historyAttribute.prototype.redo = function() {
 	if(el.shepherd && el.shepherd instanceof SVGAnimationElement) {
 		el.shepherd.commit(true);
 	}
-	log.report('<span class="tab"></span><strong>'+this.targetId+'</strong> attributes <em>'+allNames.join(',')+'</em> remade.', 1);
+	logger.report('<span class="tab"></span><strong>'+this.targetId+'</strong> attributes <em>'+allNames.join(',')+'</em> remade.', 1);
 	
 	return true;
 }

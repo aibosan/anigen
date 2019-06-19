@@ -9,7 +9,7 @@ var xlinkNS = "http://www.w3.org/1999/xlink";
 var sodipodiNS = "http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd";
 var anigenNS = "http://www.anigen.org/namespace";
 
-log.report("Creating user interface.");
+logger.report("Creating user interface.");
 new root();
 new anigenActual();
 new uiManager().seedAnigen();

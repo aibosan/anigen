@@ -59,7 +59,7 @@ function anigenActual() {
 	
 	window.anigenActual = this;
 	
-	log.report('Welcome to <strong>aniGen '+this.version.split(' ')[0]+'</strong>!');
+	logger.report('Welcome to <strong>aniGen '+this.version.split(' ')[0]+'</strong>!');
 }
 
 anigenActual.prototype.confirm = function() {
@@ -123,7 +123,7 @@ anigenActual.prototype.eventKeyDown = function(event) {
 	// disregards keystrokes when input is selected
 	if(document.activeElement instanceof HTMLInputElement ||
 		document.activeElement instanceof HTMLTextAreaElement ||
-		event.target.isChildOf(log.container)) {
+		event.target.isChildOf(logger.container)) {
 		
 		if(((event.key == 's' || event.key == 'S') && event.ctrlKey) || skipKeys.indexOf(event.key) == -1) {
 			return;
