@@ -159,7 +159,19 @@ table.keyframes td:first-child {
 	color: transparent;
 	width: 0.5em !important; 
 	cursor: pointer;
-	border: 1px solid transparent;
+	border: 1px solid red;
+}
+
+table.keyframes tr.selected td:first-child {
+	background-color: green;
+	background: repeating-linear-gradient(
+		0deg,
+		white,
+		#00ff00 1px,
+		transparent 1px,
+		transparent 3px
+	);
+	border-color: #00ff00;
 }
 
 table.keyframes td:first-child:hover {
@@ -173,7 +185,6 @@ table.keyframes td:first-child:hover {
 	);
 	border-color: black;
 }
-
 
 table.gradients tr.selected {
 	background-color: #eee;

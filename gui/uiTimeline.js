@@ -73,7 +73,7 @@ uiTimeline.prototype.refresh = function() {
 	
 	var pos;
 	if(this.tFrom == this.tTo) {
-		pos = 0.5;
+		pos = 1;
 	} else {
 		pos = (currentTime-this.tFrom)/(this.tTo-this.tFrom);
 	}

@@ -62,7 +62,9 @@ img.button:hover {
 	height: 24px !important;
 	line-height: 24px !important;
 }
-
+li.leaf uiLink.md-18 div, li.leaf .uiButton.md-18, li.leaf .window h1 .uiButton {
+	width: 36px !important;
+}
 .uiLink.md-36 div, .uiButton.md-36 {
 	font-size: 36px !important;
 	width: 36px !important;
@@ -256,12 +258,12 @@ img.button:hover {
 	margin: 0.25ex 5px;
 	height: 0.9em;
 	
-	width: 1px;
-	background: gray;
-	background: -webkit-linear-gradient(transparent, gray, transparent); /* For Safari 5.1 to 6.0 */
-    background: -o-linear-gradient(transparent, gray, transparent); /* For Opera 11.1 to 12.0 */
-    background: -moz-linear-gradient(transparent, gray, transparent); /* For Firefox 3.6 to 15 */
-    background: linear-gradient(transparent, gray, transparent); /* Standard syntax */
+	width: 1em;
+	/* background: gray; */
+	/* background: -webkit-linear-gradient(transparent, gray, transparent); /* For Safari 5.1 to 6.0 */
+    /* background: -o-linear-gradient(transparent, gray, transparent); /* For Opera 11.1 to 12.0 */
+    /* background: -moz-linear-gradient(transparent, gray, transparent); /* For Firefox 3.6 to 15 */
+    /* background: linear-gradient(transparent, gray, transparent); /* Standard syntax */
 }
 
 

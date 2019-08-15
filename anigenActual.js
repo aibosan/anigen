@@ -971,10 +971,50 @@ anigenActual.prototype.getNodeIcon = function(element) {
 		case "animatetransform":
 		case "animatecolor":
 			if(validChildren) {
-				icon = "settings_applications";
+				icon = "directions_walk"
 			} else {
-				icon = "settings";
+				icon = "directions_run"
 			}
+
+			switch(element.getAttribute('type'))
+			{
+				case 'translate':
+					icon2 = "trending_up";
+					break;
+
+				case 'rotate':
+					icon2 = "refresh";
+					break;
+
+				case 'scale':
+					icon2 = "zoom_out_map";
+					break;
+
+				case 'skewX':
+					icon2 = "swap_horiz";
+					break;
+
+				case 'skewY':
+					icon2 = "swap_vert";
+					break;
+
+				default:
+					if (element.getAttribute('attributeName') == undefined && element.getAttribute('attributeName') == null)
+					{
+						icon2 = "";
+					}
+					else
+					{
+						icon2 = "text_format";
+					}
+					break;
+			}
+			if (element.nodeName.toLowerCase() == "animatemotion")
+			{
+				icon2 = "swap_calls";
+			}
+
+			icon = icon + icon2;
 			break;
 		case "svg":
 		case "g":
@@ -988,11 +1028,11 @@ anigenActual.prototype.getNodeIcon = function(element) {
 				name = element.getAttribute("inkscape:label")+'#'+name;
 			}
 			if(element.getAttribute("anigen:name")) {
-				icon = "folder_special";
+				icon = "filter_none";
 				name = element.getAttribute("anigen:name")+'#'+name;
 			}
 			if(element.getAttribute("anigen:type") == "animationState") {
-				icon = "fingerprint";
+				icon = "directions_walk";
 			}
 			if(element.getAttribute("anigen:type") == "animationGroup") {
 				icon = "settings_applications";
@@ -1018,15 +1058,15 @@ anigenActual.prototype.getNodeIcon = function(element) {
 			if(validChildren) {
 				icon = "star_border";
 			} else {
-				icon = "star";
+				icon = "star_border";
 			}
 			
 			break;
 		default:
 			if(validChildren) {
-				icon = "label_outline";
+				icon = "star_outline";
 			} else {
-				icon = "label";
+				icon = "star_outline";
 			}
 			if(element.getAttribute("anigen:type") == "animatedViewbox") {
 				icon = "videocam";
