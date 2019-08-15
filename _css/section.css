@@ -6,11 +6,12 @@ div.uiSection > div:first-child {
 	position: absolute;
 	width: 100%;
 	height: 100%;
+	border-bottom: 1px solid lightgrey;
 }
 
 /* row 1 */
 .section-top-row1, .section-top-row2 {
-	font-size: 24px;
+	font-size: 1em;
 	background: white;
 }
 
@@ -26,9 +27,10 @@ div.uiSection > div:first-child {
 	margin-left: 4px;
 	height: 100%;
 	float: left;
+	font-size: 1.2em;
 }
 
-.section-top-row1 .editor > *, .section-top-row2 div:first-child > * {
+.section-top-row1 .editor > * {
 	vertical-align: middle;
 }
 
@@ -62,6 +64,7 @@ div.uiSection > div:first-child {
 	color: lightgray;
     font-size: 0.85em;
 	font-style: italic;
+	width: 10em;
 }
 
 .section-top-row2 .uiButton {

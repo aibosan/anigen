@@ -190,7 +190,7 @@ root.prototype.getZoomReadable = function() {
 	return Math.round(this.zoom * 100) + "%";
 }
 
-// pauses/unpauses animations
+// pauses/plays animations
 root.prototype.pauseToggle = function(unpause) {
 	if(this.svgElement.animationsPaused() && (unpause == true || unpause == null)) {
 		if(popup.closeOnSeek) {
@@ -736,7 +736,7 @@ root.prototype.evaluateSetCurrentValue = function() {
 	}
 	
 	if(!newValue.invalid && (!hasValue || closest.closest.index == null)) {
-		animation.addValue(newValue, closest.progress, newSpline, intensity);	
+		animation.addValue(newValue, closest.progress, newSpline, intensity);
 	}
 	
 	if(anigenManager.classes.windowAnimation.animation == animation) {

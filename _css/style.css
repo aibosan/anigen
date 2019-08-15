@@ -446,14 +446,16 @@ label.checkbox {
 
 .timeline {
 	position: absolute;
-	width: 100%;
+	width: calc(100% - 10px);
+	margin-left: 5px;
 	z-index: 200;
-	height: 1px;
+	height: 0;
 	cursor: pointer;
 	
-	border-top: 2px solid transparent;
-	border-bottom: 2px solid transparent;
+	border-top: 3px dotted blue;
+	border-bottom: 3px dotted blue;
 	background-clip: content-box;
+	top : -5px;
 }
 
 .timeline:hover {
@@ -468,7 +470,7 @@ label.checkbox {
 	font-size: 75%;
 	transform: translate(0, -100%);
 	cursor: pointer;
-	color: gray;
+	color: blue;
 }
 
 .timeline .boundary:hover {
@@ -477,12 +479,14 @@ label.checkbox {
 	
 }
 
-.timeline .left {
-	left: 0.5ex;
+.timeline .left, .timeline {
+	left: 0ex;
+	top: -2px;
 }
 
 .timeline .right {
-	right: 0.5ex;
+	right: 0ex;
+	top: -2px;
 }
 
 .timeline .slider {
@@ -491,8 +495,8 @@ label.checkbox {
 	cursor: pointer;
 	width: 9px;
 	height: 9px;
-	background-color: white;
-	border: 1.5px solid #555;
+	background-color: lightblue;
+	border: 1.5px solid blue;
 	border-radius: 50%;
 	
 	transform: translate(-50%, 0);

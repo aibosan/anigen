@@ -196,7 +196,7 @@ overlay.prototype.macroOpen = function() {
 	this.add(build.br());
 	
 	if(typeof(Storage) !== "undefined" && localStorage.getItem("quicksaveFilename")) {
-		this.add(new uiLink('folder_open', 'svg.loadLocal();overlay.hide();', localStorage.getItem("quicksaveFilename"), { 'title': 'Load saved file' }));
+		this.add(new uiLink('local_florist', 'svg.loadLocal();overlay.hide();', localStorage.getItem("quicksaveFilename"), { 'title': 'Load saved file' }));
 		this.add(new uiLink('delete', 'svg.removeLocal();overlay.macroOpen();', 'Delete', { 'title': 'Delete local file' }));
 		this.add(build.br());
 	}

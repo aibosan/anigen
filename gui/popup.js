@@ -431,10 +431,10 @@ popup.prototype.macroContextMenu = function(target) {
 		} else {
 			tArray.push([ "", "", "" ]);
 				rAttributes.push({ 'class': 'hr' });
-			tArray.push([ build.icon("fingerprint"), "To animation state...", "" ]);
+			tArray.push([ build.icon("directions_walk"), "To animation state...", "" ]);
 				rAttributes.push({ 'onclick': 'event.stopPropagation();popup.hide();popup.macroToAnimationState(null, svg.selected);' });
 		}
-		tArray.push([ build.icon("power_settings_new", "turn-90"), "Create animated group...", "" ]);
+		tArray.push([ build.icon("filter_none", "turn-90"), "Add Animation Group to scene", "" ]);
 			rAttributes.push({ 'onclick': 'event.stopPropagation();popup.hide();popup.macroNewAnimationGroup();' });
 	}
 	
@@ -576,7 +576,7 @@ popup.prototype.macroContextMenu = function(target) {
 						}
 					} else if(anim[i].shepherd) {
 						if(anim[i].shepherd instanceof animationGroup) {
-							animIcon = build.icon("power_settings_new", "turn-90");
+							animIcon = build.icon("filter_none", "turn-90");
 							if(anim[i].getAttribute('anigen:group')) {
 								descr += " ("+anim[i].getAttribute('anigen:group')+")";
 							}
@@ -773,7 +773,7 @@ popup.prototype.macroSetCurrentValue = function(target) {
 		intensity.setAttribute('id', 'anigenIntensity');
 		intensity.style.display = 'inline-block';
 		
-		this.add(build.icon('fingerprint', 'md-24'));
+		this.add(build.icon('directions_walk', 'md-24'));
 		this.add(stateSelect);
 		
 		this.add(build.icon('star_half', 'md-24'));
@@ -1225,8 +1225,8 @@ popup.prototype.macroMenuObject = function(target) {
 	tArray.push([ build.icon("crop_din"), "Group", "Ctrl+G" ]);
 	tArray.push([ build.icon("crop_free"), "Ungroup", "Ctrl+U" ]);
 	tArray.push([ "", "", "" ]);
-	tArray.push([ build.icon("fingerprint"), "Object to animation state...", "" ]);
-	tArray.push([ build.icon("power_settings_new", "turn-90"), "Create animated group...", "" ]);
+	tArray.push([ build.icon("directions_walk"), "Put state in Animation Group", "" ]);
+	tArray.push([ build.icon("filter_none", "turn-90"), "Add Animation Group to scene", "" ]);
 	tArray.push([ build.icon("settings_applications"), "Manage animation states...", "" ]);
 	
 	if(!(svg.selected instanceof SVGSVGElement)) {
@@ -1292,22 +1292,22 @@ popup.prototype.macroMenuAnimation = function(target) {
 	tArray.push([ "", "", "" ]);
 	
 	if(svg.svgElement.animationsPaused()) {
-		tArray.push([ build.icon("fast_rewind"), "Seek back (100ms)", "-" ]);
-		tArray.push([ build.icon("fast_forward"), "Seek forward (100ms)", "+" ]);
+		tArray.push([ build.icon("fast_rewind"), "Timeline Seek back (100ms)", "-" ]);
+		tArray.push([ build.icon("fast_forward"), "Timeline Seek forward (100ms)", "+ and Numpad +" ]);
 	} else {
-		tArray.push([ build.icon("fast_rewind"), "Seek back (1s)", "-" ]);
-		tArray.push([ build.icon("fast_forward"), "Seek forward (1s)", "+" ]);
+		tArray.push([ build.icon("fast_rewind"), "Timeline Seek back (1s)", "-" ]);
+		tArray.push([ build.icon("fast_forward"), "Timeline Seek forward (1s)", "+" ]);
 	}
-	
+
 	tArray.push([ "", "", "" ]);
-	
-	tArray.push([ build.icon("loop"), "Set animation loop...", "" ]);
-	tArray.push([ build.icon("restore"), "Restart animations", "" ]);
-	
+
+	tArray.push([ build.icon("loop"), "Set Timeline time looping", "" ]);
+	tArray.push([ build.icon("restore"), "Rewind Timeline", "Alt+Pause" ]);
+
 	if(svg.svgElement.animationsPaused()) {
-		tArray.push([ build.icon("play_arrow"), "Unpause animations", "" ]);
+		tArray.push([ build.icon("play_arrow"), "Play Timeline animations", "Space" ]);
 	} else {
-		tArray.push([ build.icon("pause"), "Pause animations", "" ]);
+		tArray.push([ build.icon("pause"), "Pause animations", "Space" ]);
 	}
 	
 	
@@ -1355,11 +1355,13 @@ popup.prototype.macroMenuHelp = function(target) {
 	
 	tArray.push([ build.icon("import_contacts"), "Manual..." ]);
 	tArray.push([ build.icon("call_split", 'turn-90'), "Versions..." ]);
+	tArray.push([ build.icon("subtitles"), "Toggle Event Log" ]);
 	tArray.push([ "", "" ]);
 	tArray.push([ build.icon("info_outline"), "About..." ]);
 	
 	rAttributes.push({ 'onclick': 'popup.hide();window.open("manual.html", "_blank");' });
 	rAttributes.push({ 'onclick': 'popup.hide();window.open("../../index.html?redirect=false", "_blank");' });
+	rAttributes.push({ 'onclick': 'anigenManager.named.bottom.toggle();anigenManager.refresh();anigenActual.settings.set("bottom", !(anigenActual.settings.get("bottom")));' });
 	rAttributes.push({ 'class': 'hr' });
 	rAttributes.push({ 'onclick': 'popup.hide();overlay.macroAbout();' });
 	
@@ -1525,11 +1527,11 @@ popup.prototype.macroToAnimationState = function(target, element) {
 		));
 	}
 	
-	this.add(build.icon('fingerprint'));
+	this.add(build.icon('directions_walk'));
 	
 	this.add(build.input('text', stateNameText, { 'title': 'State name', 'id': 'anigenStateName', 'onfocus': 'if(this.value == "'+stateNameText+'") { this.value = null; }' } ));
 	
-	this.add(build.icon('folder_open'));
+	this.add(build.icon('filter_none'));
 	
 	var stateSelect = build.select(options, { 'title': 'Group', 'id': 'anigenGroupSelect', 'onchange': 'this.nextSibling.style.display = this.value == "" ? null : "none";' } );
 	var groupName = build.input('text', groupNameText, { 'title': 'New group name', 'id': 'anigenGroupName', 'onfocus': 'if(this.value == "'+groupNameText+'") { this.value = null; }' } );

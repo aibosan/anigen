@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-
-<!-- 	aniGen (http://anigen.org) is a web-based SVG animation editor under GPLv3 and should be treated as such
-		aniGen was created by Ondrej "Aibo" Benda, of http://misteraibo.deviantart.com -->
-
 <html
         xmlns="http://www.w3.org/1999/xhtml"
         xmlns:svg="http://www.w3.org/2000/svg"
         xmlns:xlink="http://www.w3.org/1999/xlink"
-        xmlns:anigen="http://www.anigen.org/namespace"
+        xmlns:aniGen="http://www.aniGen.org/namespace"
 >
+
+<!-- 	aniGen (http://aniGen.org) is a web-based SVG animation editor under GPLv3 and should be treated as such
+		aniGen was created by Ondrej "Aibo" Benda, of http://misteraibo.deviantart.com -->
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="height=device-height, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -16,13 +16,13 @@
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
     <title id="page_title">aniGen User Manual</title>
-	
+
     <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
-	
-    <link rel="alternate icon" type="image/png" href="_png/favicon.png">
-	
+
+    <link rel="alternate icon" type="image/png" href="_favicon/favicon-16x16.png">
+
 	<link rel="stylesheet" type="text/css" href="_css/manual.css">
-	
+
 </head>
 <body>
 	<div class="logo"><img src="_png/logo_large.png" alt="aniGen logo" class="logo"></div>
@@ -31,181 +31,252 @@
 		<h1 class="notcount">Table of contents</h1>
 		<!-- table of contents -->
 	</nav>
-	
-	<aside id="menu"></aside>
-	
+
+	<div id='menu_header'>&#9776; Menu</div>
+
+	<aside id="menu">
+	</aside>
+
 	<section id="introduction">
 		<h1>Introduction</h1>
-		<p>This document serves as user manual for the <strong>aniGen</strong> editor, version 0.8.1.
-		The manual describes the interface, controls and files, provides a basic explanation of SVG animation, and a set of examples which can serve as basic tutorials.</p>
-		<p style="color:red">This document may be incomplete, or partially out of date with current version. If you find discrepancies, please follow the <a href="#bugs" style="color:red; font-weight: bold;">bug reporting</a> section.</p>
-		
+		<p>Welcome to the user manual for the <strong>aniGen</strong> SVG editor, version 0.8.1.
+		This manual describes how to animate and manipulate SVG files.  This manual includes examples as well as a basic overview of SVG internal file format.</p>
+		<p>From a high level, SVG files are text files that can be loaded in web browsers and display graphics.  These SVG images can be animated as well as have interactivity with browser users.  For example, a SVG graphic might show a chart, that changes shape and color when you click on it.  <b>add graphic</b> Also, SVG graphics can be zoomed in or made as large as you want, without losing resolution.  In other words, SVG graphics aren't get grainy or pixelated.
+		<br />For more technical specificsabout SVG format, see the format's <a href="https://www.w3.org/TR/SVG/Overview.html">specification</a>.</p>
+		<p style="color:red">This document may be incomplete and/or partially out of date with the current version. If you find discrepancies, please follow the procedures in the <a href="#bugs" style="color: black; font-weight: bold;">bug reporting</a> section.</p>
+
 		<section id="introduction_editor">
-			<h2>About editor</h2>
-			<p><strong>AniGen</strong> is a browser-based SVG animation editor. It is designed to work in tandem with <a href="http://inkscape.org">Inkscape</a>, expanding its functionality
-			to allow the user to animate vector images, as well as export them. Transfer of files between the editors should work without loss of information.</p>
-			<p>AniGen is free software available as is. It is written and maintained by Ondřej 'Aibo' Benda, and covered by GPLv3 license. The editor is currently in testing phase. Please take a moment to encounter any <a href="#bugs">bugs</a> you encounter.</p>
-			<p>For more information about SVG format, see the format's <a href="https://www.w3.org/TR/SVG/Overview.html">specification</a>.</p>
+			<h2>About aniGen SVG Editor</h2>
+			<p><strong>aniGen</strong> is a browser-based SVG editor to modify your SVG files to provide animation and interactivity. aniGen is designed to work in tandem with the vector software, <a href="http://inkscape.org">Inkscape</a>, expanding its functionality
+			Transferring SVG files between these two software editors should work without loss of information.</p>
+			<p>aniGen is free software available as is. It is written and maintained by Ondřej 'Aibo' Benda, and covered by GPLv3 license. The editor is currently in testing phase. Please report any <a href="#bugs">bugs</a> you encounter.</p>
 		</section>
-		
+
 		<section id="introduction_compatibility">
 			<h2>Compatibility</h2>
-			<p>The editor is developed mainly on <a href="https://www.google.com/chrome">Google Chrome</a>, and should also work reasonably well on <a href="https://www.mozilla.org/en-US/firefox/new/">Mozilla Firefox</a>.
-			Compatibility with other browsers is not the editor's main objective. To use the editor, JavaScript needs to be enabled.</p>
+			<p>The editor is developed mainly for use with the <a href="https://www.google.com/chrome">Google Chrome</a> browser, but works equally as well with other browsers, such as <a href="https://www.mozilla.org/en-US/firefox/new/">Mozilla Firefox</a>.
+			JavaScript needs to be enabled for aniGen to function properly.</p>
 		</section>
-		
+
 		<section id="libraries">
 			<h2>Third-party libraries</h2>
-			<p>AniGen uses the following third-party assets, as mentioned in the "about" section of the editor:</p>
+			<p>aniGen uses the following third-party assets, as mentioned in the "about" section of the editor:</p>
 				<ul>
 					<li><a href="https://fonts.google.com/specimen/Open+Sans">Open Sans</a> font</li>
 					<li>Exporting script based on <a href="https://github.com/adasek/svg-render">Adasek's SVG Render</a></li>
 					<li><a href="https://material.io/icons/">Google's material icon</a> font</li>
 				</ul>
 		</section>
-		
+
 	</section>
-	
+	<section id="quick_start">
+		<h3>Quick Start</h3>
+		<p>
+			to
+		</p>
+	</section>
+	<section id="files">
+		<h1>Files</h1>
+
+		<section id="files_opening">
+			<h2>Opening and Saving SVGs</h2>
+			<img src="_images/dialogue_open.png" alt="File open dialogue" />aniGen only works with existing SVG files (preferably created with <a href="http://inkscape.org">Inkscape</a>). 
+			When aniGen is first loaded, you can open a SVG file by either:
+			<ul>
+				<li>clicking the open icon</li>
+				<li>by dropping the file on it</li>
+				<li>Pick from a list of previously opened SVG files</li>
+			</ul>
+
+			<p>
+				<img src="_images/dialogue_open2.png" alt="File open dialogue with existing file">If a file is stored in local browser storage (by selecting <em>file→save</em> or hitting <em>ctrl+s</em>), it will be available in the file open dialogue. The local file can be deleted by the button next to it.</p>
+		</section>
+
+		<section id="files_importing">
+			<h2>Importing Images to Your SVG</h2>
+			Files can be imported by dragging them into the editor's canvas. Imported files include :
+			<ul>
+				<li>SVG</li>
+				<li>JPEG</li>
+				<li>PNG</li>
+			</ul>
+			<p>
+			_Raster files (i.e. JPEG and PNG files) will be appended to the currently selected container object.
+				SVGs will be merged, i.e. all elements container in the root SVG element will be moved to the current SVG's root element, and the contents of <a href="elements_common_defs">defs</a>
+				(clip paths, gradients, animation states etc.) will be moved to current defs.</p>
+			<p><i>Note:  It's recommended to save file before importing.</i></p>
+		</section>
+
+		<section id="files_exporting">
+			<h2>Exporting Static PNG or SVG files</h2>
+			<p><img src="_images/dialogue_export1.png" alt="File export dialogue">SVG can be exported as a series of PNGs or static SVGs archived in a ZIP. User can set:
+			<ul>
+				<li><strong>Begin time</strong> in seconds</li>
+				<li><strong>Duration time</strong> in seconds</li>
+				<li><strong>Framerate</strong> in frames per second</li>
+				<li><strong>Export size</strong> in pixels, with optional aspect ratio lock</li>
+				<li><strong>Output name</strong>, the name of the exported file</li>
+				<li><strong>Output type</strong>, either PNGs or static SVGs</li>
+				<li><strong>Downsampling</strong> - renders SVG in higher resolution and scales it down. This takes more time, but can remove certain types of artifacts made by native browser anti aliasing.</li>
+				<li><strong>Shape rendering</strong> - switches between native rendering and rendering with crisp edges. The latter creates pixel-perfect renders with <em>no native anti aliasing</em>. Combining this with downsampling setting can create anti aliased pictures with higher precision and less artifacting than native settings, but takes way more time.</li>
+				<li><strong>Notification</strong>, which sounds when export is finished</li>
+			</ul>
+			<p><em>Static SVGs</em> will create individual SVG files for each frame, stripped of all animations.</p>
+			<p>Default duration is set to the loop length specified by the user with <em>animation→loop animation...</em> dialogue, or is computed as the least common multiple of all animation durations.</p>
+			<p>If only one frame is exported, it's downloaded directly instead of in a ZIP.</p>
+			<p><img src="_images/dialogue_export2.png" alt="Rendering in progress">While rendering, the editor will be unavailable. Progress and estimated time to completion (HH:MM:SS) is shown.
+				Progress percentage is shown in the page title.
+				The rendering process can take significant time, which scales with the number of elements in the SVG. Furthermore, each PNG is stored in the computer's memory. It's recommended to export longer animations,
+				or animations with extremely large size, in smaller segments. Rendering process can be canceled (with slight delay).</p>
+			<p><img src="_images/dialogue_export3.png" alt="Files being packed into a ZIP">When all frames are rendered, they are packed into a ZIP, which then triggers the standard save dialogue of the browser.
+				This process takes some time, but comperatively little to the rendering process.</p>
+			<p><strong>Note:</strong> While mostly working, exporting is still in its testing phases. Save your work before you export and please <a href="#bugs">report</a> any problems.</p>
+			<p><strong>Note:</strong> High resolutions, high downsampling settings, and long export times can lead to browser running out of allocated memory. It's advised to save your work before exporting, and export larger animations in shorter intervals.</p>
+		</section>
+
+	</section>
+
+	</section>
 	<section id="interface">
-		<h1>User interface</h1>
+		<h1>interface Overview</h1>
 		<img src="_images/editor_overview.png" alt="Overview of the aniGen editor's main window.">
 		<p>The main window of aniGen (shown above) consists of eight main sections:</p>
 			<ul>
-				<li><strong>Main menu</strong></li> 
-				<li><strong>Global information</strong></li> 
-				<li><strong>Selection information</strong></li> 
-				<li><strong>Toolbar</strong></li> 
-				<li><strong>Canvas</strong> with rulers</li> 
-				<li><strong>XML editor</strong></li> 
-				<li><strong>Windows</strong></li> 
-				<li><strong>Event log</strong></li> 
+				<li><strong>Main menu</strong></li>
+				<li><strong>Global information</strong></li>
+				<li><strong>Selection information</strong></li>
+				<li><strong>Toolbar</strong></li>
+				<li><strong>Canvas</strong> with rulers</li>
+				<li><strong>XML editor</strong></li>
+				<li><strong>Windows</strong></li>
+				<li><strong>Event log</strong></li>
 			</ul>
 		<p>The XML editor and windows are toggled by the icons on right side of toolbar.</p>
-		
+
 		<section id="interface_menu">
 			<h2>Main menu</h2>
 			<p>The menu (top right corner) allows access to most of the editor's functions:</p>
 			<ul>
 				<li><strong>File</strong>
 					<ul>
-						<li><i class="material-icons">folder_open</i><strong>Open</strong> (ctrl+o) - shows file open dialogue, which allows you to open a new SVG file (see <a href="#files_opening">file opening</a>).</li> 
+						<li><i class="material-icons">folder_open</i><strong>Open</strong> (ctrl+o) - shows file open dialogue, which allows you to open a new SVG file (see <a href="#files_opening">file opening</a>).</li>
 						<li><i class="material-icons">save</i><strong>Save</strong> (ctrl+s) - attempts to save the current SVG document to browser's local storage, ovewriting previous save. If the storage space is insufficient, a prompt is given to save the file locally.</li>
 						<li><i class="material-icons">file_download</i><strong>Save and download</strong> (ctrl+shift+s) - saves the current SVG document and downloads it..</li>
 						<li><i class="material-icons">archive</i><strong>Export</strong> (ctrl+shift+e) - opens the export dialogue, allowing you to export the current SVG as an archived series of PNG images or static SVGs (see <a href="#files_exporting">file exporting</a>).</li>
 						<li><i class="material-icons">launch</i><strong>Show preview</strong> (ctrl+shift+p) opens a preview window, showing only the area to be exported. See <a href="#interface_preview">preview window</a>.</li>
-						
+
 						<li><i class="material-icons">description</i><strong>Document properties</strong> - allows the change of the document's dimensions.</li>
 						<li><i class="material-icons">settings</i><strong>Settings</strong> - toggles element highlights, progress curves, nodes, page border, and rulers. See <a href="#interface_settings">settings</a>.</li>
 					</ul>
-				</li> 
+				</li>
 				<li><strong>Edit</strong>
 					<ul>
-						<li><i class="material-icons">undo</i><strong>Undo</strong> (ctrl+z) - reverts last step in history.</li> 
-						<li><i class="material-icons">redo</i><strong>Redo</strong> (ctrl+shift+z) - repeats last undone step in history.</li> 
-						<li><i class="material-icons">content_cut</i><strong>Cut</strong> (ctrl+x) - removes currently selected element from the document, placing it in the <em>clipboard</em>.</li> 
+						<li><i class="material-icons">undo</i><strong>Undo</strong> (ctrl+z) - reverts last step in history.</li>
+						<li><i class="material-icons">redo</i><strong>Redo</strong> (ctrl+shift+z) - repeats last undone step in history.</li>
+						<li><i class="material-icons">content_cut</i><strong>Cut</strong> (ctrl+x) - removes currently selected element from the document, placing it in the <em>clipboard</em>.</li>
 						<li><i class="material-icons">content_paste</i><strong>Paste</strong> (ctrl+v) - depends on the nature of element in <em>clipboard</em> and the current selection:
 							<ul>
 								<li><strong>Visual element &rarr; container element</strong> - places a copy of the element into the container (e.g. pasting a path into a group)</li>
 								<li><strong>Visual element &rarr; visual element</strong> - places a copy of the element into the other element's parent (e.g. pasting a rectangle over an ellipse)</li>
 								<li><strong>Animation &rarr; generic element</strong> - places a copy of the animation into the selected element</li>
-								<li><strong>Animation &rarr; animation</strong> - copies timing information from clipboard animation into the selected animation. This includes keyframes, begins, duration, 
+								<li><strong>Animation &rarr; animation</strong> - copies timing information from clipboard animation into the selected animation. This includes keyframes, begins, duration,
 									calculation mode, and splines (if applicable). If selected animation has more keyframes than the animation in clipboard, last keyframes are removed. If it has fewer keyframes, the last
 									are duplicated.</li>
 							</ul>
-						</li> 
+						</li>
 						<li><i class="material-icons">content_copy</i><strong>Copy</strong> (ctrl+c) - places a copy of currently selected element into the <em>clipboard</em>.</li>
 						<li><i class="material-icons">storage</i><strong>Duplicate</strong> (ctrl+d) - creates a copy of currently selected element over it.</li>
 						<li><i class="material-icons">link</i><strong>Create link</strong> (ctrl+l or alt+d) - creates a <a href="#elements_common_use">use link</a> of the currently selected element.</li>
 						<li><i class="material-icons">delete</i><strong>Delete</strong> (delete) - removes currently selected element from the document.</li>
 					</ul>
-				</li> 
+				</li>
 				<li><strong>Object</strong>
 					<ul>
-						<li><i class="material-icons">crop_din</i><strong>Group</strong> (ctrl+g) - places the current selection into a group.</li> 
-						<li><i class="material-icons">crop_free</i><strong>Ungroup</strong> (ctrl+u) - removes the currently selected group, placing its child elements into its parent.</li> 
-						<li><i class="material-icons">fingerprint</i><strong>Object to animation state</strong> - opens the animation state dialogue (see <a href="#animated_groups">animated groups</a>).</li>
-						<li><i class="material-icons turn-90">power_settings_new</i><strong>Create animated group</strong> - allows the creation of animated group from previously saved states (see <a href="#animated_groups">animated groups</a>).</li>
+						<li><i class="material-icons">crop_din</i><strong>Group</strong> (ctrl+g) - places the current selection into a group.</li>
+						<li><i class="material-icons">crop_free</i><strong>Ungroup</strong> (ctrl+u) - removes the currently selected group, placing its child elements into its parent.</li>
+						<li><i class="material-icons">directions_walk</i><strong>Put state in Animation Group</strong> - opens the animation state dialogue (see <a href="#animated_groups">animated groups</a>).</li>
+						<li><i class="material-icons turn-90">filter_none</i><strong>Add Animation Group to scene</strong> - allows the creation of animated group from previously saved states (see <a href="#animated_groups">animated groups</a>).</li>
 						<li><i class="material-icons">settings_applications</i><strong>Manage animation states</strong> - opens dialogue with existing animation state groups and their given states (see <a href="#animated_groups">animated groups</a>).</li>
 					</ul>
-				</li> 
+				</li>
 				<li><strong>Animation</strong>
 					<ul>
-						<li><i class="material-icons">videocam</i><strong>Camera</strong> (SVG element only) - adds animation of the SVG's viewbox, allowing to move the view's <a href="#animation_types_camera">camera</a>.</li> 
-						
-						<li><i class="material-icons">trending_up</i><strong>Translate</strong> - adds translation animation to the selected element (see <a href="#animation_types_transform_translate">translation</a>).</li> 
-						<li><i class="material-icons">swap_calls</i><strong>Move through path</strong> - adds motion animation to the selected element (see <a href="#animation_types_motion">motion through path</a>).</li> 
-						<li><i class="material-icons">refresh</i><strong>Rotate</strong> - adds rotation animation to the selected element (see <a href="#animation_types_transform_rotate">rotation</a>).</li> 
-						<li><i class="material-icons">zoom_out_map</i><strong>Scale</strong> - adds scaling animation to the selected element (see <a href="#animation_types_transform_scale">scaling</a>).</li> 
-						<li><i class="material-icons">swap_horiz</i><strong>Scale horizontally</strong> - adds horizontal skewing animation to the selected element (see <a href="#animation_types_transform_skew">skewing</a>).</li> 
-						<li><i class="material-icons">swap_vert</i><strong>Scale vertically</strong> - adds vertical skewing animation to the selected element (see <a href="#animation_types_transform_skew">skewing</a>).</li> 
-						<li><i class="material-icons">text_format</i><strong>Animate attribute</strong> - allows the animation of one of the element's attributes (see <a href="#elements_attributes">attributes</a> and <a href="#animation_types_attribute">attribute animation</a>).</li> 
-						<li><i class="material-icons">loop</i><strong>Loop animation</strong> - allows automatic looping of the SVG at given time. Zero value removes the loop.</li> 
+						<li><i class="material-icons">videocam</i><strong>Camera</strong> (SVG element only) - adds animation of the SVG's viewbox, allowing to move the view's <a href="#animation_types_camera">camera</a>.</li>
+
+						<li><i class="material-icons">trending_up</i><strong>Translate</strong> - adds translation animation to the selected element (see <a href="#animation_types_transform_translate">translation</a>).</li>
+						<li><i class="material-icons">swap_calls</i><strong>Move through path</strong> - adds motion animation to the selected element (see <a href="#animation_types_motion">motion through path</a>).</li>
+						<li><i class="material-icons">refresh</i><strong>Rotate</strong> - adds rotation animation to the selected element (see <a href="#animation_types_transform_rotate">rotation</a>).</li>
+						<li><i class="material-icons">zoom_out_map</i><strong>Scale</strong> - adds scaling animation to the selected element (see <a href="#animation_types_transform_scale">scaling</a>).</li>
+						<li><i class="material-icons">swap_horiz</i><strong>Scale horizontally</strong> - adds horizontal skewing animation to the selected element (see <a href="#animation_types_transform_skew">skewing</a>).</li>
+						<li><i class="material-icons">swap_vert</i><strong>Scale vertically</strong> - adds vertical skewing animation to the selected element (see <a href="#animation_types_transform_skew">skewing</a>).</li>
+						<li><i class="material-icons">text_format</i><strong>Animate attribute</strong> - allows the animation of one of the element's attributes (see <a href="#elements_attributes">attributes</a> and <a href="#animation_types_attribute">attribute animation</a>).</li>
+						<li><i class="material-icons">loop</i><strong>Loop animation</strong> - allows automatic looping of the SVG at given time. Zero value removes the loop.</li>
 						<li><i class="material-icons">restore</i><strong>Restart animations</strong> (alt+pause) - sets the SVG's time to zero.</li>
-						<li><i class="material-icons">pause</i><i class="material-icons">play_arrow</i><strong>Pause / unpause</strong> (pause) - pauses or unpauses all animations.</li>
+						<li><i class="material-icons">pause</i><i class="material-icons">play_arrow</i><strong>Pause / Play</strong> (space) - pauses or plays all animations.</li>
 					</ul>
-				</li> 
+				</li>
 				<li><strong>Help</strong>
 					<ul>
 						<li><i class="material-icons">import_contacts</i><strong>Manual</strong> - opens this manual in new window.</li>
-						<li><i class="material-icons">info_outline</i><strong>About</strong> - displays general info about the editor, version, and external libraries it uses.</li> 
+						<li><i class="material-icons">info_outline</i><strong>About</strong> - displays general info about the editor, version, and external libraries it uses.</li>
 					</ul>
-				</li> 
+				</li>
 			</ul>
 		</section>
-		
+
 		<section id="interface_global">
 			<h2>Global information</h2>
 			<p>The top left section shows the following (left to right):</p>
 			<ul>
-				<li><i class="material-icons">pause</i><i class="material-icons">play_arrow</i><strong>Pause / unpause button</strong> pauses or unpauses all current animations. Shows the current state (e.g. triangle means the animations are running).</li> 
-				<li><i class="material-icons">timer</i><strong>Clock button</strong> - hides / shows the clock</li> 
-				<li><strong>Clock</strong> - shows the current time of the SVG (see <a href="#animation_timing">timing</a>). Clicking the clock allows you to set the time manually (format: HH:MM:SS.mmm).</li> 
-				<li><i class="material-icons">search</i><strong>Zoom reset button</strong> - sets zoom to 100%.</li> 
+				<li><i class="material-icons">pause</i><i class="material-icons">play_arrow</i><strong>Pause / Play button</strong> pauses or plays all current animations. Shows the current state (e.g. triangle means the animations are running).</li>
+				<li><i class="material-icons">timer</i><strong>Clock button</strong> - hides / shows the clock</li>
+				<li><strong>Clock</strong> - shows the current time of the SVG (see <a href="#animation_timing">timing</a>). Clicking the clock allows you to set the time manually (format: HH:MM:SS.mmm).</li>
+				<li><i class="material-icons">search</i><strong>Zoom reset button</strong> - sets zoom to 100%.</li>
 				<li><strong>Current zoom</strong></li>
 			</ul>
 		</section>
-		
+
 		<section id="interface_selection">
 			<h2>Selection information</h2>
 			<p>Shows information about currently selected element:</p>
 			<ul>
-				<li><strong>Tag name</strong> - see <a href="#elements">Elements and the XML tree</a>.</li> 
-				<li><strong>Identifier</strong> - or the element's unique name.</li> 
-				<li><strong>Layer name</strong> (when applicable) - if an Inkscape layer is selected, its name is displayed here.</li> 
+				<li><strong>Tag name</strong> - see <a href="#elements">Elements and the XML tree</a>.</li>
+				<li><strong>Identifier</strong> - or the element's unique name.</li>
+				<li><strong>Layer name</strong> (when applicable) - if an Inkscape layer is selected, its name is displayed here.</li>
 				<li><strong>Animated group name</strong> (when applicable) - if animated group is selected, its group name is displayed here (see <a href="#animated_groups">animated groups</a>).</li>
 			</ul>
 			<p><img src="_images/selection_layer.png" alt="Selection information of a layer.">Selection information of a layer. Left to right: tag name (<strong>g</strong> for group), identifier ("layer1"), inkscape's group name ("mouth").</p>
 			<p><img src="_images/selection_animation_group.png" alt="Selection information of an animated group.">Selection information of an animated group. Left to right: tag name (<strong>g</strong> for group), identifier ("g4138"), group type ("animated group"), group name ("mouth-female-3q").</p>
 		</section>
-		
+
 		<section id="interface_toolbar">
 			<h2>Toolbar</h2>
 			<ul>
-				<li><i class="material-icons flip-h">near_me</i><strong>Group selection tool</strong> - see <a href="#tools_group">tools - group selection</a></li> 
-				<li><i class="material-icons flip-v">edit</i><strong>Element selection tool</strong> - see <a href="#tools_element">tools - element selection</a></li> 
-				<li><i class="material-icons">search</i><strong>Zoom tool</strong> - see <a href="#tools_zoom">tools - zoom</a></li> 
-				<li><i class="material-icons flip-v">colorize</i><strong>Picker tool</strong> - see <a href="#tools_picker">tools - picker</a></li> 
-				<li><i class="material-icons turn-90">power_settings_new</i><strong>Animate element</strong> - same function as <a href="#interface_menu">menu - animation</a></li> 
-				<li><i class="material-icons">reorder</i><strong>Edit button</strong> - allows the editing of all element's attributes (see <a href="#elements_attributes">elements - attributes</a>).</li> 
-                                <li><i class="material-icons">title</i><strong>Edit text content</strong> - allows direct change of a childless element's inner text (e.g. text inside a <em>tspan</em>).</li> 
-				<li><i class="material-icons">details</i><strong>Children</strong> - shows the list of element's children (see <a href="#elements">elements - basics</a>).</li> 
-				<li><i class="material-icons">change_history</i><strong>Select parent</strong> - selects the element's parent node (see <a href="#elements">elements - basics</a>).</li> 
-				<li><i class="material-icons">arrow_back</i><strong>Previous keyframe</strong> - jumps to the selected animation's previous keyframe (see <a href="#animation_keyframes">animation keyframes</a>).</li> 
-				<li><i class="material-icons">arrow_forward</i><strong>Next keyframe</strong> - jumps to the selected animation's next keyframe (see <a href="#animation_keyframes">animation keyframes</a>).</li> 
-				
-				
-				<li><i class="material-icons">hourglass_empty</i><strong>Keyframes and timing</strong> - shows/hides the <a href="#interface_keyframes">keyframes and timing window</a>.</li> 
-				<li><i class="material-icons">format_paint</i><strong>Fill and stroke</strong> - shows/hides the <a href="#interface_colors">fill and stroke window</a>.</li> 
-				<li><i class="material-icons">layers</i><strong>Layers</strong> - shows/hides the <a href="#interface_layers">layers window</a>.</li> 
-				<li><i class="material-icons turn-90">share</i><strong>XML editor</strong> - shows/hides the <a href="#interface_xml">XML editor</a>.</li> 
+				<li><i class="material-icons flip-h">near_me</i><strong>Group selection tool</strong> - see <a href="#tools_group">tools - group selection</a></li>
+				<li><i class="material-icons flip-v">edit</i><strong>Element selection tool</strong> - see <a href="#tools_element">tools - element selection</a></li>
+				<li><i class="material-icons">search</i><strong>Zoom tool</strong> - see <a href="#tools_zoom">tools - zoom</a></li>
+				<li><i class="material-icons flip-v">colorize</i><strong>Picker tool</strong> - see <a href="#tools_picker">tools - picker</a></li>
+				<li><i class="material-icons turn-90">filter_none</i><strong>Animate element</strong> - same function as <a href="#interface_menu">menu - animation</a></li>
+				<li><i class="material-icons">reorder</i><strong>Edit button</strong> - allows the editing of all element's attributes (see <a href="#elements_attributes">elements - attributes</a>).</li>
+                                <li><i class="material-icons">title</i><strong>Edit text content</strong> - allows direct change of a childless element's inner text (e.g. text inside a <em>tspan</em>).</li>
+				<li><i class="material-icons">details</i><strong>Children</strong> - shows the list of element's children (see <a href="#elements">elements - basics</a>).</li>
+				<li><i class="material-icons">change_history</i><strong>Select parent</strong> - selects the element's parent node (see <a href="#elements">elements - basics</a>).</li>
+				<li><i class="material-icons">arrow_back</i><strong>Previous keyframe</strong> - jumps to the selected animation's previous keyframe (see <a href="#animation_keyframes">animation keyframes</a>).</li>
+				<li><i class="material-icons">arrow_forward</i><strong>Next keyframe</strong> - jumps to the selected animation's next keyframe (see <a href="#animation_keyframes">animation keyframes</a>).</li>
+
+
+				<li><i class="material-icons">hourglass_empty</i><strong>Keyframes and timing</strong> - shows/hides the <a href="#interface_keyframes">keyframes and timing window</a>.</li>
+				<li><i class="material-icons">format_paint</i><strong>Fill and stroke</strong> - shows/hides the <a href="#interface_colors">fill and stroke window</a>.</li>
+				<li><i class="material-icons">layers</i><strong>Layers</strong> - shows/hides the <a href="#interface_layers">layers window</a>.</li>
+				<li><i class="material-icons turn-90">share</i><strong>XML editor</strong> - shows/hides the <a href="#interface_xml">XML editor</a>.</li>
 			</ul>
 		</section>
-		
+
 		<section id="interface_canvas">
 			<h2>Canvas</h2>
 			<p>The visual representation of SVG document. The page (area exported as animation) is specified by the gray border. Page size can be set in Inkscape. See also <a href="#controls">controls</a> and <a href="#tools">tools</a>.</p>
 		</section>
-		
+
 		<section id="interface_keyframes">
 			<h2>Keyframes and timing window</h2>
 			<p><img src="_images/window_keyframes1.png" alt="Keyframes window">Keyframes window shows the <a href="#animation_keyframes">keyframes</a> and <a href="#animation_timing">timing</a> of currently selected animation.
@@ -214,18 +285,18 @@
 				Animations with the <em>spline</em> <a href="#animation_timing_interpolation">interpolation mode</a> also show the respective <a href="#animation_timing_splines">splines</a> between every pair of keyframes.</p>
 			<p>Clicking the percent or time value of each keyframe allows you to change it, within the 0% - 100% range, or boundaries given by the animation's duration respectively.</p>
 			<p>Keyframes can be selected by clicking the striped button on the left. To select multiple frames, hold ctrl. Holding shift will select all frames between the furthest already selected frame and the frame clicked.</p>
-			<p>Values can be changed with standard input fields. If multiple keyframes are selected, all of their values are changed when you change one. It's also possible to drag the keyframes to switch their values with one another, 
+			<p>Values can be changed with standard input fields. If multiple keyframes are selected, all of their values are changed when you change one. It's also possible to drag the keyframes to switch their values with one another,
 				or move them up and down with <em>page up</em> / <em>page down</em>. Selected keyframes can be duplicated with <em>ctrl+d</em> and deleted with <em>delete</em>.</p>
 			<p><img src="_images/window_keyframes_spline1.png" alt="Keyframes window - spline menu"><img class="right" src="_images/window_keyframes_spline2.png" alt="Keyframes window - spline editor">Splines can be changed between various presets or a custom value can be given instead. If custom spline is selected, a button allows the user to edit it.</p>
 			<p>The editor shows spline as the red curve, defined by its two control points (handles). The rectangles shown depict a five second animation, the top rectangle showing linear progression, the bottom showing progression as set by the given spline. Input fields allow direct change the spline's numeric components, and change with the handles. Any changes are immediately applied to the animation. Selecting multiple keyframes changes the spline for all of them.</p>
-			
-			
+
+
 			<p>Selected keyframes are affected by the context menu (right click). If none is selected, the clicked keyframe is affected, except the cases noted below.</p>
 			<ul>
 				<li><i class="material-icons">arrow_upward</i><strong>Move up</strong> - moves the keyframe's values and spline (if applicable) up.</li>
 				<li><i class="material-icons">add</i><strong>Duplicate</strong> - creates copy of keyframe(s)</li>
 				<li><i class="material-icons">arrow_downward</i><strong>Move down</strong> - moves keyframe(s) down</li>
-				
+
 				<li><i class="material-icons">add_circle_outline</i><strong>Create inbetwen</strong> - creates keyframes with values halfway between all selected pairs of keyframes.</li>
 				<li><i class="material-icons">timer</i><strong>Balance keyframes</strong> - sets the selected keyframes in even intervals between one another. First and last keyframes of each block of selected frames are not affected. If no frames are selected, all keyframes are affected instead.</li>
 				<li><i class="material-icons">replay</i><strong>Reverse keyframes</strong> - switches keyframes around to reverse the animation. If no keyframes are selected, the entire animation is reversed. If keyframes are selected, every interval is reversed individually.</li>
@@ -244,7 +315,7 @@
 				New begins can be added by inputing a time (in seconds) in the field below the list, and selecting "add". Begins are removed by the buttons on their right. The end time given for each begin time is the time when the given set of loops (if applicable) of animation ends -
 				if two loops overlap, the animation resets at the later begin value.</p>
 		</section>
-		
+
 		<section id="interface_colors">
 			<h2>Fill and stroke window</h2>
 			<p><img src="_images/window_colors1.png" alt="Fill tab of Fill and Stroke window, showing gradients">Manages fill and stroke of selected element. Both fill (the inner parts of an element) and stroke (element's outlines) can be set to one of the following:
@@ -272,10 +343,10 @@
 				<li><strong>Miter limit</strong> - the maximum length of a miter join wedge (if applicable), measured in pixels</li>
 			</ul>
 			</p>
-			<p>AniGen currently doesn't have UI elements for creating and editing gradients, other than doing so manually. Linked objects (e.g. gradients) can be selected with <i class="material-icons">link</i> the appropriate button.</p>
+			<p>aniGen currently doesn't have UI elements for creating and editing gradients, other than doing so manually. Linked objects (e.g. gradients) can be selected with <i class="material-icons">link</i> the appropriate button.</p>
 			<p>Additionally, the sliders at the bottom part of the window allows the user to change the blur and opacity of the element, independent of fill and stroke.</p>
 		</section>
-		
+
 		<section id="interface_layers">
 			<h2>Layers window</h2>
 			<p><img src="_images/window_layers.png" alt="Layers window">The window similar to its Inkscape's counterpart. It shows layer groups in the usual order (higher layers overlap lower ones). Nested layers are shown indented.
@@ -300,7 +371,7 @@
 				<li><i class="material-icons">delete</i><strong>Delete layer</strong></li>
 			</ul>
 		</section>
-		
+
 		<section id="interface_xml">
 			<h2>XML editor</h2>
 			<p><img src="_images/window_xml.png" alt="XML editor window">The XML editor allows quick navigation through the SVG's <a href="elements">elements</a>. Branch elements (i.e. elements with children)
@@ -313,33 +384,37 @@
 				<li><i class="material-icons">settings</i><strong><a href="#animation">Animations</a></strong></li>
 				<li><i class="material-icons">settings_applications</i><strong><a href="#animation_groups">Animated groups</a></strong></li>
 				<li><i class="material-icons">link</i><strong><a href="#elements_common_use">Use elements</a></strong> (links)</li>
-				<li><i class="material-icons">label</i><i class="material-icons">label_outline</i><strong>Visual elements</strong> (e.g. <a href="#elements_common_cicle">circles</a>, <a href="#elements_common_cicle">paths</a> etc.) as well as other general elements.</li> 
-				<li><i class="material-icons">folder</i><i class="material-icons">folder_open</i><strong>Container elements</strong> - namely <a href="#elements_common_g">groups</a> and <a href="#elements_common_svg">root SVG element</a>.</li> 
-				<li><i class="material-icons">layers</i><strong>Layers</strong></li> 
-				<li><i class="material-icons">videocam</i><strong><a href="#animation_types_camera">Camera</a></strong></li> 
-				<li><i class="material-icons">star</i><i class="material-icons">star_outline</i><strong>Definitions</strong> - a <a href="#elements_common_defs">defs</a> element, hosting various elements, such as:</li> 
+				<li><i class="material-icons">label</i><i class="material-icons">star_outline</i><strong>Visual elements</strong> (e.g. <a href="#elements_common_cicle">circles</a>, <a href="#elements_common_cicle">paths</a> etc.) as well as other general elements.</li>
+				<li><i class="material-icons">folder</i><i class="material-icons">folder_open</i><strong>Container elements</strong> - namely <a href="#elements_common_g">groups</a> and <a href="#elements_common_svg">root SVG element</a>.</li>
+				<li><i class="material-icons">layers</i><strong>Layers</strong></li>
+				<li><i class="material-icons">videocam</i><strong><a href="#animation_types_camera">Camera</a></strong></li>
+				<li><i class="material-icons">star</i><i class="material-icons">star_outline</i><strong>Definitions</strong> - a <a href="#elements_common_defs">defs</a> element, hosting various elements, such as:</li>
 					<ul>
-						<li><i class="material-icons">gesture</i><strong>Inkscape path effects</strong></li> 
-						<li><i class="material-icons">gradient</i><strong>Gradients</strong></li> 
-						<li><i class="material-icons">flip</i><strong>Clip paths</strong></li> 
-						<li><i class="material-icons">blur_on</i><strong>Filters</strong></li> 
-						<li><i class="material-icons">folder_special</i><strong>AniGen animation state groups</strong></li> 
+						<li><i class="material-icons">gesture</i><strong>Inkscape path effects</strong></li>
+						<li><i class="material-icons">gradient</i><strong>Gradients</strong></li>
+						<li><i class="material-icons">flip</i><strong>Clip paths</strong></li>
+						<li><i class="material-icons">blur_on</i><strong>Filters</strong></li>
+						<li><i class="material-icons">filter_none</i><strong>aniGen animation state groups</strong></li>
 					</ul>
 			</ul>
 		</section>
-		
+
 		<section id="interface_log">
 			<h2>Event log</h2>
-			<p>Keeps information about actions made during editing, such as copying, pasting, deleting etc.</p>
+			<p>While using aniGen, a log can be displayed (at the bottom of the screen) detailing your interactions, as well as problems that aniGen ran into.  To turn on/off the <b>Event log</b> interface, either:</p>
+			<ul>
+				<li>Click on the "<b>Toggle Event Log</b>' button located on the right side</li>
+				<li>Using the menu, go to <b> Help > Toggle Event Log</b></li>
+			</ul>
 		</section>
-		
-		
+
+
 		<section id="interface_preview">
 			<h2>Preview window</h2>
 			<p>Shows the animation's canvas as it will look when exported. Limited controls are available:
 				<ul>
 					<li><strong>F5</strong> refreshes the preview to sync with the changes you've made. By default, preview also synces each time the SVG's <a href="#animation_types_camera">camera</a> is changed. This can be disabled through <a href="#interface_settings">settings</a>.</li>
-					<li><strong>Pause</strong> or <strong>space</strong> pauses / unpauses animations</li>
+					<li><strong>Pause</strong> or <strong>space</strong> pauses / plays animations</li>
 					<li><strong>Alt + Pause</strong> resets animations</li>
 					<li><strong>Ctrl + mouse wheel</strong> zooms in and out</li>
 					<li><strong>Ctrl + alt + mouse wheel</strong> zooms in and out and fits the window to match</li>
@@ -349,7 +424,7 @@
 			</p>
 			<p>Canvas is painted in with white, the remaining portion of the window is black.</p>
 		</section>
-		
+
 		<section id="interface_settings">
 			<h2>Settings</h2>
 			<p><img src="_images/settings.png" alt="Settings dialogue">
@@ -364,61 +439,12 @@
 				</ul>
 			</p>
 		</section>
-		
-		
+
+
 	</section>
-	
-	<section id="files">
-		<h1>Files</h1>
-		
-		<section id="files_opening">
-			<h2>Opening and saving SVGs</h2>
-			<p><img src="_images/dialogue_open.png" alt="File open dialogue">AniGen only works with existing SVG files (preferably created with <a href="http://inkscape.org">Inkscape</a>). They can be opened by clicking the icon, or by dropping the file on it.</p>
-			<p><img src="_images/dialogue_open2.png" alt="File open dialogue with existing file">If a file is stored in local browser storage (by selecting <em>file→save</em> or hitting <em>ctrl+s</em>), it will be available in the file open dialogue. The local file can be deleted by the button next to it.</p>
-			
-		</section>
-		
-		<section id="files_importing">
-			<h2>Importing</h2>
-			<p>Files can be imported by dragging them into the editor's canvas. Imported files include SVGs, JPEGs and PNGs. Raster files (JPEGs and PNGs) will be appended to the currently selected container object.
-				SVGs will be merged, i.e. all elements container in the root SVG element will be moved to the current SVG's root element, and the contents of <a href="elements_common_defs">defs</a>
-				(clip paths, gradients, animation states etc.) will be moved to current defs.</p>
-			<p>It's recommended to save file before importing.</p>
-				
-		</section>
-		
-		<section id="files_exporting">
-			<h2>Exporting</h2>
-			<p><img src="_images/dialogue_export1.png" alt="File export dialogue">Current SVG can be exported as a series of PNGs or static SVGs archived in a ZIP. User can set:
-			<ul>
-				<li><strong>Begin time</strong> in seconds</li>
-				<li><strong>Duration time</strong> in seconds</li>
-				<li><strong>Framerate</strong> in frames per second</li>
-				<li><strong>Export size</strong> in pixels, with optional aspect ratio lock</li>
-				<li><strong>Output name</strong>, the name of the exported file</li>
-				<li><strong>Output type</strong>, either PNGs or static SVGs</li>
-				<li><strong>Downsampling</strong> - renders SVG in higher resolution and scales it down. This takes more time, but can remove certain types of artifacts made by native browser anti aliasing.</li>
-				<li><strong>Shape rendering</strong> - switches between native rendering and rendering with crisp edges. The latter creates pixel-perfect renders with <em>no native anti aliasing</em>. Combining this with downsampling setting can create anti aliased pictures with higher precision and less artifacting than native settings, but takes way more time.</li>				
-				<li><strong>Notification</strong>, which sounds when export is finished</li>
-			</ul>
-			<p><em>Static SVGs</em> will create individual SVG files for each frame, stripped of all animations.</p>
-			<p>Default duration is set to the loop length specified by the user with <em>animation→loop animation...</em> dialogue, or is computed as the least common multiple of all animation durations.</p>
-			<p>If only one frame is exported, it's downloaded directly instead of in a ZIP.</p>
-			<p><img src="_images/dialogue_export2.png" alt="Rendering in progress">While rendering, the editor will be unavailable. Progress and estimated time to completion (HH:MM:SS) is shown.
-				Progress percentage is shown in the page title.
-				The rendering process can take significant time, which scales with the number of elements in the SVG. Furthermore, each PNG is stored in the computer's memory. It's recommended to export longer animations, 
-				or animations with extremely large size, in smaller segments. Rendering process can be canceled (with slight delay).</p>
-			<p><img src="_images/dialogue_export3.png" alt="Files being packed into a ZIP">When all frames are rendered, they are packed into a ZIP, which then triggers the standard save dialogue of the browser.
-				This process takes some time, but comperatively little to the rendering process.</p>
-			<p><strong>Note:</strong> While mostly working, exporting is still in its testing phases. Save your work before you export and please <a href="#bugs">report</a> any problems.</p>
-			<p><strong>Note:</strong> High resolutions, high downsampling settings, and long export times can lead to browser running out of allocated memory. It's advised to save your work before exporting, and export larger animations in shorter intervals.</p>
-		</section>
-		
-	</section>
-	
 	<section id="controls">
-		<h1>Controls</h1>
-		
+		<h1>Interaction and Controls</h1>
+
 		<section id="controls_mouse">
 			<h2>Mouse</h2>
 			<p>Generally used for selecting elements by clicking in a manner similar to Inkscape. Specific <a href="#tools">tools</a> may change the default behavior.</p>
@@ -426,7 +452,7 @@
 			<p><strong>Middle button</strong> allows user to drag the canvas view.</p>
 			<p><strong>Scroll wheel</strong> moves view up and down. <em>Shift + wheel</em> moves view left and right. <em>Ctrl + wheel</em> zooms in and out. <em>Alt + wheel</em> seeks (moves time) forward and backward, <em>ctrl</em> mask increases the seek distance.</p>
 		</section>
-		
+
 		<section id="controls_keyboard">
 			<h2>Keyboard shortcuts</h2>
 			<table class='keyboard'>
@@ -436,73 +462,73 @@
 				<tr><td><span class='key'>F3</span></td><td>Select the <a href="#tools_zoom">zoom tool</a></td></tr>
 				<tr><td><span class='key'>F5</span></td><td>Refreshes the window (after confirmation)</td></tr>
 				<tr><td><span class='key'>F7</span></td><td>Select the <a href="#tools_picker">picker tool</a></td></tr>
-				
+
 				<tr><td></td><td></td></tr>
-				
-				<tr><td><span class='key'>Space</span>/<span class='key'>Pause</span>/<span class='key'>Ctrl + P</span></td><td>Pause / unpause animations</td></tr>
-				<tr><td><span class='key'>Alt + Pause</span></td><td>Reset animations</td></tr>
-				
+
+				<tr><td><span class='key'>Space</span>/<span class='key'>Pause</span>/<span class='key'>Ctrl + P</span></td><td>Pause / Play animations</td></tr>
+				<tr><td><span class='key'>Alt + Pause</span></td><td>Rewind animations</td></tr>
+
 				<tr><td><span class='key'>Ctrl + ←</span>/<span class='key'>1</span></td><td>Go to previous keyframe of selected animation</td></tr>
 				<tr><td><span class='key'>Ctrl + →</span>/<span class='key'>3</span></td><td>Go to next keyframe of selected animation</td></tr>
 				<tr><td><span class='key'>Ctrl + ↓</span>/<span class='key'>2</span></td><td>Go to the closest keyframe of currently selected animation</td></tr>
-								
+
 				<tr><td><span class='key'>+</span>/<span class='key'>E</span></td><td>Seek forward (1s if animation is running, 100ms if animation is paused)</td></tr>
 				<tr><td><span class='key'>Shift + +</span>/<span class='key'>Shift + E</span></td><td>Seek forward (10s if animation is running, 1s if animation is paused)</td></tr>
 				<tr><td><span class='key'>Alt + +</span>/<span class='key'>Alt + E</span></td><td>Seek forward (100ms if animation is running, 10ms if animation is paused)</td></tr>
-				
+
 				<tr><td><span class='key'>-</span>/<span class='key'>Q</span></td><td>Seek back (1s if animation is running, 100ms if animation is paused)</td></tr>
 				<tr><td><span class='key'>Alt + -</span>/<span class='key'>Alt + Q</span></td><td>Seek back (100ms if animation is running, 10ms if animation is paused)</td></tr>
 				<tr><td><span class='key'>Shift + -</span>/<span class='key'>Shift + Q</span></td><td>Seek back (10s if animation is running, 1s if animation is paused)</td></tr>
-				
+
 				<tr><td></td><td></td></tr>
-				
+
 				<tr><td><span class='key'>Ctrl + A</span></td><td>Select / unselect all keyframes (keyframe window only)</td></tr>
 				<tr><td><span class='key'>W</span>/<span class='key'>Ctrl + R</span></td><td>Set current value for selected animation</td></tr>
-				
+
 				<tr><td></td><td></td></tr>
-				
+
 				<tr><td><span class='key'>Escape</span></td><td>Hide popup / dialogue</td></tr>
 				<tr><td><span class='key'>Ctrl + +</span></td><td>Zoom in</td></tr>
 				<tr><td><span class='key'>Ctrl + -</span></td><td>Zoom out</td></tr>
-				
+
 				<tr><td><span class='key'>Delete</span></td><td>Remove currently selected element</td></tr>
-				
+
 				<tr><td><span class='key'>Ctrl + Y</span>/<span class='key'>Ctrl + Shift + Z</span></td><td>Redo</td></tr>
 				<tr><td><span class='key'>Ctrl + Z</span></td><td>Undo</td></tr>
-				
+
 				<tr><td></td><td></td></tr>
-				
+
 				<tr><td><span class='key'>Page Up</span></td><td>Raise currently selected element</td></tr>
 				<tr><td><span class='key'>Page Down</span></td><td>Lower currently selected element</td></tr>
 				<tr><td><span class='key'>Home</span></td><td>Raise currently selected element to the top of its parent</td></tr>
 				<tr><td><span class='key'>End</span></td><td>Lower currently selected element to the bottom of its parent</td></tr>
-				
-				
+
+
 				<tr><td><span class='key'>←</span>/<span class='key'>↑</span>/<span class='key'>↓</span>/<span class='key'>→</span></td><td>Move selected element</td></tr>
-				
+
 				<tr><td></td><td></td></tr>
-				
+
 				<tr><td><span class='key'>Alt + ←</span>/<span class='key'>Shift + A</span></td><td>Select previous sibling of selected element</td></tr>
 				<tr><td><span class='key'>Alt + →</span>/<span class='key'>Shift + D</span></td><td>Select next sibling of selected element</td></tr>
 				<tr><td><span class='key'>Alt + ↑</span>/<span class='key'>Shift + W</span></td><td>Select parent of selected element</td></tr>
 				<tr><td><span class='key'>Alt + ↓</span>/<span class='key'>Shift + S</span></td><td>Select first child of selected element</td></tr>
-				
+
 				<tr><td><span class='key'>Alt + ↑</span>/<span class='key'>Alt + W</span></td><td>Select closest animation parent of selected element</td></tr>
-				
+
 				<tr><td></td><td></td></tr>
-				
+
 				<tr><td><span class='key'>Ctrl + Shift + E</span></td><td>Open <em>Export</em> dialogue</td></tr>
 				<tr><td><span class='key'>Ctrl + Shift + K</span></td><td>Open / close the <em>Keyframes and timing</em> window</td></tr>
 				<tr><td><span class='key'>Ctrl + Shift + L</span></td><td>Open / close the <em>Layers</em> window</td></tr>
 				<tr><td><span class='key'>Ctrl + Shift + X</span></td><td>Open / close the <em>XML editor</em> window</td></tr>
-				
+
 				<tr><td><span class='key'>Ctrl + O</span></td><td>Open the <em>open</em> dialogue</td></tr>
 				<tr><td><span class='key'>Ctrl + S</span></td><td>Saves SVG into browser local storage</td></tr>
 				<tr><td><span class='key'>Ctrl + Shift + S</span></td><td>Save and download SVG</td></tr>
-				
+
 				<tr><td></td><td></td></tr>
-				
-				
+
+
 				<tr><td><span class='key'>Ctrl + C</span></td><td>Copy selected element into clipboard</td></tr>
 				<tr><td><span class='key'>Ctrl + X</span></td><td>Cut element and move it to clipboard</td></tr>
 				<tr><td><span class='key'>Ctrl + V</span></td><td>Paste element or animation timing (animation to animation)</td></tr>
@@ -510,12 +536,239 @@
 				<tr><td><span class='key'>Ctrl + L</span>/<span class='key'>Alt + D</span></td><td>Creates a &lt;use&gt; link element.</td></tr>
 				<tr><td><span class='key'>Ctrl + G</span></td><td>Group selected element</td></tr>
 				<tr><td><span class='key'>Ctrl + U</span></td><td>Ungroup selected element</td></tr>
-				
+
 			</table>
 		</section>
-		
+
 	</section>
-	
+	<section id="tools">
+		<h1>Editing tools</h1>
+
+		<section id="tools_group">
+			<h2>Group selection</h2>
+				<p><i class="material-icons flip-h">near_me</i>Based on Inkscape's "Select and transform objects" tool.</p>
+				<ul>
+					<li><strong>Left click</strong> - selects the highest group in current selection. Omits layers. If no group can be selected, the graphical element is selected instead.</li>
+					<li><strong>Right click</strong> - context menu</li>
+					<li><strong>Double click</strong> - goes inside the given group. Can select animations if the clicked element has one.</li>
+				</ul>
+		</section>
+
+		<section id="tools_element">
+			<h2>Element selection</h2>
+				<p><i class="material-icons flip-v">edit</i>Based on Inkscape's "Edit path by nodes" tool. Directly selects graphical objects, disregarding groups they might be in, and allows their editing with nodes.</p>
+				<ul>
+					<li><strong>Left click</strong> - selects the clicked graphical element.</li>
+					<li><strong>Right click</strong> - context menu</li>
+					<li><strong>Double click</strong> - selects the clicked element's animation, if any.</li>
+				</ul>
+		</section>
+
+		<section id="tools_zoom">
+			<h2>Zoom</h2>
+				<p><i class="material-icons">search</i>Zooms in or out at the factor of square root of two.</p>
+				<ul>
+					<li><strong>Left click</strong> - zoom in.</li>
+					<li><strong>Right click</strong> - zoom out</li>
+				</ul>
+		</section>
+
+		<section id="tools_picker">
+			<h2>Picker</h2>
+				<p><i class="material-icons flip-v">colorize</i>Based on Inkscape's "Picker" tool. When a graphical element is selected:</p>
+				<ul>
+					<li><strong>Left click</strong> - sets the fill color of current element to that of the clicked one (clicking SVG sets fill to "none").</li>
+					<li><strong>Ctrl + left click</strong> - sets the stroke color of current element to that of the clicked one (clicking SVG sets stroke to "none").</li>
+				</ul>
+				<p>If an animation is selected and any number of keyframes is selected in the keyframe window:</p>
+				<ul>
+					<li><strong>Attribute animation</strong> - sets selected keyframes' values to the corresponding value of clicked element, if present</li>
+					<li><strong>Motion animation</strong> - sets motion path to the data present in clicked path.</li>
+					<li><strong>Shift + click</strong> - if clicked element has an animation, copies its timing.</li>
+				</ul>
+				<p>Right-click context menu will also show additional options tied to the selected element and target.</p>
+
+		</section>
+	</section>
+	<section id="animation">
+		<h1>Animation</h1>
+			<p>All types of SVG animations share some common properties. Each animation has set duration of one pass (with possible repetition), a set of begin times, and keyframes which describe the value at given times, denoted as percentages of the animation's duration.</p>
+			<p>Furthermore, animations can be set to hold their last value after they finish (or return to the original value), are able to acumulate (meaning each run of the animation will add to the previous value), and calculate values through different interpolation modes.</p>
+			<section id="animation_timing">
+				<h2>Timing</h2>
+					<section id="animation_timing_duration">
+						<h3>Duration</h3>
+						<p>All animations have a set duration. This describes how long a <em>single run</em> of the animation lasts. In aniGen, this value is in seconds.</p>
+					</section>
+
+					<section id="animation_timing_beginnings">
+						<h3>Beginnings</h3>
+						<p>Any animation can have multiple begin times. At each time, the animation restarts, and if applicable, loops the given number of times. If an animation is set to begin again while it's still running, it will usually reset. aniGen uses values given in seconds of the SVG's time.</p>
+					</section>
+
+					<section id="animation_timing_beginnings">
+						<h3>Repetition</h3>
+						<p>An animation can repeat multiple time per each beginning. Repeat count of zero means the animation only runs once, higher values denote multiple repetitions. Furthermore, repetition can be set to "indefinite", meaning the animation will run forever (or until it's ended by external source).</p>
+					</section>
+
+					<section id="animation_timing_interpolation">
+						<h3>Interpolation modes</h3>
+						<p>The progress between every pair of values can be calculated in several ways:</p>
+						<ul>
+							<li><strong>Linear</strong> - meaning a continuous change from one value to the other.</li>
+							<li><strong>Discrete</strong> - changing instantaneously (without any interpolation) at the time of the given keyframe.</li>
+							<li><strong>Spline</strong> - progress is guided by a simple <em>spline</em>, allowing for non-linear calculation. See <a href="#animation_timing_splines">splines</a>.</li>
+							<li><strong>Paced</strong> - animation slows down and speeds up to provide smooth progression between keyframes. Usually only applicable for <a href="animation_types_motion">motion through path</a> - the animation element will slow down during sharp turns, slow down as it nears each keyframe position etc.</li>
+						</ul>
+					</section>
+
+					<section id="animation_timing_splines">
+						<h3>Splines</h3>
+						<p>A non-linear way of interpolation between keyframes. Splines are simple curves defined by two control points, each as its X and Y value between 0 and 1.</p>
+						<p>aniGen uses several spline presets, but also allows the user to set custom splines more suited to their needs.</p>
+						<p>The following examples show simple two-value animation. Top bar progresses according to a spline, bottom bar has linear progression. Spline's shape is depicted in red, its control points are shown as white circles.</p>
+						<div style="text-align:center">
+						<figure><img src="_gif/spline_0_0_1_1.gif" alt="Spline animation 0 0 1 1 (linear)"><figcaption>0 0 1 1 - linear progression</figcaption></figure>
+						<figure><img src="_gif/spline_.25_0_.75_1.gif" alt="Spline animation .25 0 .75 1 (ease in, ease out)"><figcaption>0.25 0 0.75 1 - ease in, ease out</figcaption></figure>
+						<figure><img src="_gif/spline_.5_0_.5_1.gif" alt="Spline animation .5 0 .5 1 (ease in, ease out, sharp)"><figcaption>0.5 0 0.5 1 - sharp ease in, ease out</figcaption></figure>
+						<figure><img src="_gif/spline_.25_0_.75_.75.gif" alt="Spline animation .25 1 .75 .75 (ease in)"><figcaption>0.25 1 0.75 0.75 - ease in</figcaption></figure>
+						<figure><img src="_gif/spline_.5_0_.5_.5.gif" alt="Spline animation .5 1 .5 .5 (ease in, sharp)"><figcaption>0.5 1 0.5 0.5 - sharp ease in</figcaption></figure>
+						<figure><img src="_gif/spline_.25_.25_.75_1.gif" alt="Spline animation .25 .25 .75 1 (ease out)"><figcaption>0.25 0.25 0.75 1 - ease out</figcaption></figure>
+						<figure><img src="_gif/spline_.5_.5_.5_1.gif" alt="Spline animation .25 .25 .75 1 (ease out, sharp)"><figcaption>0.25 0.25 0.75 1 - sharp ease out</figcaption></figure>
+						<figure><img src="_gif/spline_.75_1_.25_.75.gif" alt="Spline animation .75 1 .25 .75 (custom)"><figcaption>0.75 1 0.25 0.75 - a custom spline.</figcaption></figure>
+						</div>
+
+					</section>
+			</section>
+
+			<section id="animation_keyframes">
+				<h2>Keyframes</h2>
+				<p><img src="_images/window_keyframes1.png" alt="Keyframes window">Each animation has a set of keyframes. Each is denoted by its time (given as percentage of a single animation run) and its value. If <em>spline</em> interpolation mode is selected, every frame (except the first one) will have a spline attached to it as well, describing how the animation progresses to this keyframe from the previous one.</p>
+				<p>Format of values is specific to each animation type. In general, each "value" is actually a set of numeric values. As the animation progresses, the value is changed from one to the other according to the selected interpolation mode. For instance, a path animation will calculate the position of each control point of the path at each given time. This limits animations somewhat; an animation with no clear way to change from one value to the next will progress discretely (it will jump). For instance, a path's shape can only change into a shape with the same amount and types of control points. Other attributes, such as visibility, can have non-numeric values (visible/hidden), and can only change discretely.</p>
+				<p>Keyframes can be manipulated through the <a href="#interface_keyframes">keyframes and timing</a> window. Motion and transformation animations also have a node-based interface shown on the canvas, and described in sections below.</p>
+				<p>Keyframe window allows duplication and deletion of keyframes (with the minimal two keyframes - 0% and 100%). Keyframes can be moved by dragging, efectively switching values (and splines) while retaining timing.</p>
+			</section>
+
+			<section id="animation_other">
+				<h2>Other attributes</h2>
+				<p>Animations have several other attributes:</p>
+				<p><strong>Post-animation state</strong> (or "fill") describes how animation affects its parent once it finishes. If <em>from animation</em> is selected, it will retain the value of its last keyframe. On the other hand, selecting <em>original</em> will return the affected element to the state it had before the animation.</p>
+				<p><strong>Additive</strong> indicates whether animation should add to any previous value the affected element already has or not. For instance, an additive translation from 0 to 100 will move the element from its original position. For non-additive animation, if the element already has a transformation attribute, however, it will be completely replaced. It's recommended to set additive to "yes" for transformations and motion along a path. Attribute animations, in contrast, are usually better served by replacing the attribute completely.</p>
+				<p><strong>Cumulative</strong> attribute indicates the animation should add to its own value each time it runs. This means that with each repetition (or new begin), the last value is kept as initial, and new values are added to it. For instance, a cumulative translation from 0 to 100 will, in first run, move the object from 0 to 100. On second repetition, the object will move from 100 to 200, and so on. This is particularly useful for creating continuous movement which should go forever.</p>
+			</section>
+
+			<section id="animation_types">
+				<h2>Animation types</h2>
+				<p>There are, for most intents and purposes, three basic animation types in SVG. <strong>Transformations</strong> change the element's <em>transform</em> attribute, allowing for rotation, translation, scaling, and skewing. <strong>Motion along path</strong> is similar, and as name implies, moves the element along a given path. <strong>Attribute animation</strong> is the widest and most generic type of animation, which allows for the change of almost any remaining attribute of almost any SVG element.</p>
+				<p>Element can be animated with the menu <em>animation</em> option, or with the <i class="material-icons turn-90">filter_none</i> <em>animate element</em> toolbar button.</p>
+				<p>Multiple animations can be applied to the same object. Their behavior can be exclusive if not set to <em>additive</em>.
+					<section id="animation_types_camera">
+						<h3>Camera</h3>
+						<p><img style="height: 125px" class="right" src="_gif/rect_camera.gif" alt="Viewbox animation">
+						<i class="material-icons">videocam</i>Animates the SVG's viewbox - the rectangular view, which ultimately gets rendered.</p>
+						<p>Each keyframe is defined as a rectangle. By default, the aspect ratio stays the same as the original, but this can be changed manually. However, the view always gets rendered to the same size raster, which would lead to uneven stretching or shrinking of the picture.</p>
+					</section>
+
+					<section id="animation_types_transform_translate">
+						<h3>Translation</h3>
+						<p><img style="height: 125px" class="right" src="_gif/rect_translate.gif" alt="Translation animation">
+						<i class="material-icons">trending_up</i>Movement along X and Y axis. Each keyframe is defined by two values indicating the element's position. The node interface allows the user to set each by hand. Holding <em>ctrl</em> while dragging a node will move it in straight line from previous node to current node's last position.</p>
+						<p>While not as versatile as motion through path, multiple translation animations can be combined to achieve similar effect without the hassle connected to the path management.</p>
+					</section>
+
+					<section id="animation_types_motion">
+						<h3>Motion through path</h3>
+						<p><img style="height: 125px" class="right" src="_gif/rect_motion.gif" alt="Motion animation">
+						<i class="material-icons">swap_calls</i>Has the element travel along a given path. Optionally, the <em>angle</em> can be set (or set to <em>auto</em> or <em>auto-reverse</em>) this will turn the element as it travels along the path instead of simply translating it.</p>
+						<p>The <a href="#tools_picker">picker tool</a> can be used to assign the animation's path. The animation values are distance as percentage along the path, allowing the animation to run back and forth, or in reverse.</p>
+
+					</section>
+
+					<section id="animation_types_transform_rotate">
+						<h3>Rotation</h3>
+						<p><img style="height: 125px" class="right" src="_gif/rect_rotate.gif" alt="Rotation animation">
+						<i class="material-icons">refresh</i>Turning around a given origin. Keyframes hold angle (in degrees) and the X and Y position of the origin. The position of origin can change throughout the animation, allowing for fairly complex range of motion (albeit harder to master than simply turning along a single point). Node interface allows the user to move all origins with the same location, and all handles.</p>
+						<p>For each origin, angle zero is given as the angle the line from the origin to the affected element. This can effectively combine rotation with translation within a single animation.</p>
+					</section>
+
+					<section id="animation_types_transform_scale">
+						<h3>Scaling</h3>
+						<p><img style="height: 125px" class="right" src="_gif/rect_scale.gif" alt="Scaling animation">
+						<i class="material-icons">zoom_out_map</i>Changing the element's size. Described by scale factor in X and Y axis (allows independent scaling). As SVG has no native support for scaling origin, aniGen provides a more-or-less functional workaround. It's recommended to group any element you intent to scale, and only apply the scaling animation to this group to avoid issues.</p>
+					</section>
+
+					<section id="animation_types_transform_skew">
+						<h3>Skewing</h3>
+						<p><img style="height: 125px" class="right" src="_gif/rect_skew.gif" alt="Skewing animation">
+						<i class="material-icons">swap_horiz</i><i class="material-icons">swap_vert</i>Separated into horizontal (X axis) and vertical (Y axis) skew animations. Each keyframe is defined by the skew angle, zero being the initial value.</p>
+						<p>A workaround similar to that with scaling is employed for skewing, and similar care should be used when using this animation.</p>
+					</section>
+
+					<section id="animation_types_attribute">
+						<h3>Attribute animation</h3>
+						<p><img style="height: 125px" class="right" src="_gif/rect_attr.gif" alt="Attribute animation">
+						<i class="material-icons">text_format</i>Changes the selected attribute of the parent (except <em>transform</em> and several other attributes) through time. Each value indicates the new value. Several attributes (display, visibility, opacity) allow the user to select values from available presets.</p>
+						<p>If keyframes are selected in the keyframes window, the <a href="#tools_picker">picker tool</a> can be used to pick values of other (clicked) elements with relative ease.</p>
+					</section>
+
+			</section>
+
+			<section id="animated_groups">
+				<h2>Animated groups</h2>
+					<p><img src="_images/states1.png" alt="Object menu">
+						<img class="right" src="_images/context_menu.png" alt="Context menu">
+						aniGen expands the basic animation functionality by introducing animated groups.</p>
+					<p>The user can select any element (including groups) and save it as an <em>animation state</em> with main menu or right-click context menu.</p>
+					<p>States are grouped according to the number and order of elements, so that standard path animation is applicable between all of them. When created, animated group allows the user to set each state from the group as the value of given keyframes. This allows the user to quickly change one complex shape to another without the need to create and synchronize large number of attribute animations.</p>
+					<section id="animated_groups_state">
+						<h3>Animation state</h3>
+						<p><img src="_images/states2.png" alt="Animation state dialogue">Animation states are set by selecting an object, and chosing <em>object→Put state in Animation Group</em> from the main menu, or via right-click context menu.</p>
+						<p><img src="_images/states3.png" alt="Animation state dialogue">When selected, the user will be able to pick a name for the given state, as well as the group. If no group exists, or no group shares the <span class="help" title="This means the general structure of nested elements, i.e. the number of groups and types of child elements in them.">element model</span> necessary, the user will have to pick the <em>New group</em> option and naming the group.</p>
+
+						<p><strong>Note:</strong> if a group is made into a state, its transformation is disregarded. This means one can duplicate a group, move it somewhere else, and tweak elements therein without fear of making the final animation travel the distance.</p>
+
+						<p><strong>Note:</strong> if all children of selected elements share the same <span class="help" title="This means the general structure of nested elements, i.e. the number of groups and types of child elements in them.">element model</span>, a <em>batch</em> option is provided. This allows the user to set all the <em>child</em> elements as individual states, sharing the same group. For example, if the selected element is a layer, which has a number of sub-layers, each with a single state, the <em>batch</em> option will create a group named after the parent layer, and popuplate it with states named after each individual sub-layer. <strong>This is experimental.</strong></p>
+					</section>
+
+					<section id="animated_groups_group">
+						<h3>Animated group</h3>
+						<p>
+							<img src="_images/window_keyframes3.png" alt="Keyframe window - animated group">
+							<img class="right" src="_images/states5.png" alt="New animated group dialogue">
+							New animated group can be created via the main menu, or by right-click context menu.</p>
+						<p>Animated groups behave like any other animation, with few notable exceptions. While they have duration, begins, times, and so on, each value corresponds to a state name the user has given.</p>
+						<p>The keyframe window also includes a small preview of the selected shape, as well as an <em>intensity</em> slider. This allows the user to quickly create states part way between two existing state - intensity is the percentage of the change from previous state to the one in the given keyframe.</p>
+						<p><img src="_images/window_keyframes4.png" alt="Keyframe window - animated group - animated attributes tab">Intensity can also be set manually to a value outside the 0 - 1 range, creating an extrapolated state. This can have rather mixed results.</p>
+						<p><em>Tip: To "hold" a temporary value created with intensity slider, simply set the intensity of the following keyframe to zero.</em></p>
+						<p>Another addition is the ability to select which attributes will be animated. By default, the <em>d</em> attribute (see <a href="#elements_common_path">paths</a>) is animated, but more can be added as the users desires.</p>
+					</section>
+
+					<section id="animated_groups_manager">
+						<h3>State manager</h3>
+						<p><img style="width: 30%" src="_images/state_manager1.png" alt="Animation state manager">
+							<img class="right" style="width: 40%" src="_images/state_manager2.png" alt="Animation state interpolation">
+							Existing animation states can be viewed and changed with <em>object→manage animation states</em> menu option.</p>
+						<p>The dialogue shows all existing state groups, animation states, and a live preview. The states can be renamed, and the states can be deleted.</p>
+						<p>State groups can be hidden by clicking their name. Empty groups are deleted automatically.</p>
+						<p>Additionally, new states can be created from existing ones as an interpolation (inbetween value), or extrapolation, similar to the use of <em>intensity</em> option in keyframe window.</p>
+						<p>The new state is a combination of two previous states, and is added to the end of the group.</p>
+
+					</section>
+			</section>
+	</section>
+
+	<!--
+	<section id="examples">
+		<h1>Examples</h1>
+
+
+			<section id="examples_1">
+				<h2></h2>
+			</section>
+
+	</section>
+	-->
+	</section>
 	<section id="elements">
 		<h1>Elements and the XML tree</h1>
 			<p>An SVG is an XML format, meaning the file is composed of <em>elements</em>. In code, these usually appear as pairs of <em>tags</em> similar to this:</p>
@@ -533,7 +786,7 @@
 			<p>In this case, the <em>g</em> element is a child of the <em>svg</em> element.</p>
 			<p>An SVG file will usually have single <em>svg</em> element as its root, and all other elements will be its children, or the children of its children (and so on). This is called "nesting" and creates a tree structure depicted in the <a href="#interface_xml">XML editor</a>.</p>
 			<p>All SVGs share these basic properties.</p>
-		
+
 		<section id="elements_attributes">
 			<h2>Attributes</h2>
 				<p>As mentioned above, elements can have various attributes. For example:</p>
@@ -564,7 +817,7 @@
 				</code>
 				<p>The element's properties will change. In this case, the top left corner (along with the rest of the element) will move 40 pixels right (along the x axis).</p>
 				<p><strong>All</strong> SVG animations work by changing an attribute (or in some cases, CSS styles) over time.</p>
-				
+
 				<p>Attributes of interest common to multiple types of elements:</p>
 				<table>
 					<tr><th>Attribute name</th><th>Description</th><th>Possible values</th></tr>
@@ -576,7 +829,7 @@
 					<tr><td>opacity</td><td>Opacity (non-transparency) of the given element. Carries over to all of its children.</td><td>numeric value between 0 and 1 (1 meaning 100% opaque)</td></tr>
 				</table>
 		</section>
-		
+
 		<section id="elements_common">
 			<h2>Common elements</h2>
 				<p>This section contains a list of elements common to most SVG files, links to their official documentation, as well as short list of attributes interesting for <a href="#animation_types_attribute">attribute animation</a>.</p>
@@ -590,20 +843,20 @@
 						</ul>
 						<p>For the purpose of keeping aniGen running, animation of SVG attributes is not advised.</p>
 				</section>
-				
+
 				<section id="elements_common_g">
 					<h3>Group &lt;g&gt;</h2>
 						<p>See also <a href="https://www.w3.org/TR/SVG/struct.html#Groups">W3C recommendation</a>.</p>
 						<p>A container element, meaning an element with no actual graphical representation - simply holds other elements.</p>
 				</section>
-				
+
 				<section id="elements_common_defs">
 					<h3>Definitions &lt;defs&gt;</h2>
 						<p>See also <a href="https://www.w3.org/TR/SVG/struct.html#DefsElement">W3C recommendation</a>.</p>
 						<p>A special container element, usually placed directly in the root <em>svg</em> element. Holds definitions, which can be various other elements. These are not rendered, but can be linked to by other elements in the SVG file.</p>
 						<p>For example, <em>defs</em> element holds the information about all clip paths, masks and filters. In aniGen, animation states are also kept here.</p>
 				</section>
-				
+
 				<section id="elements_common_rect">
 					<h3>Rectangle &lt;rect&gt;</h2>
 						<p>See also <a href="https://www.w3.org/TR/SVG/shapes.html#RectElement">W3C recommendation</a>.</p>
@@ -618,7 +871,7 @@
 							<tr><td>cy</td><td>y-axis rounding of corners</td><td>numeric value, percentage, or length</td></tr>
 						</table>
 				</section>
-				
+
 				<section id="elements_common_circle">
 					<h3>Circle &lt;circ&gt;</h2>
 						<p>See also <a href="https://www.w3.org/TR/SVG/shapes.html#CircleElement">W3C recommendation</a>.</p>
@@ -630,7 +883,7 @@
 							<tr><td>r</td><td>radius</td><td>numeric value or length</td></tr>
 						</table>
 				</section>
-				
+
 				<section id="elements_common_ellipse">
 					<h3>Ellipse &lt;ellipse&gt;</h2>
 						<p>See also <a href="https://www.w3.org/TR/SVG/shapes.html#EllipseElement">W3C recommendation</a>.</p>
@@ -644,21 +897,21 @@
 							<tr><td>ry</td><td>y-axis radius</td><td>numeric value or length</td></tr>
 						</table>
 				</section>
-				
+
 				<section id="elements_common_path">
 					<h3>Path &lt;path&gt;</h2>
 					<p>See also <a href="https://www.w3.org/TR/SVG/paths.html#PathElement">W3C recommendation</a>.</p>
 					<p>Bread and butter of most SVG vectors - a Bézier curve. Shape is defined by its <em>d</em> attribute (path <strong>d</strong>ata), a sequence of commands.</p>
 					<p>When animating a path, keep in mind that both <em>d</em> attributes must have the same number and types of commands. In inkscape, the simplest way to achieve this is to create one path, duplicate it and adjust each node to another position, then each of the paths for different animation keyframe.</p>
 				</section>
-				
+
 				<section id="elements_common_use">
 					<h3>Links &lt;use&gt;</h2>
 					<p>See also <a href="https://www.w3.org/TR/SVG/struct.html#UseElement">W3C recommendation</a>.</p>
 					<p>A link to another element. If original element changes, the link changes with it.</p>
 					<p>You can create links with from menu <em>edit→create link</em>.</p>
 				</section>
-				
+
 				<section id="elements_common_animatetransform">
 					<h3>Transformation animation &lt;animateTransform&gt;</h2>
 					<p>See also <a href="https://www.w3.org/TR/SVG/animate.html#AnimateTransformElement">W3C recommendation</a>.</p>
@@ -679,7 +932,7 @@
 						<tr><td>values</td><td>Values for each <a href="#animation_keyframes">keyframe</a>.</td><td>Semicolon separated list of values (groups of numeric values)</td></tr>
 					</table>
 				</section>
-				
+
 				<section id="elements_common_animatemotion">
 					<h3>Motion animation &lt;animateMotion&gt;</h2>
 					<p>See also <a href="https://www.w3.org/TR/SVG/animate.html#AnimateMotionElement">W3C recommendation</a>.</p>
@@ -690,250 +943,29 @@
 							<tr><td>path</td><td>Path data of the given <a href="#elements_common_path">path</a>.</td><td>path data</td></tr>
 						</table>
 				</section>
-				
+
 				<section id="elements_common_animate">
 					<h3>Attribute animation &lt;animate&gt;</h2>
 					<p>See also <a href="https://www.w3.org/TR/SVG/animate.html#AnimateElement">W3C recommendation</a>.</p>
 					<p>Generic animation of attribute. Can handle almost anything except <em>transform</em> (which has specific animations). Shares most attributes (except type) with transform animation.</p>
 					<p>Bread and butter of most complex animations - can do anything from changing a path's shape to element's opacity to the color of its stroke.</p>
 				</section>
-			
-		</section>
-		
-	</section>
-	
-	<section id="tools">
-		<h1>Editing tools</h1>
-		
-		<section id="tools_group">
-			<h2>Group selection</h2>
-				<p><i class="material-icons flip-h">near_me</i>Based on Inkscape's "Select and transform objects" tool.</p>
-				<ul>
-					<li><strong>Left click</strong> - selects the highest group in current selection. Omits layers. If no group can be selected, the graphical element is selected instead.</li>
-					<li><strong>Right click</strong> - context menu</li>
-					<li><strong>Double click</strong> - goes inside the given group. Can select animations if the clicked element has one.</li>
-				</ul>
-		</section>
-		
-		<section id="tools_element">
-			<h2>Element selection</h2>
-				<p><i class="material-icons flip-v">edit</i>Based on Inkscape's "Edit path by nodes" tool. Directly selects graphical objects, disregarding groups they might be in, and allows their editing with nodes.</p>
-				<ul>
-					<li><strong>Left click</strong> - selects the clicked graphical element.</li>
-					<li><strong>Right click</strong> - context menu</li>
-					<li><strong>Double click</strong> - selects the clicked element's animation, if any.</li>
-				</ul>
-		</section>
-		
-		<section id="tools_zoom">
-			<h2>Zoom</h2>
-				<p><i class="material-icons">search</i>Zooms in or out at the factor of square root of two.</p>
-				<ul>
-					<li><strong>Left click</strong> - zoom in.</li>
-					<li><strong>Right click</strong> - zoom out</li>
-				</ul>
-		</section>
-		
-		<section id="tools_picker">
-			<h2>Picker</h2>
-				<p><i class="material-icons flip-v">colorize</i>Based on Inkscape's "Picker" tool. When a graphical element is selected:</p>
-				<ul>
-					<li><strong>Left click</strong> - sets the fill color of current element to that of the clicked one (clicking SVG sets fill to "none").</li>
-					<li><strong>Ctrl + left click</strong> - sets the stroke color of current element to that of the clicked one (clicking SVG sets stroke to "none").</li>
-				</ul>
-				<p>If an animation is selected and any number of keyframes is selected in the keyframe window:</p>
-				<ul>
-					<li><strong>Attribute animation</strong> - sets selected keyframes' values to the corresponding value of clicked element, if present</li>
-					<li><strong>Motion animation</strong> - sets motion path to the data present in clicked path.</li>
-					<li><strong>Shift + click</strong> - if clicked element has an animation, copies its timing.</li>
-				</ul>
-				<p>Right-click context menu will also show additional options tied to the selected element and target.</p>
-				
+
 		</section>
 	</section>
-	
-	<section id="animation">
-		<h1>Animation</h1>
-			<p>All types of SVG animations share some common properties. Each animation has set duration of one pass (with possible repetition), a set of begin times, and keyframes which describe the value at given times, denoted as percentages of the animation's duration.</p>
-			<p>Furthermore, animations can be set to hold their last value after they finish (or return to the original value), are able to acumulate (meaning each run of the animation will add to the previous value), and calculate values through different interpolation modes.</p>
-			<section id="animation_timing">
-				<h2>Timing</h2>
-					<section id="animation_timing_duration">
-						<h3>Duration</h3>
-						<p>All animations have a set duration. This describes how long a <em>single run</em> of the animation lasts. In aniGen, this value is in seconds.</p>
-					</section>
-					
-					<section id="animation_timing_beginnings">
-						<h3>Beginnings</h3>
-						<p>Any animation can have multiple begin times. At each time, the animation restarts, and if applicable, loops the given number of times. If an animation is set to begin again while it's still running, it will usually reset. AniGen uses values given in seconds of the SVG's time.</p>
-					</section>
-					
-					<section id="animation_timing_beginnings">
-						<h3>Repetition</h3>
-						<p>An animation can repeat multiple time per each beginning. Repeat count of zero means the animation only runs once, higher values denote multiple repetitions. Furthermore, repetition can be set to "indefinite", meaning the animation will run forever (or until it's ended by external source).</p>
-					</section>
-					
-					<section id="animation_timing_interpolation">
-						<h3>Interpolation modes</h3>
-						<p>The progress between every pair of values can be calculated in several ways:</p>
-						<ul>
-							<li><strong>Linear</strong> - meaning a continuous change from one value to the other.</li>
-							<li><strong>Discrete</strong> - changing instantaneously (without any interpolation) at the time of the given keyframe.</li>
-							<li><strong>Spline</strong> - progress is guided by a simple <em>spline</em>, allowing for non-linear calculation. See <a href="#animation_timing_splines">splines</a>.</li>
-							<li><strong>Paced</strong> - animation slows down and speeds up to provide smooth progression between keyframes. Usually only applicable for <a href="animation_types_motion">motion through path</a> - the animation element will slow down during sharp turns, slow down as it nears each keyframe position etc.</li>
-						</ul>
-					</section>
-					
-					<section id="animation_timing_splines">
-						<h3>Splines</h3>
-						<p>A non-linear way of interpolation between keyframes. Splines are simple curves defined by two control points, each as its X and Y value between 0 and 1.</p>
-						<p>AniGen uses several spline presets, but also allows the user to set custom splines more suited to their needs.</p>
-						<p>The following examples show simple two-value animation. Top bar progresses according to a spline, bottom bar has linear progression. Spline's shape is depicted in red, its control points are shown as white circles.</p>
-						<div style="text-align:center">
-						<figure><img src="_gif/spline_0_0_1_1.gif" alt="Spline animation 0 0 1 1 (linear)"><figcaption>0 0 1 1 - linear progression</figcaption></figure>
-						<figure><img src="_gif/spline_.25_0_.75_1.gif" alt="Spline animation .25 0 .75 1 (ease in, ease out)"><figcaption>0.25 0 0.75 1 - ease in, ease out</figcaption></figure>
-						<figure><img src="_gif/spline_.5_0_.5_1.gif" alt="Spline animation .5 0 .5 1 (ease in, ease out, sharp)"><figcaption>0.5 0 0.5 1 - sharp ease in, ease out</figcaption></figure>
-						<figure><img src="_gif/spline_.25_0_.75_.75.gif" alt="Spline animation .25 1 .75 .75 (ease in)"><figcaption>0.25 1 0.75 0.75 - ease in</figcaption></figure>
-						<figure><img src="_gif/spline_.5_0_.5_.5.gif" alt="Spline animation .5 1 .5 .5 (ease in, sharp)"><figcaption>0.5 1 0.5 0.5 - sharp ease in</figcaption></figure>
-						<figure><img src="_gif/spline_.25_.25_.75_1.gif" alt="Spline animation .25 .25 .75 1 (ease out)"><figcaption>0.25 0.25 0.75 1 - ease out</figcaption></figure>
-						<figure><img src="_gif/spline_.5_.5_.5_1.gif" alt="Spline animation .25 .25 .75 1 (ease out, sharp)"><figcaption>0.25 0.25 0.75 1 - sharp ease out</figcaption></figure>
-						<figure><img src="_gif/spline_.75_1_.25_.75.gif" alt="Spline animation .75 1 .25 .75 (custom)"><figcaption>0.75 1 0.25 0.75 - a custom spline.</figcaption></figure>
-						</div>
-						
-					</section>
-			</section>
-				
-			<section id="animation_keyframes">
-				<h2>Keyframes</h2>
-				<p><img src="_images/window_keyframes1.png" alt="Keyframes window">Each animation has a set of keyframes. Each is denoted by its time (given as percentage of a single animation run) and its value. If <em>spline</em> interpolation mode is selected, every frame (except the first one) will have a spline attached to it as well, describing how the animation progresses to this keyframe from the previous one.</p>
-				<p>Format of values is specific to each animation type. In general, each "value" is actually a set of numeric values. As the animation progresses, the value is changed from one to the other according to the selected interpolation mode. For instance, a path animation will calculate the position of each control point of the path at each given time. This limits animations somewhat; an animation with no clear way to change from one value to the next will progress discretely (it will jump). For instance, a path's shape can only change into a shape with the same amount and types of control points. Other attributes, such as visibility, can have non-numeric values (visible/hidden), and can only change discretely.</p>
-				<p>Keyframes can be manipulated through the <a href="#interface_keyframes">keyframes and timing</a> window. Motion and transformation animations also have a node-based interface shown on the canvas, and described in sections below.</p>
-				<p>Keyframe window allows duplication and deletion of keyframes (with the minimal two keyframes - 0% and 100%). Keyframes can be moved by dragging, efectively switching values (and splines) while retaining timing.</p>
-			</section>
-		
-			<section id="animation_other">
-				<h2>Other attributes</h2>
-				<p>Animations have several other attributes:</p>
-				<p><strong>Post-animation state</strong> (or "fill") describes how animation affects its parent once it finishes. If <em>from animation</em> is selected, it will retain the value of its last keyframe. On the other hand, selecting <em>original</em> will return the affected element to the state it had before the animation.</p>
-				<p><strong>Additive</strong> indicates whether animation should add to any previous value the affected element already has or not. For instance, an additive translation from 0 to 100 will move the element from its original position. For non-additive animation, if the element already has a transformation attribute, however, it will be completely replaced. It's recommended to set additive to "yes" for transformations and motion along a path. Attribute animations, in contrast, are usually better served by replacing the attribute completely.</p>
-				<p><strong>Cumulative</strong> attribute indicates the animation should add to its own value each time it runs. This means that with each repetition (or new begin), the last value is kept as initial, and new values are added to it. For instance, a cumulative translation from 0 to 100 will, in first run, move the object from 0 to 100. On second repetition, the object will move from 100 to 200, and so on. This is particularly useful for creating continuous movement which should go forever.</p>
-			</section>
-			
-			<section id="animation_types">
-				<h2>Animation types</h2>
-				<p>There are, for most intents and purposes, three basic animation types in SVG. <strong>Transformations</strong> change the element's <em>transform</em> attribute, allowing for rotation, translation, scaling, and skewing. <strong>Motion along path</strong> is similar, and as name implies, moves the element along a given path. <strong>Attribute animation</strong> is the widest and most generic type of animation, which allows for the change of almost any remaining attribute of almost any SVG element.</p>
-				<p>Element can be animated with the menu <em>animation</em> option, or with the <i class="material-icons turn-90">power_settings_new</i> <em>animate element</em> toolbar button.</p>
-				<p>Multiple animations can be applied to the same object. Their behavior can be exclusive if not set to <em>additive</em>.
-					<section id="animation_types_camera">
-						<h3>Camera</h3>
-						<p><img style="height: 125px" class="right" src="_gif/rect_camera.gif" alt="Viewbox animation">
-						<i class="material-icons">videocam</i>Animates the SVG's viewbox - the rectangular view, which ultimately gets rendered.</p>
-						<p>Each keyframe is defined as a rectangle. By default, the aspect ratio stays the same as the original, but this can be changed manually. However, the view always gets rendered to the same size raster, which would lead to uneven stretching or shrinking of the picture.</p>
-					</section>
-					
-					<section id="animation_types_transform_translate">
-						<h3>Translation</h3>
-						<p><img style="height: 125px" class="right" src="_gif/rect_translate.gif" alt="Translation animation">
-						<i class="material-icons">trending_up</i>Movement along X and Y axis. Each keyframe is defined by two values indicating the element's position. The node interface allows the user to set each by hand. Holding <em>ctrl</em> while dragging a node will move it in straight line from previous node to current node's last position.</p>
-						<p>While not as versatile as motion through path, multiple translation animations can be combined to achieve similar effect without the hassle connected to the path management.</p>
-					</section>
-			
-					<section id="animation_types_motion">
-						<h3>Motion through path</h3>
-						<p><img style="height: 125px" class="right" src="_gif/rect_motion.gif" alt="Motion animation">
-						<i class="material-icons">swap_calls</i>Has the element travel along a given path. Optionally, the <em>angle</em> can be set (or set to <em>auto</em> or <em>auto-reverse</em>) this will turn the element as it travels along the path instead of simply translating it.</p>
-						<p>The <a href="#tools_picker">picker tool</a> can be used to assign the animation's path. The animation values are distance as percentage along the path, allowing the animation to run back and forth, or in reverse.</p>
-						
-					</section>
-					
-					<section id="animation_types_transform_rotate">
-						<h3>Rotation</h3>
-						<p><img style="height: 125px" class="right" src="_gif/rect_rotate.gif" alt="Rotation animation">
-						<i class="material-icons">refresh</i>Turning around a given origin. Keyframes hold angle (in degrees) and the X and Y position of the origin. The position of origin can change throughout the animation, allowing for fairly complex range of motion (albeit harder to master than simply turning along a single point). Node interface allows the user to move all origins with the same location, and all handles.</p>
-						<p>For each origin, angle zero is given as the angle the line from the origin to the affected element. This can effectively combine rotation with translation within a single animation.</p>
-					</section>
-			
-					<section id="animation_types_transform_scale">
-						<h3>Scaling</h3>
-						<p><img style="height: 125px" class="right" src="_gif/rect_scale.gif" alt="Scaling animation">
-						<i class="material-icons">zoom_out_map</i>Changing the element's size. Described by scale factor in X and Y axis (allows independent scaling). As SVG has no native support for scaling origin, aniGen provides a more-or-less functional workaround. It's recommended to group any element you intent to scale, and only apply the scaling animation to this group to avoid issues.</p>
-					</section>
-			
-					<section id="animation_types_transform_skew">
-						<h3>Skewing</h3>
-						<p><img style="height: 125px" class="right" src="_gif/rect_skew.gif" alt="Skewing animation">
-						<i class="material-icons">swap_horiz</i><i class="material-icons">swap_vert</i>Separated into horizontal (X axis) and vertical (Y axis) skew animations. Each keyframe is defined by the skew angle, zero being the initial value.</p>
-						<p>A workaround similar to that with scaling is employed for skewing, and similar care should be used when using this animation.</p>
-					</section>
-			
-					<section id="animation_types_attribute">
-						<h3>Attribute animation</h3>
-						<p><img style="height: 125px" class="right" src="_gif/rect_attr.gif" alt="Attribute animation">
-						<i class="material-icons">text_format</i>Changes the selected attribute of the parent (except <em>transform</em> and several other attributes) through time. Each value indicates the new value. Several attributes (display, visibility, opacity) allow the user to select values from available presets.</p>
-						<p>If keyframes are selected in the keyframes window, the <a href="#tools_picker">picker tool</a> can be used to pick values of other (clicked) elements with relative ease.</p>
-					</section>
-				
-			</section>
-			
-			<section id="animated_groups">
-				<h2>Animated groups</h2>
-					<p><img src="_images/states1.png" alt="Object menu">
-						<img class="right" src="_images/context_menu.png" alt="Context menu">
-						AniGen expands the basic animation functionality by introducing animated groups.</p>
-					<p>The user can select any element (including groups) and save it as an <em>animation state</em> with main menu or right-click context menu.</p>
-					<p>States are grouped according to the number and order of elements, so that standard path animation is applicable between all of them. When created, animated group allows the user to set each state from the group as the value of given keyframes. This allows the user to quickly change one complex shape to another without the need to create and synchronize large number of attribute animations.</p>
-					<section id="animated_groups_state">
-						<h3>Animation state</h3>
-						<p><img src="_images/states2.png" alt="Animation state dialogue">Animation states are set by selecting an object, and chosing <em>object→object to animation state</em> from the main menu, or via right-click context menu.</p>
-						<p><img src="_images/states3.png" alt="Animation state dialogue">When selected, the user will be able to pick a name for the given state, as well as the group. If no group exists, or no group shares the <span class="help" title="This means the general structure of nested elements, i.e. the number of groups and types of child elements in them.">element model</span> necessary, the user will have to pick the <em>New group</em> option and naming the group.</p>
-						
-						<p><strong>Note:</strong> if a group is made into a state, its transformation is disregarded. This means one can duplicate a group, move it somewhere else, and tweak elements therein without fear of making the final animation travel the distance.</p>
-						
-						<p><strong>Note:</strong> if all children of selected elements share the same <span class="help" title="This means the general structure of nested elements, i.e. the number of groups and types of child elements in them.">element model</span>, a <em>batch</em> option is provided. This allows the user to set all the <em>child</em> elements as individual states, sharing the same group. For example, if the selected element is a layer, which has a number of sub-layers, each with a single state, the <em>batch</em> option will create a group named after the parent layer, and popuplate it with states named after each individual sub-layer. <strong>This is experimental.</strong></p>
-					</section>
-					
-					<section id="animated_groups_group">
-						<h3>Animated group</h3>
-						<p>
-							<img src="_images/window_keyframes3.png" alt="Keyframe window - animated group">
-							<img class="right" src="_images/states5.png" alt="New animated group dialogue">
-							New animated group can be created via the main menu, or by right-click context menu.</p>
-						<p>Animated groups behave like any other animation, with few notable exceptions. While they have duration, begins, times, and so on, each value corresponds to a state name the user has given.</p>
-						<p>The keyframe window also includes a small preview of the selected shape, as well as an <em>intensity</em> slider. This allows the user to quickly create states part way between two existing state - intensity is the percentage of the change from previous state to the one in the given keyframe.</p>
-						<p><img src="_images/window_keyframes4.png" alt="Keyframe window - animated group - animated attributes tab">Intensity can also be set manually to a value outside the 0 - 1 range, creating an extrapolated state. This can have rather mixed results.</p>
-						<p><em>Tip: To "hold" a temporary value created with intensity slider, simply set the intensity of the following keyframe to zero.</em></p>
-						<p>Another addition is the ability to select which attributes will be animated. By default, the <em>d</em> attribute (see <a href="#elements_common_path">paths</a>) is animated, but more can be added as the users desires.</p>
-					</section>
-					
-					<section id="animated_groups_manager">
-						<h3>State manager</h3>
-						<p><img style="width: 30%" src="_images/state_manager1.png" alt="Animation state manager">
-							<img class="right" style="width: 40%" src="_images/state_manager2.png" alt="Animation state interpolation">
-							Existing animation states can be viewed and changed with <em>object→manage animation states</em> menu option.</p>
-						<p>The dialogue shows all existing state groups, animation states, and a live preview. The states can be renamed, and the states can be deleted.</p>
-						<p>State groups can be hidden by clicking their name. Empty groups are deleted automatically.</p>
-						<p>Additionally, new states can be created from existing ones as an interpolation (inbetween value), or extrapolation, similar to the use of <em>intensity</em> option in keyframe window.</p>
-						<p>The new state is a combination of two previous states, and is added to the end of the group.</p>
-						
-					</section>
-			</section>
+	<section id="audio">
+		<h1>Audio</h1>
+		<p>
+			to be added
+		</p>
 	</section>
-	
-	<!--
-	<section id="examples">
-		<h1>Examples</h1>
-			
-			
-			<section id="examples_1">
-				<h2></h2>
-			</section>
-			
-	</section>
-	-->
-	
 	<section id="bugs">
 		<h1>Bug reporting</h1>
-			<p>Please report any bugs encountered to bugs(at)anigen.org. The report should include following:</p>
+			<p>
+				Please report any bugs encountered via email to bugs(at)aniGen.org. aniGen is also hosted on <a href='github.com'>GitHub</a> at <a href='https://github.com/aibosan/aniGen'>https://github.com/aibosan/anigen</a>.  If you are familiar with using GitHub, you can post bugs there as well.
+			</p>
+			<p>
+				Bug reporting should include following:</p>
 			<ul>
 				<li><strong>Description</strong> of the problem.</li>
 				<li><strong>Circumstances</strong>, i.e. activities during which the bug occurs.</li>
@@ -941,9 +973,7 @@
 				<li><strong>Version</strong> of the editor (in menu - about)</li>
 			</ul>
 	</section>
-	
 </body>
-
 <script type="text/javascript">
 	function explore(target, list) {
 		if(!list) {
@@ -954,7 +984,7 @@
 		if(!target) {
 			target = document.body;
 		}
-		
+
 		for(var i = 0; i < target.children.length; i++) {
 			if(target.children[i].nodeName == "SECTION") {
 				if(list.nodeName == "LI") {
@@ -981,5 +1011,4 @@
 
 	explore(document.body, list);
 </script>
-
 </html>

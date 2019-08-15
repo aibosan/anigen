@@ -30,6 +30,29 @@ infoSelection.prototype.refresh = function() {
     this.container.appendChild(this.elementId);
     this.container.appendChild(this.info);
 	
+	var bVis = new uiButton(
+		[ 'visibility', 'visibility_off' ],
+		[ 'svg.selected.style.display="none";anigenManager.classes.windowLayers.refresh();', 'svg.selected.style.display=null;anigenManager.classes.windowLayers.refresh();' ],
+		[ 'Toggle element visibility', 0 ],
+		{ 'state': (svg.selected.style.display == 'none' ? 1 : 0) }
+	);
+	bVis.shepherd.stateIcons[1].style.color = 'gray';
+	this.container.appendChild(bVis);
+
+
+	var bNote = new uiButton(
+		[ 'bookmark_border', 'bookmark' ],
+		[ 'svg.selected.setAttributeHistory({"anigen:note": svg.selected.getAttribute("anigen:note")=="true" ? null : "true"});', 0 ],
+		[ 'Flag element as a note - notes are not rendered', 'Remove note flag' ],
+		{ 'state': (svg.selected.getAttribute('anigen:note') == 'true' ? 1 : 0) }
+	);
+	if(svg.selected instanceof SVGSVGElement) { bNote.shepherd.disable(); }
+	this.container.appendChild(bNote);
+
+	this.container.appendChild(this.elementNodeName);
+    this.container.appendChild(this.elementId);
+    this.container.appendChild(this.info);
+	
 	this.elementNodeName.removeChildren();
 	this.elementNodeName.appendChild(document.createTextNode("<" + element.nodeName + ">"))
 	
@@ -58,7 +81,7 @@ infoSelection.prototype.refresh = function() {
 			var groupId = svg.animationStates[element.getAttribute('anigen:group')][0].groupElement.getAttribute('id');
 		
 			var bGroup = new uiButton(
-				'folder_special',
+				'filter_none',
 				'svg.select("'+groupId+'")',
 				'Select state group element'
 			);
@@ -76,26 +99,6 @@ infoSelection.prototype.refresh = function() {
 			this.info.appendChild(document.createTextNode(element.getAttribute('attributeName')));
 			break;
 	}
-	
-	
-	var bVis = new uiButton(
-		[ 'visibility', 'visibility_off' ],
-		[ 'svg.selected.style.display="none";anigenManager.classes.windowLayers.refresh();', 'svg.selected.style.display=null;anigenManager.classes.windowLayers.refresh();' ],
-		[ 'Toggle element visibility', 0 ],
-		{ 'state': (svg.selected.style.display == 'none' ? 1 : 0) }
-	);
-	bVis.shepherd.stateIcons[1].style.color = 'gray';
-	this.container.appendChild(bVis);
-	
-	
-	var bNote = new uiButton(
-		[ 'bookmark', 'bookmark_border' ],
-		[ 'svg.selected.setAttributeHistory({"anigen:note": svg.selected.getAttribute("anigen:note")=="true" ? null : "true"});', 0 ],
-		[ 'Flag element as a note - notes are not rendered', 'Remove note flag' ],
-		{ 'state': (svg.selected.getAttribute('anigen:note') == 'true' ? 1 : 0) }
-	);
-	if(svg.selected instanceof SVGSVGElement) { bNote.shepherd.disable(); }
-	this.container.appendChild(bNote);
 	
 	
 	var linkList = element.getLinkList();

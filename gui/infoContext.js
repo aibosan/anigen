@@ -20,11 +20,12 @@ infoContext.prototype.seed = function() {
 	this.buttons.rectTool = new uiButton('crop_din', 'anigenActual.setTool(5, true);', 'Rectangle (F4)', { 'state': anigenActual.tool == 5 ? 1 : 0, 'radio': true, 'toggle': true, 'class': 'floatLeft' }).shepherd;
 	this.buttons.ellipseTool = new uiButton('panorama_fish_eye', 'anigenActual.setTool(6, true);', 'Ellipse (F5)', { 'state': anigenActual.tool == 5 ? 1 : 0, 'radio': true, 'toggle': true, 'class': 'floatLeft' }).shepherd;
 	
-	this.buttons.animate = new uiButton('power_settings_new', 'popup.macroAnimateMenu(anigenManager.classes.context.buttons.animate.container);', 'Animate element...', { 'toggle': true, 'class': 'floatLeft turn-90' }).shepherd;
-	this.buttons.edit = new uiButton('reorder', 'overlay.macroEdit(svg.selected);', 'Edit attributes', { 'class': 'floatLeft' }).shepherd;
-        this.buttons.editTextContent = new uiButton('title', 'popup.macroEditTextContent(this.container);', 'Edit text content', { 'class': 'floatLeft' }).shepherd;
-        this.buttons.children = new uiButton('details', 'popup.macroChildren(anigenManager.classes.context.buttons.children.container, svg.selected);', 'Child nodes...', { 'toggle': true, 'class': 'floatLeft' }).shepherd;
-	this.buttons.parent = new uiButton('change_history', 'svg.select(svg.selected.getViableParent());', 'Select parent', { 'class': 'floatLeft' } ).shepherd;
+	this.buttons.animate = new uiButton('directions_run', 'popup.macroAnimateMenu(anigenManager.classes.context.buttons.animate.container);', 'Animate Node', { 'toggle': true, 'class': 'floatLeft' }).shepherd;
+	this.buttons.edit = new uiButton('reorder', 'overlay.macroEdit(svg.selected);', 'Edit Node attributes', { 'class': 'floatLeft' }).shepherd;
+	this.buttons.editTextContent = new uiButton('title', 'popup.macroEditTextContent(this.container);', 'Edit Node Text Content', { 'class': 'floatLeft' }).shepherd;
+
+	this.buttons.children = new uiButton('device_hub', 'popup.macroChildren(anigenManager.classes.context.buttons.children.container, svg.selected);', 'Child Nodes Selector', { 'toggle': true, 'class': 'floatLeft' }).shepherd;
+	this.buttons.parent = new uiButton('change_history', 'svg.select(svg.selected.getViableParent());', 'Select Parent Node (Alt + ↑)', { 'class': 'floatLeft' } ).shepherd;
 	
 	this.buttons.keyframePrev = new uiButton('arrow_back', 'var trg = svg.selected.shepherd || svg.selected;if(typeof trg.getClosest === "function") { svg.gotoTime(trg.getClosest().previous.time); }', 'Jump to previous keyframe (1 / Ctrl+Left)', { 'class': 'floatLeft' }).shepherd;
 	this.buttons.keyframeNext = new uiButton('arrow_forward', 'var trg = svg.selected.shepherd || svg.selected;if(typeof trg.getClosest === "function") { svg.gotoTime(trg.getClosest().next.time); }', 'Jump to next keyframe (3 / Ctrl+Right)', { 'class': 'floatLeft' }).shepherd;
@@ -32,8 +33,8 @@ infoContext.prototype.seed = function() {
 	this.buttons.layers = new uiButton('layers', 'anigenManager.classes.windowLayers.toggle();', 'Show layers (Ctrl+Shift+L)', { 'toggle': true }).shepherd;
 	this.buttons.keyframes = new uiButton('hourglass_empty', 'anigenManager.classes.windowAnimation.toggle();', 'Show animation keyframes (Ctrl+Shift+K)', { 'toggle': true }).shepherd;
 	this.buttons.colors = new uiButton('format_paint', 'anigenManager.classes.windowColors.toggle();', 'Show fill and stroke', { 'toggle': true }).shepherd;
-	this.buttons.log = new uiButton('toc', 'anigenManager.named.bottom.toggle();anigenManager.refresh();anigenActual.settings.set("bottom", !(anigenActual.settings.get("bottom")));', 'Show event log', { 'toggle': true, 'class': 'flip-h' }).shepherd;
-	this.buttons.tree = new uiButton('share', 'anigenManager.named.left.toggle();anigenManager.classes.rulerH.refresh();anigenManager.classes.rulerV.refresh();anigenActual.settings.set("tree", !(anigenActual.settings.get("tree")));', 'Show XML tree (Ctrl+Shift+X)', { 'toggle': true, 'class': 'turn-90' }).shepherd;
+	this.buttons.log = new uiButton('subtitles', 'anigenManager.named.bottom.toggle();anigenManager.refresh();anigenActual.settings.set("bottom", !(anigenActual.settings.get("bottom")));', 'Toggle Event Log', { 'toggle': true, 'class': '' }).shepherd;
+	this.buttons.tree = new uiButton('list', 'anigenManager.named.left.toggle();anigenManager.classes.rulerH.refresh();anigenManager.classes.rulerV.refresh();anigenActual.settings.set("tree", !(anigenActual.settings.get("tree")));', 'Show XML tree (Ctrl+Shift+X)', { 'toggle': true, 'class': '' }).shepherd;
 	
 	
 	/* tool-sensitive nodes */
@@ -53,21 +54,19 @@ infoContext.prototype.seed = function() {
 	
 	this.toolButtons.group = {};
 	
-	this.toolButtons.group.rotateLeft = new uiButton('rotate_right', 'svg.rotate(svg.selected, { "angle": 90 }, false, true);', 'Rotate 90° clockwise', { 'class': 'floatLeft' }).shepherd;
-	this.toolButtons.group.rotateRight = new uiButton('rotate_left', 'svg.rotate(svg.selected, { "angle": -90 }, false, true);', 'Rotate 90° counterclockwise', { 'class': 'floatLeft' }).shepherd;
-	this.toolButtons.group.flipH = new uiButton('flip', 'svg.scale(svg.selected, { "scaleX": -1, "scaleY": 1}, false, true);', 'Flip horizontally', { 'class': 'floatLeft' }).shepherd;
-	this.toolButtons.group.flipV = new uiButton('flip', 'svg.scale(svg.selected, { "scaleX": 1, "scaleY": -1}, false, true);', 'Flip vertically', { 'class': 'floatLeft turn-90' }).shepherd;
-	
-	this.toolButtons.group.moveBot = new uiButton('vertical_align_bottom', 'svg.selected.moveBottom(true);window.dispatchEvent(new Event("treeSeed"));svg.select();', 'Lower element to the bottom (end)', { 'class': 'floatLeft' }).shepherd;
-	this.toolButtons.group.moveDown = new uiButton('arrow_downward', 'svg.selected.moveDown(true);window.dispatchEvent(new Event("treeSeed"));svg.select();', 'Lower element one step (page down)', { 'class': 'floatLeft' }).shepherd;
-	this.toolButtons.group.moveUp = new uiButton('arrow_upward', 'svg.selected.moveUp(true);window.dispatchEvent(new Event("treeSeed"));svg.select();', 'Raise element one step (page up)', { 'class': 'floatLeft' }).shepherd;
-	this.toolButtons.group.moveTop = new uiButton('vertical_align_top', 'svg.selected.moveTop(true);window.dispatchEvent(new Event("treeSeed"));svg.select();', 'Raise element to the top (home)', { 'class': 'floatLeft' }).shepherd;
+	this.toolButtons.group.moveBot = new uiButton('vertical_align_bottom', 'svg.selected.moveBottom(true);window.dispatchEvent(new Event("treeSeed"));svg.select();', 'Lower element to the bottom (End)', { 'class': 'floatLeft' }).shepherd;
+	this.toolButtons.group.moveDown = new uiButton('arrow_downward', 'svg.selected.moveDown(true);window.dispatchEvent(new Event("treeSeed"));svg.select();', 'Lower element one step (PageDown)', { 'class': 'floatLeft' }).shepherd;
+	this.toolButtons.group.moveUp = new uiButton('arrow_upward', 'svg.selected.moveUp(true);window.dispatchEvent(new Event("treeSeed"));svg.select();', 'Raise element one step (PageUp)', { 'class': 'floatLeft' }).shepherd;
+	this.toolButtons.group.moveTop = new uiButton('vertical_align_top', 'svg.selected.moveTop(true);window.dispatchEvent(new Event("treeSeed"));svg.select();', 'Raise element to the top (Home)', { 'class': 'floatLeft' }).shepherd;
 	
 	this.toolGroups[1].appendChild(new uiBreak('floatLeft'));
-	this.toolGroups[1].appendChild(this.toolButtons.group.rotateLeft.container);
-	this.toolGroups[1].appendChild(this.toolButtons.group.rotateRight.container);
-	this.toolGroups[1].appendChild(this.toolButtons.group.flipH.container);
-	this.toolGroups[1].appendChild(this.toolButtons.group.flipV.container);
+	this.toolGroups[1].appendChild(this.buttons.animate.container);
+	this.toolGroups[1].appendChild(this.buttons.edit.container);
+	this.toolGroups[1].appendChild(this.buttons.editTextContent.container);
+
+	this.toolGroups[1].appendChild(new uiBreak('floatLeft'));
+	this.toolGroups[1].appendChild(this.buttons.children.container);
+	this.toolGroups[1].appendChild(this.buttons.parent.container);
 	
 	this.toolGroups[1].appendChild(new uiBreak('floatLeft'));
 	this.toolGroups[1].appendChild(this.toolButtons.group.moveBot.container);
@@ -117,16 +116,17 @@ infoContext.prototype.seed = function() {
 	
 	this.container.appendChild(this.buttons.pickerTool.container);
 	
-	this.container.appendChild(new uiBreak('floatLeft'));
-	this.container.appendChild(this.buttons.animate.container);
-	this.container.appendChild(this.buttons.edit.container);
-        this.container.appendChild(this.buttons.editTextContent.container);
-	this.container.appendChild(this.buttons.children.container);
-	this.container.appendChild(this.buttons.parent.container);
-	this.container.appendChild(new uiBreak('floatLeft'));
-	this.container.appendChild(this.buttons.keyframePrev.container);
-	this.container.appendChild(this.buttons.keyframeNext.container);
+	this.toolButtons.group.rotateLeft = new uiButton('rotate_right', 'svg.rotate(svg.selected, { "angle": 90 }, false, true);', 'Rotate 90° clockwise', { 'class': 'floatLeft' }).shepherd;
+	this.toolButtons.group.rotateRight = new uiButton('rotate_left', 'svg.rotate(svg.selected, { "angle": -90 }, false, true);', 'Rotate 90° counterclockwise', { 'class': 'floatLeft' }).shepherd;
+	this.toolButtons.group.flipH = new uiButton('flip', 'svg.scale(svg.selected, { "scaleX": -1, "scaleY": 1}, false, true);', 'Flip horizontally', { 'class': 'floatLeft' }).shepherd;
+	this.toolButtons.group.flipV = new uiButton('flip', 'svg.scale(svg.selected, { "scaleX": 1, "scaleY": -1}, false, true);', 'Flip vertically', { 'class': 'floatLeft turn-90' }).shepherd;
 	
+	this.container.appendChild(new uiBreak('floatLeft'));
+	this.container.appendChild(this.toolButtons.group.rotateLeft.container);
+	this.container.appendChild(this.toolButtons.group.rotateRight.container);
+	this.container.appendChild(this.toolButtons.group.flipH.container);
+	this.container.appendChild(this.toolButtons.group.flipV.container);
+
 	for(var i = 0; i < this.toolGroups.length; i++) {
 		this.toolGroups[i].addClass('floatLeft');
 		this.toolGroups[i].style.display = 'none';
