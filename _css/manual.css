@@ -32,6 +32,9 @@
   src: url('../_fonts/MaterialIcons/MaterialIcons-Regular.ttf') format('truetype');
 }
 
+*, articles > * {
+	transition					: all 0.1s linear 0s;
+}
 
 body {
 	font-family: 'Open Sans', sans-serif;
@@ -179,6 +182,7 @@ p > img.right {
 
 body nav {
 	font-size: 90%;
+	display: none;
 }
 
 body nav ol {
@@ -197,22 +201,42 @@ p {
 	margin-bottom: 1.5em;
 }
 
+div#menu_header{
+	vertical-align: top;
+	background-color: green;
+	top: 0;
+	position: fixed;
+	color: white;
+	padding: .5em;
+	border-radius: 0 0 10px 0;
+	cursor: pointer;
+}
+
 #menu {
-	font-size: 90%;
 	position: fixed;
 	top: 0px;
 	left: 0px;
-	border-right: 2em solid #008000;
+	border-right: .5em solid #008000;
 	background-color: white;
 	height: 100%;
-	
+
+	z-index: 10000;
+		
 	width: 0px;
 	overflow: hidden;
 	
 	white-space: nowrap;
 }
 
-#menu:hover {
+#menu > ol > li {
+	font-size: 120%;
+}
+
+#menu > ol > li > ol {
+	font-size: 70%;
+}
+
+div#menu_header:hover + #menu, #menu:hover {
 	width: auto;
 	overflow-y: auto;
 	padding: 0 1em;
@@ -230,6 +254,8 @@ div.logo {
 
 div.logo img {
 	border: none;
+	max-width: 400px;
+	width: 40%;
 	display: inline-block;
 }
 
